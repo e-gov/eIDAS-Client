@@ -10,6 +10,7 @@
 7. ja andes kasutajale mõistliku teate, kui midagi peaks untsu minema
 8. ja mis on piisavalt lihtne ja dokumenteeritud, et seda saab kergesti lõimida Eesti e-teenustesse, sh TARA-sse
     1. järgib [eIDAS konnektorteenuse liidese spetsifikatsiooni](https://github.com/e-gov/eIDAS-Connector/blob/master/Spetsifikatsioon.md)
+    2. kasutab Java komponente. mille ühilduvust lõimitava e-teenuse Java-tarkvaraga võiks eeldada
 9. ja Nortalil on võimekus vajadusel nõustada liidestujaid.
 10. omab ka teatud omadusi, millega saab automaatselt eIDAS-autentimist testida.
 
