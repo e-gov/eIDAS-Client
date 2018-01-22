@@ -1,6 +1,6 @@
 # eIDAS-Client. Arhitektuuri kirjeldus
 
-eIDAS klient on Euroopa Liidu poolt pakutava ülepiirilise isikutuvastusteenuse näidisklient. Teenus on Java veebirakendus, mis pakub isiku autententimisprotsessi algatamiseks ja lõpptulemuse kontrollimiseks lihtsat veebiliidest.
+eIDAS klient on Euroopa Liidu piirülese isikutuvastusteenuse näidisklient. Teenus on Java veebirakendus, mis pakub isiku autentimisprotsessi algatamiseks ja lõpptulemuse kontrollimiseks lihtsat veebiliidest.
 
 eIDAS klient järgib [RIA eIDAS konnektorteenuse liidese spetsifikatsiooni](https://github.com/e-gov/eIDAS-Connector/blob/master/Spetsifikatsioon.md).
 
