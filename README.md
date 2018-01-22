@@ -72,6 +72,8 @@ SAML metadata laadimine:
 
 2. eIDAS konnektorteenuse metaandmed loetakse sisse rakenduse käivitamisel (eenevalt seadistatud URLilt) ja puhverdatakse (vt paigaldusjuhendit, et kontrollida puhvri aegumist jm parameetreid).
 
+NB! Toetatud sihtriikide nimekiri (JSON vormingus) laetakse konfiguratsioonis määratud URL-lt rakenduse käivitamise ajal ning puhverdatakse (puhvri aegumine on seadistatav).
+// JSON vorming on täpsustamisel. //
 
 ### Isikutuvastusprotsess
 
@@ -85,11 +87,8 @@ Lihtsustatult toimib isikutuvastuse protsess eIDAS kliendi ja eIDAS konnektortee
 
 4. Peale ülepiirilise isikutuvastusprotsessi läbimist suunab eIDAS konnektorteenus, tulemuse eIDAS kliendi `/returnUrl` aadressile koos `SAMLResponse` ja `RelayState` parameetriga. EIDAS klient valideerib vastuse, dekrüpteerib sisu ning kuvab tuvastatud isiku andmed. NB! Vorming on juhitav RelayState parameetri abil (inimloetav kuju, vs masinloetav)
 
-// Vaja teha! Kuidas toimib toetatud sihtriikide valiku automaatne uuendamine? //
-
 <img src='doc/img/EidasClient-Isikutuvastus.png'>
 Joonis 1.
-
 
 TEENUSE ÜLESEHITUS
 -----------
@@ -120,7 +119,7 @@ Toimimiseks vajab eIDAS klient teenus eIDAS konnektorteenust ning genereeritud v
 | Komponent        | Selgitus |
 | ------------- | :----- |
 | `eIDAS konnektorteenus` | eIDAS klient vajab ligipääsu eIDAS konnektorteenuse SAML 2.0 metadata ja isikutuvastuse päringu vastuvõtu otspunktidele (eIDAS konnektorteenuse metadata vastuses viidatud kui `AssertionConsumerService`)|
-| `Võtmehoidla` | SAML vastuste allkirjastamiseks vajalikke võtmeid hoitakse võtmehoidlates (pkcs12, jks). |
+| `Võtmehoidla` | SAML vastuste allkirjastamiseks vajalikke võtmeid hoitakse võtmehoidlates (pkcs12, jks). // Kas hsm tugi on vajalik? Lisab keerukust. // |
 | `Konfiguratsioon` | Teenuse juhtimine ja seadistus toimib läbi keskse konfiguratsioonifaili. |
 Tabel 2.
 
@@ -157,12 +156,5 @@ Tabel 4.
 ### /metadata
 
 Publitseerib eIDAS klient teenuse metaandmed. Parameetrid puuduvad.
-
-
-LISA 2 - ADMIN funktsionaalsus
----------------
-
-// Vajab täpsustamist //
-
 
 
