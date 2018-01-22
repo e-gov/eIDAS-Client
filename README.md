@@ -96,7 +96,7 @@ TEENUSE ÜLESEHITUS
 
 Eidas klient paketeeritakse kas kõiki sõltuvusi sisaldava ja veebiserverit sisaldava veebirakendusena (`fat jar`) või standardse veebiarhiivina (`war`).
 
-Eidas kliendi teenuskiht toetub Spring Security ja CEF-i näidistarkvaras v1.14 kasutatavatele alusteekidele.
+Eidas kliendi teenuskiht toetub [pac4j](https://github.com/pac4j/pac4j) ja [Spring Security](https://projects.spring.io/spring-security/) alusteekidele.
 
 <img src='doc/img/EidasClient.png'></img>
 
@@ -128,7 +128,7 @@ Tabel 2.
 PAIGALDUSJUHEND
 -------------------
 
-// Täpsustamist vajavad nõuded keskkonnale ja juhised kliendi kokkuehitamiseks //
+// Täpsustamist vajavad konkreetsed sammud ehitamiseks ja keskkonna püsti panemiseks (Maven) //
 // Täpsustamist vajavad seadistamise detailid (sh konnektorteenuse registreerimine, võtmete import, krüptoalgoritmide, otspunktide, https-i eripärade ja logimise seadistus) //
 
 LISA 1 - TEENUSE LIIDESE SPETSIFIKATSIOON
