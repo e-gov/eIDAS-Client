@@ -4,6 +4,17 @@ eIDAS klient on Euroopa Liidu poolt pakutava ülepiirilise isikutuvastusteenuse 
 
 eIDAS klient järgib [RIA eIDAS konnektorteenuse liidese spetsifikatsiooni](https://github.com/e-gov/eIDAS-Connector/blob/master/Spetsifikatsioon.md).
 
+## Sisukord
+
+[**Põhiomadused**](#p%C3%B5hiomadused)
+[SAML metaandmete vahetus](#saml-metaandmete-vahetus)
+[Isikutuvastusprotsess](#isikutuvastusprotsess)
+[Teenuse ülesehitus](#teenuse-%C3%BClesehitus)
+[Pakutavad liidesed](#pakutavad-liidesed)
+[Nõutud liidesed](#n%C3%B5utud-liidesed)
+[Paigaldusnõuded](#paigaldusn%C3%B5uded)
+[Liidese spetsifikatsioon](https://github.com/e-gov/eIDAS-Client#liidese-spetsifikatsioon)
+
 ## Põhiomadused
 
 1. Java ***rakendus***, mis
@@ -38,14 +49,11 @@ eIDAS-Client-i ***tootena*** võiks välja pakkuda eIDAS adapteri nime all.
 
 ~~Kui spetsifikatsioon, UI jm dokumentatsioon oleks inglise keeles, võiks teek potentsiaalselt huvi pakkuda teiste EL riikide konnektorite külge liidestujatele (võimalus promoda teeki CEF-is, ehk isegi saada tellimusi CEF-st või teistest riikidest).~~
 
-## Kuidas toimib?
-----------
-
 Näidisklient publitseerib oma metadata otspunkti, töötleb isikutuvastusprotsessi päringuid ja vastuseid vastavalt [eIDAS konnektorteenuse liidese spetsifikatsioonis](https://github.com/e-gov/eIDAS-Connector/blob/master/Spetsifikatsioon.md) sätestatud nõuetele.
 
 eIDAS kliendi kasutajaliides kuvab isikutuvastuse tulemuse nii inimloetaval (HTML) kui ka masinloetaval kujul (JSON).
 
-### SAML metaandmete vahetus
+## SAML metaandmete vahetus
 
 eIDAS konnektorteenuse SAML metaandmete laadimine ja kliendi enda metaandmete avaldamine toimub pärast eIDAS kliendi teenuse käivitamist (kuid enne kasutaja päringute teenindamist).
 
@@ -56,7 +64,7 @@ SAML metadata laadimine:
 
 NB! Toetatud sihtriikide nimekiri (JSON vormingus) laetakse konfiguratsioonis määratud URL-lt rakenduse käivitamise ajal ning puhverdatakse (puhvri aegumine on seadistatav). JSON vorming vt [Toetatud riikide nimekiri](https://github.com/e-gov/eIDAS-Connector/blob/master/Spetsifikatsioon.md#toetatud-riikide-nimekiri).
 
-### Isikutuvastusprotsess
+## Isikutuvastusprotsess
 
 Lihtsustatult toimib isikutuvastusprotsess eIDAS kliendi ja eIDAS konnektorteenuse vahel järgmiselt (vt joonis 1.)
 
@@ -71,7 +79,7 @@ Lihtsustatult toimib isikutuvastusprotsess eIDAS kliendi ja eIDAS konnektorteenu
 <img src='doc/img/EidasClient-Isikutuvastus.png'>
 Joonis 1.
 
-### Teenuse ülesehitus
+## Teenuse ülesehitus
 -----------
 
 eIDAS klient paketeeritakse kas kõiki sõltuvusi sisaldava ja veebiserverit sisaldava veebirakendusena (`fat jar`) või standardse veebiarhiivina (`war`).
@@ -82,9 +90,9 @@ Eidas kliendi teenuskiht toetub [pac4j](https://github.com/pac4j/pac4j) ja [Spri
 
 Joonis 2.
 
-### Pakutavad liidesed
+## Pakutavad liidesed
 
-Ülepiirilise isikutuvastuse päringu algatamiseks ja tagasituleva vastuse vajalike otspunktide loetelu on toodud Tabelis 1. Otspunktide täpsem kirjeldus toodud lisas 1.
+Ülepiirilise isikutuvastuse päringu algatamiseks ja tagasituleva vastuse vajalike otspunktide loetelu on toodud Tabelis 1. Otspunktide täpsem kirjeldus toodud jaotises "Liidese spetsifikatsioon".
 
 | Otspunkt        | Toetatud meetodid | Selgitus  |
 | ------------- | :------: | :-------------|
@@ -93,7 +101,7 @@ Joonis 2.
 | `/metadata`  | GET |	SAML 2.0 standardijärgne metadata otspunkt. Vajalik eIDAS konnektorteenuse ja kliendi vahelise usalduse loomiseks. |
 Tabel 1.
 
-### Nõutud liidesed
+## Nõutud liidesed
 
 Toimimiseks vajab eIDAS klient eIDAS konnektorteenust ning genereeritud võtmeid koos seadistusega.
 
@@ -104,13 +112,13 @@ Toimimiseks vajab eIDAS klient eIDAS konnektorteenust ning genereeritud võtmeid
 | `Konfiguratsioon` | Teenuse juhtimine ja seadistus toimib läbi keskse konfiguratsioonifaili. |
 Tabel 2.
 
-## Paigaldusjuhend
+## Paigaldusnõuded
 -------------------
 
 // Täpsustamist vajavad konkreetsed sammud ehitamiseks ja keskkonna püsti panemiseks (Maven). -- Programmeerimisega paralleelselt. //
 // Täpsustamist vajavad seadistamise detailid (sh konnektorteenuse registreerimine, võtmete import, krüptoalgoritmide, otspunktide, https-i eripärade ja logimise seadistus). -- Programmeerimisega paralleelselt. //
 
-## Lisa 1 - Liidese spetsifikatsioon
+## Liidese spetsifikatsioon
 -----------
 
 ### /start
