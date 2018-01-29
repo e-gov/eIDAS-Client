@@ -6,20 +6,13 @@ eIDAS klient järgib [RIA eIDAS konnektorteenuse liidese spetsifikatsiooni](http
 
 ## Sisukord
 
-[**Põhiomadused**](#p%C3%B5hiomadused)
-
-[**SAML metaandmete vahetus**](#saml-metaandmete-vahetus)
-
-[**Isikutuvastusprotsess**](#isikutuvastusprotsess)
-
-[**Teenuse ülesehitus**](#teenuse-%C3%BClesehitus)
-
-[**Pakutavad liidesed**](#pakutavad-liidesed)
-
-[**Nõutud liidesed**](#n%C3%B5utud-liidesed)
-
-[**Paigaldusnõuded**](#paigaldusn%C3%B5uded)
-
+[**Põhiomadused**](#p%C3%B5hiomadused)<br>
+[**SAML metaandmete vahetus**](#saml-metaandmete-vahetus)<br>
+[**Isikutuvastusprotsess**](#isikutuvastusprotsess)<br>
+[**Teenuse ülesehitus**](#teenuse-%C3%BClesehitus)<br>
+[**Pakutavad liidesed**](#pakutavad-liidesed)<br>
+[**Nõutud liidesed**](#n%C3%B5utud-liidesed)<br>
+[**Paigaldusnõuded**](#paigaldusn%C3%B5uded)<br>
 [**Liidese spetsifikatsioon**](https://github.com/e-gov/eIDAS-Client#liidese-spetsifikatsioon)
 
 ## Põhiomadused
