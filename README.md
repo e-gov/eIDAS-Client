@@ -115,7 +115,20 @@ Tabel 2.
 ## Paigaldusnõuded
 -------------------
 
-// Täpsustamist vajavad konkreetsed sammud ehitamiseks ja keskkonna püsti panemiseks (Maven). -- Programmeerimisega paralleelselt. //
+### Ehitamine ja käivitamine
+
+Rakenduse käivitamiseks vajalikud tegevused (eeldab Java 1.8+ ja Maveni olemasolu):
+
+1. Tõmba lähtekood
+`git clone https://github.com/e-gov/eIDAS-Client.git`
+2. Ehita veebirakendus
+`mvn clean install`
+3. Käivita veebirakendus
+`java -jar eidas-client-webapp/target/eidas-client-webapp-1.0-SNAPSHOT.war`
+
+NB! Alternatiivina näidiskliendi `eidas-client-webapp-1.0-SNAPSHOT.war` faili paigaldada ka traditisiooonilisse Java Servlet tuge pakkuvasse veebiserverisse.
+
+
 // Täpsustamist vajavad seadistamise detailid (sh konnektorteenuse registreerimine, võtmete import, krüptoalgoritmide, otspunktide, https-i eripärade ja logimise seadistus). -- Programmeerimisega paralleelselt. //
 
 ## Liidese spetsifikatsioon
