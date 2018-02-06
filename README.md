@@ -1,5 +1,7 @@
 # eIDAS-Client. Arhitektuuri kirjeldus
 
+<img src='doc/img/ee_cef_0.png'></img>
+
 eIDAS klient on Euroopa Liidu piirülese isikutuvastusteenuse näidisklient. Teenus on Java veebirakendus, mis pakub isiku autentimisprotsessi algatamiseks ja lõpptulemuse kontrollimiseks lihtsat veebiliidest.
 
 eIDAS klient järgib [RIA eIDAS konnektorteenuse liidese spetsifikatsiooni](https://github.com/e-gov/eIDAS-Connector/blob/master/Spetsifikatsioon.md).
@@ -133,6 +135,9 @@ NB! Alternatiivina näidiskliendi `eidas-client-webapp-1.0-SNAPSHOT.war` faili p
 ## Liidese spetsifikatsioon
 -----------
 
+HTTP staatuskoode käsitletakse [RFC2616](https://tools.ietf.org/html/rfc2616) standardile vastavalt. Näiteks tähistavad 400 vahemiku koodid kliendi päringu mittevastavust nõuetele (nagu puuduvad või lubamatu väärtusega parameetrid) ning staatuskoodid alates 500 serveripoolseid probleeme (nagu ülekoormus). Kõigi muude juhtude korral tagastatakse HTTP staatuskood 200 koos vastavas vormingus vastusega (JSON/HTML/XML).
+
+
 ### /start
 
 Algatab autentimisprotsessi või kui vajalikud parameetrid puuduvad, kuvab kasutajale sihtriigid ülepiirilise autentimise alustamiseks. Võimalike parameetrite loetelu on toodud tabelis 3.
@@ -152,6 +157,8 @@ Võtab vastu ja töötleb eIDAS konnektorteenusest tuleva vastuse. Kuvab tulemus
 | `SAMLResponse` | Jah | Parameeter, milles tagastatakse Base64-kodeeritud SAML `Response` päring. Vastus peab olema allkirjastatud ja isiku kohta käivad väited krüpteeritud (eIDAS Node privaatvõtmega). |
 | `RelayState` | Ei | Parameetri alusel otsustatakse, millisel kujul kasutajale vastus kuvada. <ul><li>Kui parameeter `RelayState` eksisteerib ja selle väärtus on `showHtmlReport`, kuvatakse autentimise tulemus inimloetaval kujul html vormina. </li><li>Muul juhul, kui parameetrit ei täpsustata, saadetakse otspunkti poole pöördujale vastus masinloetaval kujul (JSON).</li></ul> |
 Tabel 4.
+
+
 
 ### /metadata
 
