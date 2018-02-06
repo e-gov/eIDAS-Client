@@ -82,8 +82,7 @@ Joonis 1.
 ## Teenuse ülesehitus
 -----------
 
-eIDAS klient paketeeritakse kas kõiki sõltuvusi sisaldava ja veebiserverit sisaldava veebirakendusena (`fat jar`) või standardse veebiarhiivina (`war`).
-
+Eidas klient paketeeritakse war failina.
 Eidas kliendi teenuskiht toetub [pac4j](https://github.com/pac4j/pac4j) ja [Spring Security](https://projects.spring.io/spring-security/) alusteekidele. (Vt teekide valiku põhjendused [TARAEI-16](https://jira.ria.ee/browse/TARAEI-16)  &#128273;).
 
 <img src='doc/img/EidasClient.png'></img>
@@ -117,7 +116,7 @@ Tabel 2.
 
 ### Ehitamine ja käivitamine
 
-Rakenduse käivitamiseks vajalikud tegevused (eeldab Java 1.8+ ja Maveni olemasolu):
+Rakenduse käivitamiseks vajalikud tegevused (eeldab Java 1.8+):
 
 1. Tõmba lähtekood
 `git clone https://github.com/e-gov/eIDAS-Client.git`
