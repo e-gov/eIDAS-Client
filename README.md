@@ -1,6 +1,6 @@
-# eIDAS-Client. Arhitektuuri kirjeldus
-
 <img src='doc/img/ee_cef_0.png'></img>
+
+# eIDAS-Client. Arhitektuuri kirjeldus
 
 eIDAS klient on Euroopa Liidu piirülese isikutuvastusteenuse näidisklient. Teenus on Java veebirakendus, mis pakub isiku autentimisprotsessi algatamiseks ja lõpptulemuse kontrollimiseks lihtsat veebiliidest.
 
