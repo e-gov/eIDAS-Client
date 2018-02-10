@@ -28,17 +28,6 @@ public class EidasClientApplicationTest {
     int port;
 
     @Test
-    public void testValidResponse() {
-        given()
-            .port(port)
-        .when()
-            .get("/")
-        .then()
-            .statusCode(200)
-            .body("html.body", contains("Hello world!"));
-    }
-
-    @Test
     public void metadataMatchesSchema() {
 
         given()
