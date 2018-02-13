@@ -7,15 +7,23 @@ import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import ee.ria.eidas.config.IntegrationTest;
 import io.restassured.path.xml.XmlPath;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
+@Category(IntegrationTest.class)
 public class MetadataIntegrationTest extends TestsBase {
+
+    @Value("${eidas.client.spEntityId}")
+    private String spEntityId;
+
     @Ignore
     @Test
     public  void metap1_hasValidSignature() {
@@ -34,13 +42,13 @@ public class MetadataIntegrationTest extends TestsBase {
         XmlPath xmlPath = new XmlPath(response).using(xmlPathConfig().namespaceAware(false));
         assertEquals("The namespace should be expected", "urn:oasis:names:tc:SAML:2.0:metadata2", xmlPath.getString("EntityDescriptor.@xmlns:md"));
     }
-    @Ignore
+
     @Test
     public void metap3_mandatoryValuesArePresentInEntityDescriptor() {
         Instant currentTime = Instant.now();
         String response = getMedatadaBody();
         XmlPath xmlPath = new XmlPath(response);
-        assertEquals("The entityID must be the same as entpointUrl", SP_URL+":"+SP_PORT+SP_METADATA_ENDPOINT, xmlPath.getString("EntityDescriptor.@entityID"));
+        assertEquals("The entityID must be the same as entpointUrl", spEntityId, xmlPath.getString("EntityDescriptor.@entityID"));
 
         Instant validUntil = Instant.parse(xmlPath.getString("EntityDescriptor.@validUntil"));
         assertThat("The metadata should be valid for 24h",currentTime.plus(Duration.ofHours(23).plusMinutes(50)), lessThan(validUntil));
