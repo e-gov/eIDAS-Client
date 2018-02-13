@@ -1,8 +1,12 @@
 package ee.ria.eidas.client.webapp;
 
+import com.github.tomakehurst.wiremock.WireMockServer;
+import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.jayway.restassured.RestAssured;
 import com.jayway.restassured.config.XmlConfig;
 import com.sun.org.apache.xerces.internal.dom.DOMInputImpl;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.boot.context.embedded.LocalServerPort;
@@ -13,10 +17,16 @@ import org.w3c.dom.ls.LSResourceResolver;
 
 import java.io.File;
 import java.io.InputStream;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.matcher.RestAssuredMatchers.matchesXsdInClasspath;
 import static org.hamcrest.Matchers.contains;
+import static org.junit.Assert.assertNotNull;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -24,8 +34,21 @@ public class EidasClientApplicationTest {
 
     public static final String SCHEMA_DIR_ON_CLASSPATH = "schema" + File.separator;
 
+    private final static WireMockServer wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig().port(7771));
+
     @LocalServerPort
     int port;
+
+    @BeforeClass
+    public static void initExternalDependencies() {
+        wireMockServer.start();
+        wireMockServer.stubFor(WireMock.get(urlEqualTo("/EidasNode/ConnectorResponderMetadata"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/xml")
+                        .withBody(readFileBody("samples/response/idp-metadata-ok.xml"))
+                ));
+    }
 
     @Test
     public void testValidResponse() {
@@ -56,6 +79,21 @@ public class EidasClientApplicationTest {
         public LSInput resolveResource(String type, String namespaceURI, String publicId, String systemId, String baseURI) {
             InputStream resource = ClassLoader.getSystemResourceAsStream(SCHEMA_DIR_ON_CLASSPATH + systemId);
             return new DOMInputImpl(publicId, systemId, baseURI, resource, null);
+        }
+    }
+
+    public static String readFileBody(String fileName) {
+        return new String(readFileBytes(fileName), StandardCharsets.UTF_8);
+    }
+
+    public static byte[] readFileBytes(String fileName) {
+        try {
+            ClassLoader classLoader = EidasClientApplicationTest.class.getClassLoader();
+            URL resource = classLoader.getResource(fileName);
+            assertNotNull("File not found: " + fileName, resource);
+            return Files.readAllBytes(Paths.get(resource.toURI()));
+        } catch (Exception e) {
+            throw new RuntimeException("Exception: " + e.getMessage(), e);
         }
     }
 }
