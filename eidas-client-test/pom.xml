@@ -17,7 +17,7 @@
             <groupId>ee.ria.eidas</groupId>
             <artifactId>eidas-client-webapp</artifactId>
             <version>${project.version}</version>
-            <scope>test</scope>
+            <classifier>classes</classifier>
         </dependency>
         <dependency>
             <groupId>io.rest-assured</groupId>

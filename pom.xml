@@ -16,8 +16,8 @@
     </parent>
 
     <modules>
-        <module>eidas-client-webapp</module>
         <module>eidas-client-pac4j-extension</module>
+        <module>eidas-client-webapp</module>
         <module>eidas-client-test</module>
     </modules>
 
