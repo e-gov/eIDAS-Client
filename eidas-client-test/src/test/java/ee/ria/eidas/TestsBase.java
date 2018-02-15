@@ -16,6 +16,7 @@ import org.w3c.dom.ls.LSInput;
 import org.w3c.dom.ls.LSResourceResolver;
 import java.io.InputStream;
 
+
 import static io.restassured.RestAssured.given;
 import static io.restassured.config.EncoderConfig.encoderConfig;
 import static io.restassured.internal.matcher.xml.XmlXsdMatcher.matchesXsdInClasspath;
@@ -31,6 +32,9 @@ public class TestsBase {
 
     @Value("${eidas.client.spEntityId}")
     protected String spMetadata;
+
+    @Value("${eidas.client.spStartUrl}")
+    private String spStartUrl;
 
     @Before
     public void setUp() {
@@ -62,12 +66,20 @@ public class TestsBase {
         return true;
     }
 
+    protected String getAuthenticationReqBody() {
+        return given()
+                .config(RestAssured.config().encoderConfig(encoderConfig().defaultContentCharset("UTF-8")))
+                .when()
+                .get(spStartUrl).then().extract().body().asString();
+    }
+
     //TODO: Need a method for signature validation
-    protected Boolean validateMetadataSignature(String body) {
+    protected Boolean validateSignature(String body) {
         return true;
     }
+
     //TODO: Need a method for certificate validity check
-    protected Boolean isCertificateValid(String cert) {
+    protected Boolean isCertificateValid(String certString) {
         return true;
     }
 
