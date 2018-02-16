@@ -16,17 +16,13 @@ import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.springframework.beans.factory.annotation.Value;
-
-import java.io.IOException;
-import java.security.cert.CertificateException;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.List;
 
 @Category(IntegrationTest.class)
 public class MetadataIntegrationTest extends TestsBase {
 
-    @Value("${eidas.client.spEntityId}")
+    @Value("${eidas.client.spMetadataUrl}")
     private String spMetadata;
 
     @Value("${eidas.client.spReturnUrl}")
@@ -36,17 +32,15 @@ public class MetadataIntegrationTest extends TestsBase {
     @Test
     public void metap3_validUtnilIsPresentInEntityDescriptor() {
         Instant currentTime = Instant.now();
-        String response = getMedatadaBody();
-        XmlPath xmlPath = new XmlPath(response);
+        XmlPath xmlPath = getMetadataBodyXML();
         Instant validUntil = Instant.parse(xmlPath.getString("EntityDescriptor.@validUntil"));
         assertThat("The metadata should be valid for 24h",currentTime.plus(Duration.ofHours(23).plusMinutes(50)), lessThan(validUntil));
     }
 
     @Ignore
     @Test //This is optional block
-    public void metap3_organizationInformationIsCorrect() {
-        String response = getMedatadaBody();
-        XmlPath xmlPath = new XmlPath(response);
+    public void metap2_organizationInformationIsCorrect() {
+        XmlPath xmlPath = getMetadataBodyXML();
         assertEquals("Correct Organization name must be present", "DEMO-SP",
                 xmlPath.getString("EntityDescriptor.Organization.OrganizationName"));
         assertEquals("Correct Organization display name must be present", "Sample SP",
@@ -57,9 +51,8 @@ public class MetadataIntegrationTest extends TestsBase {
 
     @Ignore
     @Test //This is optional block
-    public void metap3_contacInformationIsCorrect() {
-        String response = getMedatadaBody();
-        XmlPath xmlPath = new XmlPath(response);
+    public void metap2_contacInformationIsCorrect() {
+        XmlPath xmlPath = getMetadataBodyXML();
         assertEquals("Correct Organization name must be present", "eIDAS SP Operator",
                 xmlPath.getString("**.findAll {it.@contactType == 'support'}.Company"));
         assertEquals("Correct Organization name must be present", "Jean-Michel",
@@ -74,7 +67,7 @@ public class MetadataIntegrationTest extends TestsBase {
 
     @Ignore
     @Test
-    public void metap4_caseSensitivityOnEndpoint() {
+    public void metap3_caseSensitivityOnEndpoint() {
         given()
                 .config(RestAssured.config().encoderConfig(encoderConfig().defaultContentCharset("UTF-8")))
                 .when()
@@ -87,7 +80,7 @@ public class MetadataIntegrationTest extends TestsBase {
 
     @Ignore
     @Test //Should return GET?
-    public void metap4_optionsOnMetadataEndpoint() {
+    public void metap3_optionsOnMetadataEndpoint() {
         given()
                 .config(RestAssured.config().encoderConfig(encoderConfig().defaultContentCharset("UTF-8")))
                 .when()
@@ -100,7 +93,7 @@ public class MetadataIntegrationTest extends TestsBase {
 
     @Ignore
     @Test //should return 404?
-    public void metap4_postOnMetadataEndpoint() {
+    public void metap3_postOnMetadataEndpoint() {
         given()
                 .config(RestAssured.config().encoderConfig(encoderConfig().defaultContentCharset("UTF-8")))
                 .when()
@@ -113,7 +106,7 @@ public class MetadataIntegrationTest extends TestsBase {
 
     @Ignore
     @Test //should return 404?
-    public void metap4_putOnMetadataEndpoint() {
+    public void metap3_putOnMetadataEndpoint() {
         given()
                 .config(RestAssured.config().encoderConfig(encoderConfig().defaultContentCharset("UTF-8")))
                 .when()
@@ -126,7 +119,7 @@ public class MetadataIntegrationTest extends TestsBase {
 
     @Ignore
     @Test
-    public void metap4_headOnMetadataEndpoint() {
+    public void metap3_headOnMetadataEndpoint() {
         given()
                 .config(RestAssured.config().encoderConfig(encoderConfig().defaultContentCharset("UTF-8")))
                 .when()
@@ -139,7 +132,7 @@ public class MetadataIntegrationTest extends TestsBase {
 
     @Ignore
     @Test //what should be the output for that?
-    public void metap4_deleteOnMetadataEndpoint() {
+    public void metap3_deleteOnMetadataEndpoint() {
         given()
                 .config(RestAssured.config().encoderConfig(encoderConfig().defaultContentCharset("UTF-8")))
                 .when()

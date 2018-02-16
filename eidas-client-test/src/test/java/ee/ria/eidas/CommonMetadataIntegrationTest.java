@@ -26,8 +26,8 @@ import static org.junit.Assert.assertTrue;
 @Category(IntegrationTest.class)
 public class CommonMetadataIntegrationTest extends TestsBase {
 
-    @Value("${eidas.client.spEntityId}")
-    private String spMetadata;
+    @Value("${eidas.client.spMetadataUrl}")
+    private String spMetadataUrl;
 
     @Value("${eidas.client.spReturnUrl}")
     private String spReturnUrl;
@@ -35,14 +35,13 @@ public class CommonMetadataIntegrationTest extends TestsBase {
 //    @Ignore
     @Test
     public  void metap1_hasValidSignature() {
-        assertTrue("Signature must be intact", validateSignature(getMedatadaBody()));
+        assertTrue("Signature must be intact", validateSignature(getMetadataBodyXML()));
     }
 
     @Ignore
     @Test
-    public void metap1_certificateIsPresentInSignature() throws CertificateException, IOException {
-        String response = getMedatadaBody();
-        XmlPath xmlPath = new XmlPath(response);
+    public void metap1_certificateIsPresentInSignature() {
+        XmlPath xmlPath = getMetadataBodyXML();
         String signingCertificate = xmlPath.getString("EntityDescriptor.Signature.KeyInfo.X509Data.X509Certificate");
         assertThat("Signing certificate must be present", signingCertificate, startsWith("MII"));
         assertTrue("Signing certificate must be valid", isCertificateValid(signingCertificate));
@@ -50,32 +49,29 @@ public class CommonMetadataIntegrationTest extends TestsBase {
 
     @Ignore
     @Test
-    public void metap2_verifySamlMetadataSchema() {
+    public void metap1_verifySamlMetadataSchema() {
         assertTrue("Metadata must be based on urn:oasis:names:tc:SAML:2.0:metadata schema", validateMetadataSchema());
     }
 
     @Ignore //Not needed, because we have schema check?
     @Test
-    public void metap2_verifySamlMetadataIdentifier() {
-        String response = getMedatadaBody();
+    public void metap1_verifySamlMetadataIdentifier() {
+        String response = getMetadataBody();
         XmlPath xmlPath = new XmlPath(response).using(xmlPathConfig().namespaceAware(false));
         assertEquals("The namespace should be expected", "urn:oasis:names:tc:SAML:2.0:metadata2", xmlPath.getString("EntityDescriptor.@xmlns:md"));
     }
 
     @Ignore
     @Test
-    public void metap3_mandatoryValuesArePresentInEntityDescriptor() {
-        Instant currentTime = Instant.now();
-        String response = getMedatadaBody();
-        XmlPath xmlPath = new XmlPath(response);
-        assertEquals("The entityID must be the same as entpointUrl", spMetadata, xmlPath.getString("EntityDescriptor.@entityID"));
+    public void metap2_mandatoryValuesArePresentInEntityDescriptor() {
+        XmlPath xmlPath = getMetadataBodyXML();
+        assertEquals("The entityID must be the same as entpointUrl", spMetadataUrl, xmlPath.getString("EntityDescriptor.@entityID"));
     }
 
     @Ignore
     @Test
-    public void metap3_mandatoryValuesArePresentInExtensions() {
-        String response = getMedatadaBody();
-        XmlPath xmlPath = new XmlPath(response);
+    public void metap2_mandatoryValuesArePresentInExtensions() {
+        XmlPath xmlPath = getMetadataBodyXML();
         assertEquals("ServiceProvider should be public", "public", xmlPath.getString("EntityDescriptor.Extensions.SPType"));
 
         List<String> digestMethods = xmlPath.getList("EntityDescriptor.Extensions.DigestMethod.@Algorithm");
@@ -90,9 +86,8 @@ public class CommonMetadataIntegrationTest extends TestsBase {
 
     @Ignore
     @Test
-    public void metap3_mandatoryValuesArePresentInSpssoDescriptor() {
-        String response = getMedatadaBody();
-        XmlPath xmlPath = new XmlPath(response);
+    public void metap2_mandatoryValuesArePresentInSpssoDescriptor() {
+        XmlPath xmlPath = getMetadataBodyXML();
         assertEquals("Authentication requests signing must be: true", "true", xmlPath.getString("EntityDescriptor.SPSSODescriptor.@AuthnRequestsSigned"));
         assertEquals("Authentication assertions signing must be: true", "true", xmlPath.getString("EntityDescriptor.SPSSODescriptor.@WantAssertionsSigned"));
         assertEquals("Enumeration must be: SAML 2.0", "urn:oasis:names:tc:SAML:2.0:protocol",
@@ -101,39 +96,36 @@ public class CommonMetadataIntegrationTest extends TestsBase {
 
     @Ignore
     @Test
-    public void metap3_certificatesArePresentInSpssoDescriptorBlock() {
-        String response = getMedatadaBody();
-        XmlPath xmlPath = new XmlPath(response);
+    public void metap2_certificatesArePresentInSpssoDescriptorBlock() {
+        XmlPath xmlPath = getMetadataBodyXML();
         String signingCertificate = xmlPath.getString("**.findAll {it.@use == 'signing'}.KeyInfo.X509Data.X509Certificate");
         String encryptionCertificate = xmlPath.getString("**.findAll {it.@use == 'encryption'}.KeyInfo.X509Data.X509Certificate");
         assertThat("Signing certificate must be present", signingCertificate, startsWith("MII"));
-//        assertTrue("Signing certificate must be valid", isCertificateValid(signingCertificate));
+        assertTrue("Signing certificate must be valid", isCertificateValid(signingCertificate));
         assertThat("Encryption certificate must be present", encryptionCertificate, startsWith("MII"));
-//        assertTrue("Encryption certificate must be valid", isCertificateValid(encryptionCertificate));
+        assertTrue("Encryption certificate must be valid", isCertificateValid(encryptionCertificate));
         assertThat("Signing and encryption certificates must be different", signingCertificate, not(equalTo(encryptionCertificate)));
     }
 
     @Ignore
     @Test
-    public void metap3_nameIdFormatIsCorrectInSpssoDescriptor() {
-        String response = getMedatadaBody();
-        XmlPath xmlPath = new XmlPath(response);
+    public void metap2_nameIdFormatIsCorrectInSpssoDescriptor() {
+        XmlPath xmlPath = getMetadataBodyXML();
         assertEquals("Name ID format should be: unspecified", "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified",
                 xmlPath.getString("EntityDescriptor.SPSSODescriptor.NameIDFormat"));
     }
 
     @Ignore
     @Test
-    public void metap3_mandatoryValuesArePresentInAssertionConsumerService() {
-        String response = getMedatadaBody();
-        XmlPath xmlPath = new XmlPath(response);
+    public void metap2_mandatoryValuesArePresentInAssertionConsumerService() {
+        XmlPath xmlPath = getMetadataBodyXML();
         assertEquals("The binding must be: HTTP-POST", "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST",
                 xmlPath.getString("EntityDescriptor.SPSSODescriptor.AssertionConsumerService.@Binding"));
         assertEquals("The Location should indicate correct return url", spReturnUrl,
                 xmlPath.getString("EntityDescriptor.SPSSODescriptor.AssertionConsumerService.@Location"));
         assertEquals("The index should be: 0", "0",
                 xmlPath.getString("EntityDescriptor.SPSSODescriptor.AssertionConsumerService.@index"));
-        assertEquals("The isDefault shoult be: true", "0",
+        assertEquals("The isDefault shoult be: true", "true",
                 xmlPath.getString("EntityDescriptor.SPSSODescriptor.AssertionConsumerService.@isDefault"));
     }
 }
