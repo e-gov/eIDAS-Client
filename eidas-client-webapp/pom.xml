@@ -20,23 +20,12 @@
     <dependencies>
         <dependency>
             <groupId>ee.ria.eidas</groupId>
-            <artifactId>eidas-client-pac4j-extension</artifactId>
+            <artifactId>eidas-client-opensaml-extension</artifactId>
             <version>${project.version}</version>
         </dependency>
-
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-thymeleaf</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.pac4j</groupId>
-            <artifactId>pac4j-core</artifactId>
-            <version>${pac4j.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.pac4j</groupId>
-            <artifactId>pac4j-saml</artifactId>
-            <version>${pac4j.version}</version>
         </dependency>
         <dependency>
             <groupId>com.github.tomakehurst</groupId>
