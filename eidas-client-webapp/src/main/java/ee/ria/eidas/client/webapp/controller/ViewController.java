@@ -1,6 +1,8 @@
 package ee.ria.eidas.client.webapp.controller;
 
-import ee.ria.eidas.metadata.SpMetadataGenerator;
+import ee.ria.eidas.client.metadata.SPMetadataGenerator;
+import ee.ria.eidas.client.util.OpenSAMLUtils;
+import org.opensaml.saml.saml2.metadata.EntityDescriptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Controller;
@@ -14,11 +16,12 @@ import static org.springframework.web.bind.annotation.RequestMethod.GET;
 public class ViewController {
 
     @Autowired
-    private SpMetadataGenerator metadataGenerator;
+    private SPMetadataGenerator metadataGenerator;
 
     @RequestMapping(value = "/metadata", method = GET, produces = { "application/xml", "text/xml" }, consumes = MediaType.ALL_VALUE)
     public @ResponseBody String view() {
-        return metadataGenerator.getMetadata();
+        EntityDescriptor entityDescriptor = metadataGenerator.getMetadata();
+        return OpenSAMLUtils.getXmlString(entityDescriptor);
     }
 
     @RequestMapping(value = "/start", method = GET)

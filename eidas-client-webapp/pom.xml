@@ -20,7 +20,7 @@
     <dependencies>
         <dependency>
             <groupId>ee.ria.eidas</groupId>
-            <artifactId>eidas-client-pac4j-extension</artifactId>
+            <artifactId>eidas-client-opensaml-extension</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

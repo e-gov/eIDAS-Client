@@ -1,18 +1,17 @@
-package ee.ria.eidas;
+package ee.ria.eidas.client;
 
-import ee.ria.eidas.config.EidasClientProperties;
-import ee.ria.eidas.util.OpenSAMLUtils;
+import ee.ria.eidas.client.config.EidasClientProperties;
+import ee.ria.eidas.client.config.OpenSAMLConfiguration;
+import ee.ria.eidas.client.exception.EidasClientException;
+import ee.ria.eidas.client.util.OpenSAMLUtils;
 import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
 import net.shibboleth.utilities.java.support.resolver.CriteriaSet;
 import net.shibboleth.utilities.java.support.resolver.ResolverException;
 import net.shibboleth.utilities.java.support.xml.XMLParserException;
 import org.opensaml.core.config.InitializationService;
 import org.opensaml.core.criterion.EntityIdCriterion;
-import org.opensaml.core.xml.AbstractXMLObject;
 import org.opensaml.core.xml.XMLObject;
-import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
 import org.opensaml.core.xml.io.UnmarshallingException;
-import org.opensaml.core.xml.schema.impl.XSAnyImpl;
 import org.opensaml.core.xml.util.XMLObjectSupport;
 import org.opensaml.messaging.context.MessageContext;
 import org.opensaml.messaging.handler.MessageHandler;
@@ -39,14 +38,6 @@ import org.opensaml.xmlsec.signature.support.SignatureValidator;
 import org.opensaml.xmlsec.signature.support.impl.ExplicitKeySignatureTrustEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.stereotype.Component;
-import org.xml.sax.SAXException;
-import se.litsec.eidas.opensaml.ext.attributes.impl.DateOfBirthTypeImpl;
-
-import javax.annotation.PostConstruct;
-import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -59,14 +50,13 @@ import java.util.List;
 
 public class AssertionConsumerServlet extends HttpServlet {
 
+    private static Logger LOGGER = LoggerFactory.getLogger(AssertionConsumerServlet.class);
 
     private EidasClientProperties eidasClientProperties;
 
     private ExplicitKeySignatureTrustEngine explicitKeySignatureTrustEngine;
 
     private Credential spAssertionDecryptionCredential;
-
-    private static Logger logger = LoggerFactory.getLogger(AssertionConsumerServlet.class);
 
     public AssertionConsumerServlet(EidasClientProperties eidasClientProperties, ExplicitKeySignatureTrustEngine explicitKeySignatureTrustEngine, Credential spAssertionDecryptionCredential) {
         this.eidasClientProperties = eidasClientProperties;
@@ -78,39 +68,35 @@ public class AssertionConsumerServlet extends HttpServlet {
         try {
             InitializationService.initialize();
         } catch (Exception e) {
-            logger.error("Error: ", e);
+            LOGGER.error("Error: ", e);
         }
     }
 
-    public Response getSamlResponse(String samlResponse) throws IOException, XMLParserException, UnmarshallingException, SAXException {
-        Response response = (Response) XMLObjectSupport.unmarshallFromInputStream(
-                XMLObjectProviderRegistrySupport.getParserPool(), new ByteArrayInputStream(samlResponse.getBytes(StandardCharsets.UTF_8)));
-        return response;
+    public Response getSamlResponse(String samlResponse) throws XMLParserException, UnmarshallingException{
+        return (Response) XMLObjectSupport.unmarshallFromInputStream(
+                OpenSAMLConfiguration.getParserPool(), new ByteArrayInputStream(samlResponse.getBytes(StandardCharsets.UTF_8)));
 
     }
 
-    public void doPost(final HttpServletRequest req, final HttpServletResponse resp) throws ServletException, IOException {
-
-        Response samlResponse = null;
-
+    public void doPost(final HttpServletRequest req, final HttpServletResponse resp) {
+        Response samlResponse;
         try {
-            String _samlResponse = req.getParameter("SAMLResponse");
-            byte[] decode = Base64.getDecoder().decode(_samlResponse);
-            String decodedSAMLstr = new String(decode, StandardCharsets.UTF_8);
+            String encodedSamlResponse = req.getParameter("SAMLResponse");
+            byte[] decodedSamlResponse = Base64.getDecoder().decode(encodedSamlResponse);
+            String decodedSAMLstr = new String(decodedSamlResponse, StandardCharsets.UTF_8);
             samlResponse = getSamlResponse(decodedSAMLstr);
-            OpenSAMLUtils.logSAMLObject(samlResponse);
+            LOGGER.info(OpenSAMLUtils.getXmlString(samlResponse));
         } catch (Exception e) {
-            logger.error("Failed to read SAMLResponse. " + e.getMessage(), e);
+            throw new EidasClientException("Failed to read SAMLResponse. " + e.getMessage(), e);
         }
-
 
         validateDestinationAndLifetime(samlResponse, req);
 
         EncryptedAssertion encryptedAssertion = getEncryptedAssertion(samlResponse);
         Assertion assertion = decryptAssertion(encryptedAssertion);
         verifyAssertionSignature(assertion);
-        logger.info("Decrypted Assertion: ");
-        OpenSAMLUtils.logSAMLObject(assertion);
+        LOGGER.info("Decrypted Assertion: ");
+        LOGGER.info(OpenSAMLUtils.getXmlString(assertion));
 
         logAssertionAttributes(assertion);
         logAuthenticationInstant(assertion);
@@ -166,11 +152,9 @@ public class AssertionConsumerServlet extends HttpServlet {
     }
 
     private void verifyAssertionSignature(Assertion assertion) {
-
         if (!assertion.isSigned()) {
             throw new RuntimeException("The SAML Assertion was not signed");
         }
-
         try {
             SAMLSignatureProfileValidator profileValidator = new SAMLSignatureProfileValidator();
             profileValidator.validate(assertion.getSignature());
@@ -183,7 +167,7 @@ public class AssertionConsumerServlet extends HttpServlet {
             Credential credential = explicitKeySignatureTrustEngine.getCredentialResolver().resolveSingle(criteriaSet);
             SignatureValidator.validate(assertion.getSignature(), credential);
 
-            logger.info("SAML Assertion signature verified");
+            LOGGER.info("SAML Assertion signature verified");
         } catch (SignatureException|ResolverException e) {
             throw new IllegalStateException("Signature verification failed!", e);
         }
@@ -195,8 +179,8 @@ public class AssertionConsumerServlet extends HttpServlet {
     }
 
     private void redirectToGotoURL(HttpServletRequest req, HttpServletResponse resp) {
-        String gotoURL = (String)req.getSession().getAttribute(EidasClientProperties.SESSION_ATTRIBUTE_ORIGINALLY_REQUESTED_URL);
-        logger.info("Redirecting to requested URL: " + gotoURL);
+        String gotoURL = (String) req.getSession().getAttribute(EidasClientProperties.SESSION_ATTRIBUTE_ORIGINALLY_REQUESTED_URL);
+        LOGGER.info("Redirecting to requested URL: " + gotoURL);
         try {
             resp.sendRedirect(gotoURL);
         } catch (IOException e) {
@@ -205,19 +189,19 @@ public class AssertionConsumerServlet extends HttpServlet {
     }
 
     private void logAuthenticationMethod(Assertion assertion) {
-        logger.info("Authentication method: " + assertion.getAuthnStatements().get(0)
+        LOGGER.info("Authentication method: " + assertion.getAuthnStatements().get(0)
                 .getAuthnContext().getAuthnContextClassRef().getAuthnContextClassRef());
     }
 
     private void logAuthenticationInstant(Assertion assertion) {
-        logger.info("Authentication instant: " + assertion.getAuthnStatements().get(0).getAuthnInstant());
+        LOGGER.info("Authentication instant: " + assertion.getAuthnStatements().get(0).getAuthnInstant());
     }
 
     private void logAssertionAttributes(Assertion assertion) {
         for (Attribute attribute : assertion.getAttributeStatements().get(0).getAttributes()) {
-            logger.info("Attribute name: " + attribute.getName());
+            LOGGER.info("Attribute name: " + attribute.getName());
             for (XMLObject attributeValue : attribute.getAttributeValues()) {
-                logger.info("Attribute value: " + ((AbstractXMLObject) attributeValue).toString());
+                LOGGER.info("Attribute value: " + attributeValue.toString());
             }
         }
     }

@@ -1,5 +1,6 @@
-package ee.ria.eidas.config;
+package ee.ria.eidas.client.config;
 
+import ee.ria.eidas.client.exception.EidasClientException;
 import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
 import net.shibboleth.utilities.java.support.xml.BasicParserPool;
 import net.shibboleth.utilities.java.support.xml.ParserPool;
@@ -9,24 +10,26 @@ import org.opensaml.core.config.InitializationService;
 import org.opensaml.core.xml.XMLObjectBuilderFactory;
 import org.opensaml.core.xml.config.XMLObjectProviderRegistry;
 import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
-import org.opensaml.core.xml.io.MarshallerFactory;
-import org.opensaml.core.xml.io.UnmarshallerFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
 
-public final class OpenSamlConfiguration {
-    protected static final Logger logger = LoggerFactory.getLogger(OpenSamlConfiguration.class);
+public class OpenSAMLConfiguration {
+    protected static final Logger LOGGER = LoggerFactory.getLogger(OpenSAMLConfiguration.class);
 
     private static BasicParserPool parserPool;
 
-    private OpenSamlConfiguration() {}
+    private OpenSAMLConfiguration() {}
 
     static {
-        logger.info("Bootstrapping OpenSAML configuration");
+        LOGGER.info("Bootstrapping OpenSAML configuration");
         bootstrap();
+    }
+
+    public static ParserPool getParserPool () {
+        return parserPool;
     }
 
     private static void bootstrap() {
@@ -39,10 +42,10 @@ public final class OpenSamlConfiguration {
         parserPool.setXincludeAware(false);
         parserPool.setIgnoreElementContentWhitespace(true);
 
-        final Map<String, Object> builderAttributes = new HashMap<>();
+        Map<String, Object> builderAttributes = new HashMap<>();
         parserPool.setBuilderAttributes(builderAttributes);
 
-        final Map<String, Boolean> features = new HashMap<>();
+        Map<String, Boolean> features = new HashMap<>();
         features.put("http://apache.org/xml/features/disallow-doctype-decl", Boolean.TRUE);
         features.put("http://apache.org/xml/features/validation/schema/normalized-value", Boolean.FALSE);
         features.put("http://javax.xml.XMLConstants/feature/secure-processing", Boolean.TRUE);
@@ -54,14 +57,12 @@ public final class OpenSamlConfiguration {
         try {
             parserPool.initialize();
         } catch (final ComponentInitializationException e) {
-            throw new RuntimeException("Exception initializing parserPool", e);
+            throw new EidasClientException("Errir initializing parserPool", e);
         }
-
-
         try {
             InitializationService.initialize();
         } catch (final InitializationException e) {
-            throw new RuntimeException("Exception initializing OpenSAML", e);
+            throw new EidasClientException("Error initializing OpenSAML", e);
         }
 
         XMLObjectProviderRegistry registry;
@@ -72,23 +73,7 @@ public final class OpenSamlConfiguration {
                 ConfigurationService.register(XMLObjectProviderRegistry.class, registry);
             }
         }
-
         registry.setParserPool(parserPool);
     }
 
-    public static ParserPool getParserPool () {
-        return parserPool;
-    }
-
-    public static XMLObjectBuilderFactory getBuilderFactory() {
-        return XMLObjectProviderRegistrySupport.getBuilderFactory();
-    }
-
-    public static MarshallerFactory getMarshallerFactory() {
-        return XMLObjectProviderRegistrySupport.getMarshallerFactory();
-    }
-
-    public static UnmarshallerFactory getUnmarshallerFactory() {
-        return XMLObjectProviderRegistrySupport.getUnmarshallerFactory();
-    }
 }

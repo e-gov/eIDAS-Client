@@ -1,6 +1,8 @@
-package ee.ria.eidas.config;
+package ee.ria.eidas.client.config;
 
 import javax.validation.constraints.NotNull;
+
+import ee.ria.eidas.client.authnrequest.SPType;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
@@ -53,11 +55,13 @@ public class EidasClientProperties {
     @NotNull
     private String spEntityId;
 
-    private String loginUrl = "/start";
-    private String samlAssertionConsumerUrl = "/returnUrl";
+    private SPType spType = SPType.PUBLIC;
 
     @NotNull
     private String providerName;
+
+    private String loginUrl = "/start";
+    private String samlAssertionConsumerUrl = "/returnUrl";
 
     public String getMetadataSigningKeyId() {
         return metadataSigningKeyId;
@@ -193,5 +197,13 @@ public class EidasClientProperties {
 
     public void setProviderName(String providerName) {
         this.providerName = providerName;
+    }
+
+    public SPType getSpType() {
+        return spType;
+    }
+
+    public void setSpType(SPType spType) {
+        this.spType = spType;
     }
 }
