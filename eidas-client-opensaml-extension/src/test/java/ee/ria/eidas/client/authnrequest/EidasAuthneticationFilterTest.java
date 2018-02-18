@@ -2,10 +2,13 @@ package ee.ria.eidas.client.authnrequest;
 
 import ee.ria.eidas.client.config.EidasClientConfiguration;
 import ee.ria.eidas.client.config.EidasClientProperties;
+import ee.ria.eidas.client.metadata.IDPMetadataResolver;
 import net.shibboleth.utilities.java.support.codec.HTMLEncoder;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.opensaml.saml.common.xml.SAMLConstants;
+import org.opensaml.saml.saml2.metadata.SingleSignOnService;
 import org.opensaml.security.credential.Credential;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -30,11 +33,14 @@ public class EidasAuthneticationFilterTest {
     @Autowired
     private Credential authnReqSigningCredential;
 
+    @Autowired
+    private SingleSignOnService singleSignOnService;
+
     private EidasAuthenticationFilter authenticationFilter;
 
     @Before
     public void setUp() {
-        authenticationFilter = new EidasAuthenticationFilter(authnReqSigningCredential, properties);
+        authenticationFilter = new EidasAuthenticationFilter(authnReqSigningCredential, properties, singleSignOnService);
     }
 
     @Test
@@ -46,7 +52,7 @@ public class EidasAuthneticationFilterTest {
         authenticationFilter.doFilter(httpRequest, httpResponse, filterChain);
 
         assertEquals(HttpStatus.OK.value(), httpResponse.getStatus());
-        String htmlForm = "<form action=\"" + HTMLEncoder.encodeForHTMLAttribute(properties.getIdpSSOUrl()) + "\" method=\"post\">";
+        String htmlForm = "<form action=\"" + HTMLEncoder.encodeForHTMLAttribute(singleSignOnService.getLocation()) + "\" method=\"post\">";
         assertTrue(httpResponse.getContentAsString().contains(htmlForm));
         assertTrue(httpResponse.getContentAsString().contains("<input type=\"hidden\" name=\"SAMLRequest\""));
         assertTrue(httpResponse.getContentAsString().contains("<input type=\"hidden\" name=\"country\" value=\"CA\"/>"));

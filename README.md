@@ -113,7 +113,7 @@ Toimimiseks vajab eIDAS klient eIDAS konnektorteenust ning genereeritud võtmeid
 | `Konfiguratsioon` | Teenuse juhtimine ja seadistus toimib läbi keskse konfiguratsioonifaili. |
 Tabel 2.
 
-## Paigaldusnõuded
+## Paigaldus
 -------------------
 
 ### Ehitamine ja käivitamine
@@ -128,6 +128,40 @@ Rakenduse käivitamiseks vajalikud tegevused (eeldab Java 1.8+):
 `java -jar eidas-client-webapp/target/eidas-client-webapp-1.0-SNAPSHOT.war`
 
 NB! Alternatiivina näidiskliendi `eidas-client-webapp-1.0-SNAPSHOT.war` faili paigaldada ka traditisiooonilisse Java Servlet tuge pakkuvasse veebiserverisse.
+
+### Konfiguratsiooniparameetrid
+
+
+Tabel 3.1 - Teenusepakkuja metateabe seadistus
+
+| Parameeter        | Kohustuslik | Kirjeldus, näide |
+| :---------------- | :---------- | :----------------|
+| `eidas.client.keystore` | Jah | Võtmehoidla asukoht. Peab olema JKS tüüpi. classpath:samlKeystore.jks |
+| `eidas.client.keystorePass` | Jah | Võtmehoidla parool. |
+| `eidas.client.metadataSigningKeyId` | Jah | SAML metateabe allkirjastamisvõtme ID. |
+| `eidas.client.metadataSigningKeyPass` | Jah | SAML metateabe allkirjastamisvõtme parool. |
+| `eidas.client.requestSigningKeyId` | Jah | SAML autentimispäringu allkirjastamisvõtme ID. |
+| `eidas.client.requestSigningKeyPass` | Jah | SAML autentimispäringu allkirjastamisvõtme parool. |
+| `eidas.client.responseDecryptionKeyId` | Jah | SAML autentimisvastuse dekrüpteerimisvõtme ID. |
+| `eidas.client.responseDecryptionKeyPass` | Jah | SAML autentimisvastuse dekrüpteerimisvõtme parool. |
+| `eidas.client.spEntityId` | Jah | `/md:EntityDescriptor/@Issuer` väärtus metateabes. Näiteks: https://hostname:8889/metadata |
+| `eidas.client.callbackUrl` | Jah | `/md:EntityDescriptor/md:SPSSODescriptor/md:AssertionConsumerService/@Location` väärtus metateabes. |
+
+
+Tabel 3.2 - Konnektorteenuse metateabe seadistus
+
+| Parameeter        | Kohustuslik | Kirjeldus, näide |
+| :---------------- | :---------- | :----------------|
+| `eidas.client.idpMetadataUrl`  | Jah | Konnektorteenuse metateabe asukoht. https://eidastest.eesti.ee/EidasNode/ConnectorResponderMetadata |
+| `eidas.client.idpMetadataSigningCertificateKeyId` | Ei | Konnektorteeenuse metateabe allkirjastamiseks kasutatud sertifikaadi alias võtmehoidlas. Vaikimisi alias: `metadata`. |
+
+Tabel 3.3 - AuthnRequesti seadistus
+
+| Parameeter        | Kohustuslik | Kirjeldus, näide |
+| :---------------- | :---------- | :----------------|
+| `eidas.client.providerName` | Jah | `/saml2p:AuthnRequest/@ProviderName` väärtus. |
+
+
 
 
 // Täpsustamist vajavad seadistamise detailid (sh konnektorteenuse registreerimine, võtmete import, krüptoalgoritmide, otspunktide, https-i eripärade ja logimise seadistus). -- Programmeerimisega paralleelselt. //
@@ -146,20 +180,25 @@ Algatab autentimisprotsessi või kui vajalikud parameetrid puuduvad, kuvab kasut
 | ------------- |:-------------:| :-----|
 | `Country` |	Ei | Parameeter, mis määrab ära tuvastatava kodaniku riigi. Väärtus peab olema vastama [ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2) standardis toodule. <br>Kui määramata, kuvatakse HTML vorm riigivalikuga. |
 | `LoA` |	Ei | Parameeter, mis määrab ära nõutava isikutuvastuse taseme. Lubatud väärtused: `low`, `substantial`, `high`. <br>Kui parameeter on määramata, siis vaikimisi loetakse väärtuseks `low`. |
+| `RelayState` |	Ei | Parameeter, mis saadetakse edasi konnektorteenusele muutmata kujul. |
 Tabel 3.
 
 ### /returnUrl
 
-Võtab vastu ja töötleb eIDAS konnektorteenusest tuleva vastuse. Kuvab tulemuse inimloetaval või masinloetaval kujul (vt parameeter `RelayState`). Lubatud parameetrite loetelu toodud tabelis 4.
+Lubatud parameetrite loetelu toodud tabelis 4.1. URLile pöördudes valideeritakse parameetrid (sh SAML vastus) ja kuvatakse tulemus json objektina (vt Tabel 4.2)
 
 | Parameetri nimi        | Kohustuslik           | Selgitus  |
 | ------------- |:-------------:| :-----|
 | `SAMLResponse` | Jah | Parameeter, milles tagastatakse Base64-kodeeritud SAML `Response` päring. Vastus peab olema allkirjastatud ja isiku kohta käivad väited krüpteeritud (eIDAS Node privaatvõtmega). |
-| `RelayState` | Ei | Parameetri alusel otsustatakse, millisel kujul kasutajale vastus kuvada. <ul><li>Kui parameeter `RelayState` eksisteerib ja selle väärtus on `showHtmlReport`, kuvatakse autentimise tulemus inimloetaval kujul html vormina. </li><li>Muul juhul, kui parameetrit ei täpsustata, saadetakse otspunkti poole pöördujale vastus masinloetaval kujul (JSON).</li></ul> |
-Tabel 4.
+| `RelayState` | Ei | Päringuga saadetud `RelayState` parameetri väärtus. |
+Tabel 4.1
+
+
+Tabel 4.2 // Vajab täpsustamist
 
 
 
 ### /metadata
 
 Publitseerib eIDAS klient teenuse metaandmed. Parameetrid puuduvad.
+

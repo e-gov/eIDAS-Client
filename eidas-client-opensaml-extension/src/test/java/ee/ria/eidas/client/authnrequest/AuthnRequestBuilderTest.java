@@ -2,6 +2,7 @@ package ee.ria.eidas.client.authnrequest;
 
 import ee.ria.eidas.client.config.EidasClientConfiguration;
 import ee.ria.eidas.client.config.EidasClientProperties;
+import ee.ria.eidas.client.metadata.IDPMetadataResolver;
 import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Before;
@@ -10,6 +11,7 @@ import org.junit.runner.RunWith;
 import org.opensaml.core.xml.XMLObject;
 import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.saml2.core.*;
+import org.opensaml.saml.saml2.metadata.SingleSignOnService;
 import org.opensaml.security.credential.Credential;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
@@ -33,11 +35,14 @@ public class AuthnRequestBuilderTest {
     @Autowired
     private Credential authnReqSigningCredential;
 
+    @Autowired
+    private SingleSignOnService singleSignOnService;
+
     private AuthnRequestBuilder requestBuilder;
 
     @Before
     public void setUp() {
-        requestBuilder = new AuthnRequestBuilder(authnReqSigningCredential, properties);
+        requestBuilder = new AuthnRequestBuilder(authnReqSigningCredential, properties, singleSignOnService);
     }
 
     @Test
@@ -50,7 +55,7 @@ public class AuthnRequestBuilderTest {
         assertTrue(authnRequest.isForceAuthn());
         assertTrue(authnRequest.getIssueInstant().isBefore(new DateTime()));
         assertEquals(properties.getProviderName(), authnRequest.getProviderName());
-        assertEquals(properties.getIdpSSOUrl(), authnRequest.getDestination());
+        assertEquals(singleSignOnService.getLocation(), authnRequest.getDestination());
         assertEquals(SAMLConstants.SAML2_POST_BINDING_URI, authnRequest.getProtocolBinding());
         assertEquals(properties.getCallbackUrl(), authnRequest.getAssertionConsumerServiceURL());
         assertEquals(properties.getSpEntityId(), authnRequest.getIssuer().getValue());

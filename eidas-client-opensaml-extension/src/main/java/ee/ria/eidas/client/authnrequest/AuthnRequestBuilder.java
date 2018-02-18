@@ -9,6 +9,7 @@ import org.opensaml.core.xml.schema.XSAny;
 import org.opensaml.core.xml.schema.impl.XSAnyBuilder;
 import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.saml2.core.*;
+import org.opensaml.saml.saml2.metadata.SingleSignOnService;
 import org.opensaml.security.credential.Credential;
 import org.opensaml.xmlsec.keyinfo.impl.X509KeyInfoGeneratorFactory;
 import org.opensaml.xmlsec.signature.KeyInfo;
@@ -28,9 +29,12 @@ public class AuthnRequestBuilder {
 
     private EidasClientProperties eidasClientProperties;
 
-    public AuthnRequestBuilder(Credential authnReqSigningCredential, EidasClientProperties eidasClientProperties) {
+    private SingleSignOnService singleSignOnService;
+
+    public AuthnRequestBuilder(Credential authnReqSigningCredential, EidasClientProperties eidasClientProperties, SingleSignOnService singleSignOnService) {
         this.authnReqSigningCredential = authnReqSigningCredential;
         this.eidasClientProperties = eidasClientProperties;
+        this.singleSignOnService = singleSignOnService;
     }
 
     public AuthnRequest buildAuthnRequest() {
@@ -51,7 +55,7 @@ public class AuthnRequestBuilder {
             authnRequest.setIssueInstant(new DateTime());
             authnRequest.setForceAuthn(true);
             authnRequest.setProviderName(eidasClientProperties.getProviderName());
-            authnRequest.setDestination(eidasClientProperties.getIdpSSOUrl());
+            authnRequest.setDestination(singleSignOnService.getLocation());
             authnRequest.setProtocolBinding(SAMLConstants.SAML2_POST_BINDING_URI);
             authnRequest.setAssertionConsumerServiceURL(eidasClientProperties.getCallbackUrl());
             authnRequest.setID(OpenSAMLUtils.generateSecureRandomId());

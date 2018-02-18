@@ -2,6 +2,7 @@ package ee.ria.eidas.client.authnrequest;
 
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.exception.EidasClientException;
+import ee.ria.eidas.client.metadata.IDPMetadataResolver;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
 import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
 import org.opensaml.core.config.InitializationException;
@@ -12,7 +13,6 @@ import org.opensaml.saml.common.messaging.context.SAMLEndpointContext;
 import org.opensaml.saml.common.messaging.context.SAMLPeerEntityContext;
 import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.saml2.core.*;
-import org.opensaml.saml.saml2.metadata.Endpoint;
 import org.opensaml.saml.saml2.metadata.SingleSignOnService;
 import org.opensaml.security.credential.Credential;
 import org.opensaml.xmlsec.SignatureSigningParameters;
@@ -37,9 +37,12 @@ public class EidasAuthenticationFilter implements Filter {
 
     private EidasClientProperties eidasClientProperties;
 
-    public EidasAuthenticationFilter(Credential authnReqSigningCredential, EidasClientProperties eidasClientProperties) {
+    private SingleSignOnService singleSignOnService;
+
+    public EidasAuthenticationFilter(Credential authnReqSigningCredential, EidasClientProperties eidasClientProperties, SingleSignOnService singleSignOnService) {
         this.authnReqSigningCredential = authnReqSigningCredential;
         this.eidasClientProperties = eidasClientProperties;
+        this.singleSignOnService = singleSignOnService;
     }
 
     @Override
@@ -86,7 +89,7 @@ public class EidasAuthenticationFilter implements Filter {
     }
 
     private void redirectUserForAuthentication(HttpServletResponse httpServletResponse) {
-        AuthnRequestBuilder authnRequestBuilder = new AuthnRequestBuilder(authnReqSigningCredential, eidasClientProperties);
+        AuthnRequestBuilder authnRequestBuilder = new AuthnRequestBuilder(authnReqSigningCredential, eidasClientProperties, singleSignOnService);
         AuthnRequest authnRequest = authnRequestBuilder.buildAuthnRequest() ;
         redirectUserWithRequest(httpServletResponse, authnRequest);
     }
@@ -99,7 +102,7 @@ public class EidasAuthenticationFilter implements Filter {
         SAMLPeerEntityContext peerEntityContext = context.getSubcontext(SAMLPeerEntityContext.class, true);
 
         SAMLEndpointContext endpointContext = peerEntityContext.getSubcontext(SAMLEndpointContext.class, true);
-        endpointContext.setEndpoint(getIPDEndpoint());
+        endpointContext.setEndpoint(singleSignOnService);
 
         SignatureSigningParameters signatureSigningParameters = new SignatureSigningParameters();
         signatureSigningParameters.setSigningCredential(authnReqSigningCredential);
@@ -130,12 +133,5 @@ public class EidasAuthenticationFilter implements Filter {
         } catch (MessageEncodingException e) {
             throw new EidasClientException("Error encoding HTTP POST Binding response", e);
         }
-    }
-
-    private Endpoint getIPDEndpoint() {
-        SingleSignOnService endpoint = OpenSAMLUtils.buildSAMLObject(SingleSignOnService.class);
-        endpoint.setBinding(SAMLConstants.SAML2_POST_BINDING_URI);
-        endpoint.setLocation(eidasClientProperties.getIdpSSOUrl());
-        return endpoint;
     }
 }

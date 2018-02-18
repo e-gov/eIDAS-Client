@@ -8,10 +8,17 @@ import net.shibboleth.utilities.java.support.resolver.CriteriaSet;
 import net.shibboleth.utilities.java.support.resolver.Criterion;
 import net.shibboleth.utilities.java.support.resolver.ResolverException;
 import org.opensaml.core.criterion.EntityIdCriterion;
+import org.opensaml.saml.common.xml.SAMLConstants;
+import org.opensaml.saml.metadata.resolver.MetadataResolver;
 import org.opensaml.saml.metadata.resolver.impl.PredicateRoleDescriptorResolver;
+import org.opensaml.saml.saml2.metadata.EntityDescriptor;
+import org.opensaml.saml.saml2.metadata.SingleSignOnService;
 import org.opensaml.saml.security.impl.MetadataCredentialResolver;
 import org.opensaml.security.credential.Credential;
+import org.opensaml.security.credential.CredentialSupport;
 import org.opensaml.security.credential.impl.KeyStoreCredentialResolver;
+import org.opensaml.security.credential.impl.StaticCredentialResolver;
+import org.opensaml.security.x509.X509Credential;
 import org.opensaml.xmlsec.config.DefaultSecurityConfigurationBootstrap;
 import org.opensaml.xmlsec.keyinfo.KeyInfoCredentialResolver;
 import org.opensaml.xmlsec.signature.support.impl.ExplicitKeySignatureTrustEngine;
@@ -25,6 +32,7 @@ import org.springframework.core.io.ResourceLoader;
 
 import java.io.IOException;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -46,8 +54,8 @@ public class EidasClientConfiguration {
     }
 
     @Bean
-    public IDPMetadataResolver idpMetadataResolver() throws IOException {
-        return new IDPMetadataResolver(resourceLoader.getResource(eidasClientProperties.getIdpMetadataUrl()).getInputStream());
+    public IDPMetadataResolver idpMetadataResolver(@Qualifier("metadataSignatureTrustEngine") ExplicitKeySignatureTrustEngine metadataSignatureTrustEngine) throws IOException {
+        return new IDPMetadataResolver(resourceLoader.getResource(eidasClientProperties.getIdpMetadataUrl()).getInputStream(), metadataSignatureTrustEngine);
     }
 
     @Bean
@@ -58,6 +66,13 @@ public class EidasClientConfiguration {
                 eidasClientProperties.getMetadataSigningKeyPass());
     }
 
+    @Bean
+    public Credential idpMetadataSigningCredential(KeyStore keyStore) {
+        return getCredential(
+                keyStore,
+                eidasClientProperties.getMetadataSigningKeyId(),
+                eidasClientProperties.getMetadataSigningKeyPass());
+    }
 
     @Bean
     public Credential authnReqSigningCredential(KeyStore keyStore) {
@@ -88,7 +103,40 @@ public class EidasClientConfiguration {
     }
 
     @Bean
-    public ExplicitKeySignatureTrustEngine explicitKeySignatureTrustEngine(IDPMetadataResolver IDPMetadataResolver) {
+    public SingleSignOnService singleSignOnService(IDPMetadataResolver idpMetadataResolver) {
+        try {
+            MetadataResolver metadataResolver = idpMetadataResolver.resolve();
+            CriteriaSet criteriaSet = new CriteriaSet(new EntityIdCriterion(idpMetadataResolver.getEntityId()));
+            EntityDescriptor entityDescriptor = metadataResolver.resolveSingle(criteriaSet);
+            for ( SingleSignOnService ssoService : entityDescriptor.getIDPSSODescriptor(SAMLConstants.SAML20P_NS).getSingleSignOnServices() ) {
+                if ( ssoService.getBinding().equals(SAMLConstants.SAML2_POST_BINDING_URI) ) {
+                    return ssoService;
+                }
+            }
+        } catch (final ResolverException e) {
+            throw new IllegalStateException("Error initializing idp metadata", e);
+        }
+
+        throw new EidasClientException("Could not find a valid SAML2 POST BINDING from IDP metadata!");
+    }
+
+    @Bean
+    public ExplicitKeySignatureTrustEngine metadataSignatureTrustEngine(KeyStore keyStore){
+        try {
+            java.security.cert.X509Certificate cert = (java.security.cert.X509Certificate) keyStore.getCertificate(eidasClientProperties.getIdpMetadataSigningCertificateKeyId());
+            if (cert == null)
+                throw new IllegalStateException("It seems you are missing a certificate with alias '" + eidasClientProperties.getIdpMetadataSigningCertificateKeyId() + "' in your " + eidasClientProperties.getKeystore() + " keystore. We need it in order to verify IDP metadata's signature.");
+
+            X509Credential switchCred = CredentialSupport.getSimpleCredential(cert, null);
+            StaticCredentialResolver switchCredResolver = new StaticCredentialResolver(switchCred);
+            return new ExplicitKeySignatureTrustEngine(switchCredResolver, DefaultSecurityConfigurationBootstrap.buildBasicInlineKeyInfoCredentialResolver());
+        } catch (KeyStoreException e) {
+            throw new EidasClientException("Error initializing. Cannot get IDP metadata trusted certificate" ,e);
+        }
+    }
+
+    @Bean
+    public ExplicitKeySignatureTrustEngine idpMetadataSignatureTrustEngine(IDPMetadataResolver IDPMetadataResolver) {
         MetadataCredentialResolver metadataCredentialResolver = new MetadataCredentialResolver();
         PredicateRoleDescriptorResolver roleResolver = new PredicateRoleDescriptorResolver(IDPMetadataResolver.resolve());
 

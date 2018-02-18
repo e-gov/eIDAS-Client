@@ -14,6 +14,7 @@ public class EidasClientProperties {
     private static final String DEFAULT_NAMEID_POLICY_FORMAT = "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified";
     public static final String SESSION_ATTRIBUTE_USER_AUTHENTICATED = "authenticated";
     public static final String SESSION_ATTRIBUTE_ORIGINALLY_REQUESTED_URL = "originally_requested_url";
+    public static final String DEFAULT_IDP_METADATA_SIGN_CERT_KEY = "metadata";
 
     @NotNull
     private String keystore;
@@ -40,9 +41,6 @@ public class EidasClientProperties {
     private String responseDecryptionKeyPass;
 
     @NotNull
-    private String idpSSOUrl;
-
-    @NotNull
     private String callbackUrl;
 
     @NotNull
@@ -62,6 +60,7 @@ public class EidasClientProperties {
 
     private String loginUrl = "/start";
     private String samlAssertionConsumerUrl = "/returnUrl";
+    private String idpMetadataSigningCertificateKeyId = DEFAULT_IDP_METADATA_SIGN_CERT_KEY;
 
     public String getMetadataSigningKeyId() {
         return metadataSigningKeyId;
@@ -109,14 +108,6 @@ public class EidasClientProperties {
 
     public void setResponseDecryptionKeyPass(String responseDecryptionKeyPass) {
         this.responseDecryptionKeyPass = responseDecryptionKeyPass;
-    }
-
-    public String getIdpSSOUrl() {
-        return idpSSOUrl;
-    }
-
-    public void setIdpSSOUrl(String idpSSOUrl) {
-        this.idpSSOUrl = idpSSOUrl;
     }
 
     public String getCallbackUrl() {
@@ -205,5 +196,13 @@ public class EidasClientProperties {
 
     public void setSpType(SPType spType) {
         this.spType = spType;
+    }
+
+    public String getIdpMetadataSigningCertificateKeyId() {
+        return idpMetadataSigningCertificateKeyId;
+    }
+
+    public void setIdpMetadataSigningCertificateKeyId(String idpMetadataSigningCertificateKeyId) {
+        this.idpMetadataSigningCertificateKeyId = idpMetadataSigningCertificateKeyId;
     }
 }
