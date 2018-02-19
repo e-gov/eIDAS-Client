@@ -1,10 +1,9 @@
 package ee.ria.eidas.client.metadata;
 
 import ee.ria.eidas.client.config.EidasClientConfiguration;
-import ee.ria.eidas.client.config.EidasClientProperties;
+import ee.ria.eidas.client.exception.EidasClientException;
 import net.shibboleth.utilities.java.support.resolver.CriteriaSet;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -41,17 +40,35 @@ public class IDPMetadataResolverTest {
     }
 
     @Test
+    public void resolveNonexistingMetadata() throws Exception {
+        expectedEx.expect(EidasClientException.class);
+        expectedEx.expectMessage("Idp metadata was not found. Please check your configuration.");
+
+        assertResolveFails(null);
+    }
+
+    @Test
     public void resolveIdpMetadataWithInvalidSignature() {
         expectedEx.expect(RuntimeException.class);
         expectedEx.expectMessage("No valid EntityDescriptors found!");
 
-        InputStream metadataInputStream = getClass().getResourceAsStream("/idp-metadata-invalid_signature.xml");
-        IDPMetadataResolver idpMetadataResolver = new IDPMetadataResolver(metadataInputStream, metadataSignatureTrustEngine);
-        idpMetadataResolver.resolve();
+        assertResolveFails(getClass().getResourceAsStream("/idp-metadata-invalid_signature.xml"));
+    }
+
+    @Test
+    public void resolveIdpMetadataHasExpired() {
+        expectedEx.expect(RuntimeException.class);
+        expectedEx.expectMessage("No valid EntityDescriptors found!");
+
+        assertResolveFails(getClass().getResourceAsStream("/idp-metadata-expired.xml"));
+    }
+
+    private void assertResolveFails(InputStream input) {
+        IDPMetadataResolver idpMetadataResolver = new IDPMetadataResolver(input, metadataSignatureTrustEngine);
+        MetadataResolver metadataResolver = idpMetadataResolver.resolve();
         Assert.fail("Test should not reach this!");
     }
 
-    // TODO expired metadata
     // TODO expired certificate
 }
 
