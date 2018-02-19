@@ -32,13 +32,12 @@ public class CommonMetadataIntegrationTest extends TestsBase {
     @Value("${eidas.client.spReturnUrl}")
     private String spReturnUrl;
 
-//    @Ignore
+
     @Test
     public  void metap1_hasValidSignature() {
         assertTrue("Signature must be intact", validateSignature(getMetadataBodyXML()));
     }
 
-    @Ignore
     @Test
     public void metap1_certificateIsPresentInSignature() {
         XmlPath xmlPath = getMetadataBodyXML();
@@ -47,7 +46,7 @@ public class CommonMetadataIntegrationTest extends TestsBase {
         assertTrue("Signing certificate must be valid", isCertificateValid(signingCertificate));
     }
 
-    @Ignore
+
     @Test
     public void metap1_verifySamlMetadataSchema() {
         assertTrue("Metadata must be based on urn:oasis:names:tc:SAML:2.0:metadata schema", validateMetadataSchema());
@@ -61,11 +60,10 @@ public class CommonMetadataIntegrationTest extends TestsBase {
         assertEquals("The namespace should be expected", "urn:oasis:names:tc:SAML:2.0:metadata2", xmlPath.getString("EntityDescriptor.@xmlns:md"));
     }
 
-    @Ignore
     @Test
     public void metap2_mandatoryValuesArePresentInEntityDescriptor() {
         XmlPath xmlPath = getMetadataBodyXML();
-        assertEquals("The entityID must be the same as entpointUrl", spMetadataUrl, xmlPath.getString("EntityDescriptor.@entityID"));
+        assertThat("The entityID must be the same as entpointUrl", xmlPath.getString("EntityDescriptor.@entityID"), endsWith(spMetadataUrl));
     }
 
     @Ignore
@@ -84,7 +82,6 @@ public class CommonMetadataIntegrationTest extends TestsBase {
                         hasItem("http://www.w3.org/2007/05/xmldsig-more#sha512-rsa-MGF1"), hasItem("http://www.w3.org/2007/05/xmldsig-more#sha256-rsa-MGF1")));
     }
 
-    @Ignore
     @Test
     public void metap2_mandatoryValuesArePresentInSpssoDescriptor() {
         XmlPath xmlPath = getMetadataBodyXML();
@@ -121,8 +118,8 @@ public class CommonMetadataIntegrationTest extends TestsBase {
         XmlPath xmlPath = getMetadataBodyXML();
         assertEquals("The binding must be: HTTP-POST", "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST",
                 xmlPath.getString("EntityDescriptor.SPSSODescriptor.AssertionConsumerService.@Binding"));
-        assertEquals("The Location should indicate correct return url", spReturnUrl,
-                xmlPath.getString("EntityDescriptor.SPSSODescriptor.AssertionConsumerService.@Location"));
+        assertThat("The Location should indicate correct return url",
+                xmlPath.getString("EntityDescriptor.SPSSODescriptor.AssertionConsumerService.@Location"), endsWith( spReturnUrl));
         assertEquals("The index should be: 0", "0",
                 xmlPath.getString("EntityDescriptor.SPSSODescriptor.AssertionConsumerService.@index"));
         assertEquals("The isDefault shoult be: true", "true",

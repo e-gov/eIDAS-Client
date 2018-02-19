@@ -35,6 +35,7 @@ public class MetadataIntegrationTest extends TestsBase {
         XmlPath xmlPath = getMetadataBodyXML();
         Instant validUntil = Instant.parse(xmlPath.getString("EntityDescriptor.@validUntil"));
         assertThat("The metadata should be valid for 24h",currentTime.plus(Duration.ofHours(23).plusMinutes(50)), lessThan(validUntil));
+        assertThat("The metadata should be valid for 24h",validUntil, allOf(lessThan(currentTime.plus(Duration.ofHours(24).plusMinutes(5))), greaterThan(currentTime.plus(Duration.ofHours(23).plusMinutes(55)))));
     }
 
     @Ignore
@@ -65,7 +66,6 @@ public class MetadataIntegrationTest extends TestsBase {
                 xmlPath.getString("**.findAll {it.@contactType == 'support'}.TelephoneNumber"));
     }
 
-    @Ignore
     @Test
     public void metap3_caseSensitivityOnEndpoint() {
         given()
@@ -117,7 +117,6 @@ public class MetadataIntegrationTest extends TestsBase {
                 .get(spMetadata).then().statusCode(200);
     }
 
-    @Ignore
     @Test
     public void metap3_headOnMetadataEndpoint() {
         given()
