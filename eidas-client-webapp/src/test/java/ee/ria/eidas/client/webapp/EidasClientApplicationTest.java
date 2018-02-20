@@ -89,7 +89,7 @@ public class EidasClientApplicationTest {
             .queryParam("loa", "LOW")
             .queryParam("relayState", "test")
         .when()
-            .post("/auth")
+            .post("/login")
         .then()
             .statusCode(200)
             .body("html.body.form.@action", equalTo("http://localhost:8080/EidasNode/ServiceProvider"))
