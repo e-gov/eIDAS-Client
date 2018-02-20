@@ -3,11 +3,9 @@ package ee.ria.eidas;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.config.EncoderConfig.encoderConfig;
-import static io.restassured.path.xml.config.XmlPathConfig.xmlPathConfig;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import ee.ria.eidas.config.IntegrationTest;
 import io.restassured.RestAssured;
@@ -18,6 +16,7 @@ import org.junit.experimental.categories.Category;
 import org.springframework.beans.factory.annotation.Value;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.List;
 
 @Category(IntegrationTest.class)
 public class MetadataIntegrationTest extends TestsBase {
@@ -27,6 +26,21 @@ public class MetadataIntegrationTest extends TestsBase {
 
     @Value("${eidas.client.spReturnUrl}")
     private String spReturnUrl;
+
+    @Ignore
+    @Test // Not relevant anymore
+    public void metap2_mandatoryValuesArePresentInExtensions() {
+        XmlPath xmlPath = getMetadataBodyXML();
+
+        List<String> digestMethods = xmlPath.getList("EntityDescriptor.Extensions.DigestMethod.@Algorithm");
+        assertThat("One of the accepted digest algorithms must be present", digestMethods,
+                anyOf(hasItem("http://www.w3.org/2001/04/xmlenc#sha512"), hasItem("http://www.w3.org/2001/04/xmlenc#sha256")));
+
+        List<String> signingMethods = xmlPath.getList("EntityDescriptor.Extensions.SigningMethod.@Algorithm");
+        assertThat("One of the accepted singing algorithms must be present", signingMethods,
+                anyOf(hasItem("http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha512"), hasItem("http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha256"),
+                        hasItem("http://www.w3.org/2007/05/xmldsig-more#sha512-rsa-MGF1"), hasItem("http://www.w3.org/2007/05/xmldsig-more#sha256-rsa-MGF1")));
+    }
 
     @Ignore
     @Test
@@ -64,6 +78,16 @@ public class MetadataIntegrationTest extends TestsBase {
                 xmlPath.getString("**.findAll {it.@contactType == 'support'}.EmailAddress"));
         assertEquals("Correct Organization name must be present", "+555 123456",
                 xmlPath.getString("**.findAll {it.@contactType == 'support'}.TelephoneNumber"));
+    }
+
+    @Ignore
+    @Test //These values are optional
+    public void metap2_optionalValuesArePresentInAssertionConsumerService() {
+        XmlPath xmlPath = getMetadataBodyXML();
+        assertEquals("The index should be: 0", "0",
+                xmlPath.getString("EntityDescriptor.SPSSODescriptor.AssertionConsumerService.@index"));
+        assertEquals("The isDefault shoult be: true", "true",
+                xmlPath.getString("EntityDescriptor.SPSSODescriptor.AssertionConsumerService.@isDefault"));
     }
 
     @Test

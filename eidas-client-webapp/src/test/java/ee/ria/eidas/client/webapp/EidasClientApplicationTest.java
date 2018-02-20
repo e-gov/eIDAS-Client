@@ -27,7 +27,6 @@ import java.nio.file.Paths;
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.matcher.RestAssuredMatchers.matchesXsdInClasspath;
-import static com.jayway.restassured.path.xml.XmlPath.from;
 import static org.junit.Assert.assertNotNull;
 import static org.hamcrest.Matchers.*;
 import static org.hamcrest.core.IsEqual.equalTo;
