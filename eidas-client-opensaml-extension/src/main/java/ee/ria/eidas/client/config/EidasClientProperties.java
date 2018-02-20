@@ -6,6 +6,8 @@ import ee.ria.eidas.client.authnrequest.SPType;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
+import java.util.List;
+
 @Validated
 @ConfigurationProperties(prefix = "eidas.client")
 public class EidasClientProperties {
@@ -46,21 +48,24 @@ public class EidasClientProperties {
     @NotNull
     private String idpMetadataUrl;
 
-    private int maximumAuthenticationLifetime = DEFAULT_MAXIMUM_AUTHENTICTION_LIFETIME;
-
-    private String nameIdPolicyFormat = DEFAULT_NAMEID_POLICY_FORMAT;
-
     @NotNull
     private String spEntityId;
-
-    private SPType spType = SPType.PUBLIC;
 
     @NotNull
     private String providerName;
 
-    private String loginUrl = "/start";
-    private String samlAssertionConsumerUrl = "/returnUrl";
+    @NotNull
+    private List<String> availableCountries;
+
+    private SPType spType = SPType.PUBLIC;
+
+    private int maximumAuthenticationLifetime = DEFAULT_MAXIMUM_AUTHENTICTION_LIFETIME;
+
+    private String nameIdPolicyFormat = DEFAULT_NAMEID_POLICY_FORMAT;
+
     private String idpMetadataSigningCertificateKeyId = DEFAULT_IDP_METADATA_SIGN_CERT_KEY;
+
+    private String samlAssertionConsumerUrl = "/returnUrl";
 
     public String getMetadataSigningKeyId() {
         return metadataSigningKeyId;
@@ -166,14 +171,6 @@ public class EidasClientProperties {
         this.keystorePass = keystorePass;
     }
 
-    public String getLoginUrl() {
-        return loginUrl;
-    }
-
-    public void setLoginUrl(String loginUrl) {
-        this.loginUrl = loginUrl;
-    }
-
     public String getSamlAssertionConsumerUrl() {
         return samlAssertionConsumerUrl;
     }
@@ -204,5 +201,13 @@ public class EidasClientProperties {
 
     public void setIdpMetadataSigningCertificateKeyId(String idpMetadataSigningCertificateKeyId) {
         this.idpMetadataSigningCertificateKeyId = idpMetadataSigningCertificateKeyId;
+    }
+
+    public List<String> getAvailableCountries() {
+        return availableCountries;
+    }
+
+    public void setAvailableCountries(List<String> availableCountries) {
+        this.availableCountries = availableCountries;
     }
 }

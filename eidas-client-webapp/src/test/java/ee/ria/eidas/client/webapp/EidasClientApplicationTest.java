@@ -67,13 +67,17 @@ public class EidasClientApplicationTest {
     public void httpPostBinding() {
         given()
             .port(port)
+            .queryParam("country", "EE")
+            .queryParam("loa", "LOW")
+            .queryParam("relayState", "test")
         .when()
-            .get("/start")
+            .post("/auth")
         .then()
             .statusCode(200)
             .body("html.body.form.@action", equalTo("http://localhost:8080/EidasNode/ServiceProvider"))
-            .body("html.body.form.div.input[0].@value", not(empty()))
-            .body("html.body.form.div.input[1].@value", equalTo("CA"));
+            .body("html.body.form.div.input[0].@value", equalTo("test"))
+            .body("html.body.form.div.input[1].@value", not(empty()))
+            .body("html.body.form.div.input[2].@value", equalTo("EE"));
     }
 
     public class ClasspathResourceResolver implements LSResourceResolver {

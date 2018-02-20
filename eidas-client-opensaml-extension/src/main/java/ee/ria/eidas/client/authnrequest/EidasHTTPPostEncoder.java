@@ -29,7 +29,7 @@ public class EidasHTTPPostEncoder extends HTTPPostEncoder {
     @Override
     protected void populateVelocityContext(VelocityContext velocityContext, MessageContext<SAMLObject> messageContext, String endpointURL) throws MessageEncodingException {
         velocityContext.put("Country", countryCode);
-        //velocityContext.put("RelayState", relayState);
+        velocityContext.put("RelayState", relayState);
         super.populateVelocityContext(velocityContext, messageContext, endpointURL);
     }
 

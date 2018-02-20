@@ -1,5 +1,6 @@
 package ee.ria.eidas.client.config;
 
+import ee.ria.eidas.client.authnrequest.EidasAuthenticationService;
 import ee.ria.eidas.client.exception.EidasClientException;
 import ee.ria.eidas.client.metadata.IDPMetadataResolver;
 import ee.ria.eidas.client.metadata.SPMetadataGenerator;
@@ -33,6 +34,7 @@ import org.springframework.core.io.ResourceLoader;
 import java.io.IOException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
+import java.security.cert.X509Certificate;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -121,9 +123,16 @@ public class EidasClientConfiguration {
     }
 
     @Bean
+    public EidasAuthenticationService eidasAuthProtectedUrlFilterRegistration(
+            @Qualifier("authnReqSigningCredential") Credential signingCredential,
+            SingleSignOnService singleSignOnService) {
+        return new EidasAuthenticationService(signingCredential, eidasClientProperties, singleSignOnService);
+    }
+
+    @Bean
     public ExplicitKeySignatureTrustEngine metadataSignatureTrustEngine(KeyStore keyStore){
         try {
-            java.security.cert.X509Certificate cert = (java.security.cert.X509Certificate) keyStore.getCertificate(eidasClientProperties.getIdpMetadataSigningCertificateKeyId());
+            X509Certificate cert = (X509Certificate) keyStore.getCertificate(eidasClientProperties.getIdpMetadataSigningCertificateKeyId());
             if (cert == null)
                 throw new IllegalStateException("It seems you are missing a certificate with alias '" + eidasClientProperties.getIdpMetadataSigningCertificateKeyId() + "' in your " + eidasClientProperties.getKeystore() + " keystore. We need it in order to verify IDP metadata's signature.");
 

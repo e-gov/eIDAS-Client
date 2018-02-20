@@ -37,7 +37,7 @@ public class AuthnRequestBuilder {
         this.singleSignOnService = singleSignOnService;
     }
 
-    public AuthnRequest buildAuthnRequest() {
+    public AuthnRequest buildAuthnRequest(AssuranceLevel loa) {
         try {
             Signature signature = (Signature) XMLObjectProviderRegistrySupport.getBuilderFactory()
                     .getBuilder(Signature.DEFAULT_ELEMENT_NAME)
@@ -61,7 +61,7 @@ public class AuthnRequestBuilder {
             authnRequest.setID(OpenSAMLUtils.generateSecureRandomId());
             authnRequest.setIssuer(buildIssuer());
             authnRequest.setNameIDPolicy(buildNameIdPolicy());
-            authnRequest.setRequestedAuthnContext(buildRequestedAuthnContext());
+            authnRequest.setRequestedAuthnContext(buildRequestedAuthnContext(loa));
             authnRequest.setExtensions(buildExtensions());
             authnRequest.setSignature(signature);
 
@@ -87,12 +87,12 @@ public class AuthnRequestBuilder {
         return issuer;
     }
 
-    private RequestedAuthnContext buildRequestedAuthnContext() {
+    private RequestedAuthnContext buildRequestedAuthnContext(AssuranceLevel loa) {
         RequestedAuthnContext requestedAuthnContext = OpenSAMLUtils.buildSAMLObject(RequestedAuthnContext.class);
         requestedAuthnContext.setComparison(AuthnContextComparisonTypeEnumeration.MINIMUM);
 
         AuthnContextClassRef loaAuthnContextClassRef = OpenSAMLUtils.buildSAMLObject(AuthnContextClassRef.class);
-        loaAuthnContextClassRef.setAuthnContextClassRef(AssuranceLevel.LOW.getUri());
+        loaAuthnContextClassRef.setAuthnContextClassRef(loa.getUri());
 
         requestedAuthnContext.getAuthnContextClassRefs().add(loaAuthnContextClassRef);
 

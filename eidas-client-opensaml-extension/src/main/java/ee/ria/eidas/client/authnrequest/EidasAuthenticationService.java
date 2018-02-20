@@ -2,7 +2,6 @@ package ee.ria.eidas.client.authnrequest;
 
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.exception.EidasClientException;
-import ee.ria.eidas.client.metadata.IDPMetadataResolver;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
 import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
 import org.opensaml.core.config.InitializationException;
@@ -11,8 +10,7 @@ import org.opensaml.messaging.context.MessageContext;
 import org.opensaml.messaging.encoder.MessageEncodingException;
 import org.opensaml.saml.common.messaging.context.SAMLEndpointContext;
 import org.opensaml.saml.common.messaging.context.SAMLPeerEntityContext;
-import org.opensaml.saml.common.xml.SAMLConstants;
-import org.opensaml.saml.saml2.core.*;
+import org.opensaml.saml.saml2.core.AuthnRequest;
 import org.opensaml.saml.saml2.metadata.SingleSignOnService;
 import org.opensaml.security.credential.Credential;
 import org.opensaml.xmlsec.SignatureSigningParameters;
@@ -22,16 +20,14 @@ import org.opensaml.xmlsec.signature.support.SignatureConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.security.Provider;
 import java.security.Security;
 
-public class EidasAuthenticationFilter implements Filter {
+public class EidasAuthenticationService {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(EidasAuthenticationFilter.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(EidasAuthenticationService.class);
 
     private Credential authnReqSigningCredential;
 
@@ -39,62 +35,45 @@ public class EidasAuthenticationFilter implements Filter {
 
     private SingleSignOnService singleSignOnService;
 
-    public EidasAuthenticationFilter(Credential authnReqSigningCredential, EidasClientProperties eidasClientProperties, SingleSignOnService singleSignOnService) {
+    static {
+        init();
+    }
+
+    public EidasAuthenticationService(Credential authnReqSigningCredential, EidasClientProperties eidasClientProperties, SingleSignOnService singleSignOnService) {
         this.authnReqSigningCredential = authnReqSigningCredential;
         this.eidasClientProperties = eidasClientProperties;
         this.singleSignOnService = singleSignOnService;
     }
 
-    @Override
-    public void init(FilterConfig filterConfig) {
+    public void authenticate(HttpServletRequest request, HttpServletResponse response, String country, AssuranceLevel loa, String relayState) {
+        setGotoURLOnSession(request);
+        redirectUserForAuthentication(response, country, loa, relayState);
+    }
+
+    private static void init() {
         JavaCryptoValidationInitializer javaCryptoValidationInitializer = new JavaCryptoValidationInitializer();
         try {
             javaCryptoValidationInitializer.init();
-        } catch (InitializationException e) {
-            throw new EidasClientException("Error initializing IDP Metadata Provider", e);
-        }
-
-        for (Provider jceProvider : Security.getProviders()) {
-            LOGGER.info(jceProvider.getInfo());
-        }
-
-        try {
-            LOGGER.info("Initializing");
+            for (Provider jceProvider : Security.getProviders()) {
+                LOGGER.info(jceProvider.getInfo());
+            }
             InitializationService.initialize();
         } catch (InitializationException e) {
-            throw new RuntimeException("Initialization failed");
+            throw new EidasClientException("Error initializing Authentication service!", e);
         }
-    }
-
-    @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
-        HttpServletRequest httpServletRequest = (HttpServletRequest)request;
-        HttpServletResponse httpServletResponse = (HttpServletResponse)response;
-
-        if (httpServletRequest.getSession().getAttribute(EidasClientProperties.SESSION_ATTRIBUTE_USER_AUTHENTICATED) != null) {
-            chain.doFilter(request, response);
-        } else {
-            setGotoURLOnSession(httpServletRequest);
-            redirectUserForAuthentication(httpServletResponse);
-        }
-    }
-
-    @Override
-    public void destroy() {
-
     }
 
     private void setGotoURLOnSession(HttpServletRequest request) {
         request.getSession().setAttribute(EidasClientProperties.SESSION_ATTRIBUTE_ORIGINALLY_REQUESTED_URL, request.getRequestURL().toString());
     }
 
-    private void redirectUserForAuthentication(HttpServletResponse httpServletResponse) {
+    private void redirectUserForAuthentication(HttpServletResponse httpServletResponse, String country, AssuranceLevel loa, String relayState) {
         AuthnRequestBuilder authnRequestBuilder = new AuthnRequestBuilder(authnReqSigningCredential, eidasClientProperties, singleSignOnService);
-        AuthnRequest authnRequest = authnRequestBuilder.buildAuthnRequest() ;
-        redirectUserWithRequest(httpServletResponse, authnRequest);
+        AuthnRequest authnRequest = authnRequestBuilder.buildAuthnRequest(loa) ;
+        redirectUserWithRequest(httpServletResponse, authnRequest, country, relayState);
     }
 
-    private void redirectUserWithRequest(HttpServletResponse httpServletResponse, AuthnRequest authnRequest) {
+    private void redirectUserWithRequest(HttpServletResponse httpServletResponse, AuthnRequest authnRequest, String country, String relayState) {
         MessageContext context = new MessageContext();
 
         context.setMessage(authnRequest);
@@ -113,8 +92,8 @@ public class EidasAuthenticationFilter implements Filter {
 
         EidasHTTPPostEncoder encoder = new EidasHTTPPostEncoder();
         encoder.setMessageContext(context);
-        encoder.setCountryCode("CA");
-        encoder.setRelayState("123");
+        encoder.setCountryCode(country);
+        encoder.setRelayState(relayState);
 
         encoder.setHttpServletResponse(httpServletResponse);
 
@@ -134,4 +113,5 @@ public class EidasAuthenticationFilter implements Filter {
             throw new EidasClientException("Error encoding HTTP POST Binding response", e);
         }
     }
+
 }
