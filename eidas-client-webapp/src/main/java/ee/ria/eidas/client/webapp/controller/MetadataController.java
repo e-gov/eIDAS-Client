@@ -18,8 +18,7 @@ public class MetadataController {
     private SPMetadataGenerator metadataGenerator;
 
     @RequestMapping(value = "/metadata", method = GET, produces = { "application/xml", "text/xml" }, consumes = MediaType.ALL_VALUE)
-    public @ResponseBody
-    String view() {
+    public @ResponseBody String metadata() {
         EntityDescriptor entityDescriptor = metadataGenerator.getMetadata();
         return OpenSAMLUtils.getXmlString(entityDescriptor);
     }

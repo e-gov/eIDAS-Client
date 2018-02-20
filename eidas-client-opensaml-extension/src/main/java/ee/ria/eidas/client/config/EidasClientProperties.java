@@ -57,6 +57,7 @@ public class EidasClientProperties {
     @NotNull
     private List<String> availableCountries;
 
+    @NotNull
     private SPType spType = SPType.PUBLIC;
 
     private int maximumAuthenticationLifetime = DEFAULT_MAXIMUM_AUTHENTICTION_LIFETIME;

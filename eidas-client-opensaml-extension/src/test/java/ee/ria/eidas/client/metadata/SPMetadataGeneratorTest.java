@@ -1,7 +1,10 @@
 package ee.ria.eidas.client.metadata;
 
+import ee.ria.eidas.client.authnrequest.SPType;
 import ee.ria.eidas.client.config.EidasClientConfiguration;
 import ee.ria.eidas.client.config.EidasClientProperties;
+import org.joda.time.DateTime;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -54,6 +57,7 @@ public class SPMetadataGeneratorTest {
 
     private void assertEntityDescriptor(EntityDescriptor entityDescriptor) {
         assertEquals(properties.getSpEntityId(), entityDescriptor.getEntityID());
+        assertTrue(entityDescriptor.getValidUntil().isBefore(DateTime.now().plusDays(1)));
 
         assertNotNull(entityDescriptor.getSignature().getSigningCredential());
         assertNotNull(entityDescriptor.getSignature().getKeyInfo().getX509Datas().get(0).getX509Certificates().get(0));
@@ -65,8 +69,15 @@ public class SPMetadataGeneratorTest {
     }
 
     private void assertExtensions(List<XMLObject> extensions) {
-        XMLObject digestMethod = extensions.get(0);
+        XMLObject spType = extensions.get(0);
+        assertSpType(spType);
+        XMLObject digestMethod = extensions.get(1);
         assertEquals("http://www.w3.org/2001/04/xmlenc#sha512", digestMethod.getDOM().getAttribute("Algorithm"));
+    }
+
+    private void assertSpType(XMLObject spType) {
+        assertEquals("SPType", spType.getDOM().getLocalName());
+        Assert.assertEquals(SPType.PUBLIC.getValue(), spType.getDOM().getTextContent());
     }
 
     private void assertSPSSODescriptor(EntityDescriptor entityDescriptor) {
@@ -79,9 +90,7 @@ public class SPMetadataGeneratorTest {
         assertKeyDescriptor(keyDescriptors.get(1), UsageType.ENCRYPTION);
 
         List<NameIDFormat> nameIDFormats = spDescriptor.getNameIDFormats();
-        assertNameIDFormat(nameIDFormats.get(0), NameIDType.TRANSIENT);
-        assertNameIDFormat(nameIDFormats.get(1), NameIDType.PERSISTENT);
-        assertNameIDFormat(nameIDFormats.get(2), NameIDType.UNSPECIFIED);
+        assertNameIDFormat(nameIDFormats.get(0), NameIDType.UNSPECIFIED);
 
         AssertionConsumerService assertionConsumerService = spDescriptor.getAssertionConsumerServices().get(0);
         assertAssertionConsumerService(assertionConsumerService);

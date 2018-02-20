@@ -3,10 +3,11 @@ package ee.ria.eidas.client.metadata;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.exception.EidasClientException;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
-import net.shibboleth.utilities.java.support.xml.SerializeSupport;
 import org.apache.commons.lang.RandomStringUtils;
 import org.joda.time.DateTime;
 import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
+import org.opensaml.core.xml.schema.XSAny;
+import org.opensaml.core.xml.schema.impl.XSAnyBuilder;
 import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.ext.saml2alg.DigestMethod;
 import org.opensaml.saml.saml2.core.NameIDType;
@@ -24,11 +25,9 @@ import org.opensaml.xmlsec.signature.support.SignatureConstants;
 import org.opensaml.xmlsec.signature.support.Signer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Element;
 
 import java.util.Collection;
 import java.util.LinkedList;
-import java.util.Objects;
 
 public class SPMetadataGenerator {
 
@@ -76,7 +75,7 @@ public class SPMetadataGenerator {
     private EntityDescriptor buildEntityDescriptor() {
         EntityDescriptor descriptor = OpenSAMLUtils.buildSAMLObject(EntityDescriptor.class);
         descriptor.setEntityID(eidasClientProperties.getSpEntityId());
-        descriptor.setValidUntil(DateTime.now().plusYears(20));
+        descriptor.setValidUntil(DateTime.now().plusDays(1));
         descriptor.setID(generateEntityDescriptorId());
         descriptor.setExtensions(generateMetadataExtensions());
         descriptor.getRoleDescriptors().add(buildSPSSODescriptor());
@@ -86,6 +85,10 @@ public class SPMetadataGenerator {
     private Extensions generateMetadataExtensions() {
         Extensions extensions = OpenSAMLUtils.buildSAMLObject(Extensions.class);
         extensions.getNamespaceManager().registerAttributeName(DigestMethod.TYPE_NAME);
+
+        XSAny spType = new XSAnyBuilder().buildObject("http://eidas.europa.eu/saml-extensions", "SPType", "eidas");
+        spType.setTextContent(eidasClientProperties.getSpType().getValue());
+        extensions.getUnknownXMLObjects().add(spType);
 
         DigestMethod method = OpenSAMLUtils.buildSAMLObject(DigestMethod.class);
         method.setAlgorithm("http://www.w3.org/2001/04/xmlenc#sha512");
@@ -125,13 +128,7 @@ public class SPMetadataGenerator {
     }
 
     private Collection<NameIDFormat> buildNameIDFormat() {
-        Collection<NameIDFormat> formats = new LinkedList<NameIDFormat>();
-        NameIDFormat transientNameID = OpenSAMLUtils.buildSAMLObject(NameIDFormat.class);
-        transientNameID.setFormat(NameIDType.TRANSIENT);
-        formats.add(transientNameID);
-        NameIDFormat persistentNameID = OpenSAMLUtils.buildSAMLObject(NameIDFormat.class);
-        persistentNameID.setFormat(NameIDType.PERSISTENT);
-        formats.add(persistentNameID);
+        Collection<NameIDFormat> formats = new LinkedList<>();
         NameIDFormat unspecNameID = OpenSAMLUtils.buildSAMLObject(NameIDFormat.class);
         unspecNameID.setFormat(NameIDType.UNSPECIFIED);
         formats.add(unspecNameID);
