@@ -70,9 +70,9 @@ NB! Toetatud sihtriikide nimekiri (JSON vormingus) laetakse konfiguratsioonis m�
 
 Lihtsustatult toimib isikutuvastusprotsess eIDAS kliendi ja eIDAS konnektorteenuse vahel järgmiselt (vt joonis 1.)
 
-1. Kasutaja navigeerib avalehele `/start`, täpsustamata parameetreid. eIDAS klient kuvab sihtriikide valiku.
+1. Kasutaja navigeerib avalehele `/login`, mille peale kuvab eIDAS klient sihtriikide valiku vormi.
 
-2. Kasutaja valib sihtriigi ja soovi korral autentimistaseme ning kas ta soovib tulemusi masinloetaval või inimloetaval kujul. Kasutaja vajutab 'Suuna'. Veebileht teeb taas päringu avalehele `/start`, kuid koos valitud parameetritega. Eidas kliendi serveri poolel pannakse kokku `SAMLRequest` parameetri sisu ja tagastatakse kasutajale ümbersuunamisvorm, mis suunatakse automaatselt RIA eIDAS konnektorteenusesse.
+2. Kasutaja valib sihtriigi ja soovi korral autentimistaseme ning kas ta soovib tulemusi masinloetaval või inimloetaval kujul. Kasutaja vajutab 'Login'. Veebileht teeb HTTP POST päringu `/login` lehele koos valitud parameetritega. Eidas kliendi serveri poolel pannakse kokku `SAMLRequest` parameetri sisu ja tagastatakse kasutajale ümbersuunamisvorm, mis suunatakse automaatselt RIA eIDAS konnektorteenusesse.
 
 3. Sirvik suunab kasutaja automaatselt eIDAS konnektorteenusesse koos `SAMLRequest`, `RelayState` ja `Country` parameetritega, kus teostatakse järgnevate sammudena ära kogu ülepiirilise isikutuvastuse sammud. Sealhulgas suunatakse kasutaja ümber sihtriigi eIDAS Node teenusesse, vajadusel küsitakse kasutaja nõusolekut andmete avaldamiseks ning teostatakse isikutuvastus.
 
@@ -97,7 +97,8 @@ Joonis 2.
 
 | Otspunkt        | Toetatud meetodid | Selgitus  |
 | ------------- | :------: | :-------------|
-| `/start`  | GET |	Algatab isikutuvastusprotsessi valitud riigi eIDAS sõlmpunkti vastu. Kui riigikoodi ei täpsustata parameetriga `Country`, kuvatakse inimloetav HTML vorm riigivalikuga. Lisaparameetrite loetelu vt LISA 1. |
+| `/login`  | GET |	  Kuvab inimloetava HTML vormi riigivalikuga, mille esitamisel algatatakse isikutuvastusprotsessi. Lisaparameetrite loetelu vt LISA 1. |
+| `/login`  | POST |	Algatab isikutuvastusprotsessi valitud riigi eIDAS sõlmpunkti vastu. |
 | `/returnUrl`  | POST |	Isikutuvastuse tulemuse vastuvõtt. Isikuandmete või vea kuvamine vastavalt parameetritele (vt LISA 1). |
 | `/metadata`  | GET |	SAML 2.0 standardijärgne metadata otspunkt. Vajalik eIDAS konnektorteenuse ja kliendi vahelise usalduse loomiseks. |
 Tabel 1.
@@ -172,9 +173,10 @@ Tabel 3.3 - AuthnRequesti seadistus
 HTTP staatuskoode käsitletakse [RFC2616](https://tools.ietf.org/html/rfc2616) standardile vastavalt. Näiteks tähistavad 400 vahemiku koodid kliendi päringu mittevastavust nõuetele (nagu puuduvad või lubamatu väärtusega parameetrid) ning staatuskoodid alates 500 serveripoolseid probleeme (nagu ülekoormus). Kõigi muude juhtude korral tagastatakse HTTP staatuskood 200 koos vastavas vormingus vastusega (JSON/HTML/XML).
 
 
-### /start
+### /login
 
-Algatab autentimisprotsessi või kui vajalikud parameetrid puuduvad, kuvab kasutajale sihtriigid ülepiirilise autentimise alustamiseks. Võimalike parameetrite loetelu on toodud tabelis 3.
+GET päringu puhul kuvab kasutajale sihtriigid ülepiirilise autentimise alustamiseks. Võimalike parameetrite loetelu on toodud tabelis 3.
+POST puhul algatab autentimisprotsessi.
 
 | Parameetri nimi        | Kohustuslik           | Selgitus  |
 | ------------- |:-------------:| :-----|

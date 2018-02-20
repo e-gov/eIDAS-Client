@@ -25,7 +25,7 @@ public class AuthenticationController {
     @Autowired
     private EidasClientProperties properties;
 
-    @RequestMapping(value = "/login", method = GET)
+    @RequestMapping(value = {"/login", "/"}, method = GET)
     public String authenticate(Model model) {
         List<AssuranceLevel> levelsOfAssurance = Arrays.asList(AssuranceLevel.values());
         model.addAttribute("countries", properties.getAvailableCountries());
