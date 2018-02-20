@@ -32,6 +32,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.cert.X509Certificate;
@@ -57,7 +58,8 @@ public class EidasClientConfiguration {
 
     @Bean
     public IDPMetadataResolver idpMetadataResolver(@Qualifier("metadataSignatureTrustEngine") ExplicitKeySignatureTrustEngine metadataSignatureTrustEngine) throws IOException {
-        return new IDPMetadataResolver(resourceLoader.getResource(eidasClientProperties.getIdpMetadataUrl()).getInputStream(), metadataSignatureTrustEngine);
+        InputStream idpMetadata = resourceLoader.getResource(eidasClientProperties.getIdpMetadataUrl()).getInputStream();
+        return new IDPMetadataResolver(idpMetadata, metadataSignatureTrustEngine);
     }
 
     @Bean
@@ -110,6 +112,9 @@ public class EidasClientConfiguration {
             MetadataResolver metadataResolver = idpMetadataResolver.resolve();
             CriteriaSet criteriaSet = new CriteriaSet(new EntityIdCriterion(idpMetadataResolver.getEntityId()));
             EntityDescriptor entityDescriptor = metadataResolver.resolveSingle(criteriaSet);
+            if (entityDescriptor == null) {
+                throw new IllegalStateException("Could not find a valid EntityDescriptor in your IDP metadata! ");
+            }
             for ( SingleSignOnService ssoService : entityDescriptor.getIDPSSODescriptor(SAMLConstants.SAML20P_NS).getSingleSignOnServices() ) {
                 if ( ssoService.getBinding().equals(SAMLConstants.SAML2_POST_BINDING_URI) ) {
                     return ssoService;
