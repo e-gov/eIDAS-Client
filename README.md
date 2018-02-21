@@ -175,12 +175,13 @@ HTTP staatuskoode käsitletakse [RFC2616](https://tools.ietf.org/html/rfc2616) s
 
 ### /login
 
-GET päringu puhul kuvab kasutajale sihtriigid ülepiirilise autentimise alustamiseks. Võimalike parameetrite loetelu on toodud tabelis 3.
-POST puhul algatab autentimisprotsessi.
+GET päringu puhul kuvab kasutajale sihtriigid ülepiirilise autentimise alustamiseks.
+
+POST puhul algatab autentimisprotsessi. Võimalike parameetrite loetelu on toodud tabelis 3.
 
 | Parameetri nimi        | Kohustuslik           | Selgitus  |
 | ------------- |:-------------:| :-----|
-| `Country` |	Ei | Parameeter, mis määrab ära tuvastatava kodaniku riigi. Väärtus peab olema vastama [ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2) standardis toodule. <br>Kui määramata, kuvatakse HTML vorm riigivalikuga. |
+| `Country` |	Jah | Kohustuslik POST meetodi puhul. Parameeter määrab ära tuvastatava kodaniku riigi. Väärtus peab vastama [ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2) standardis toodule. |
 | `LoA` |	Ei | Parameeter, mis määrab ära nõutava isikutuvastuse taseme. Lubatud väärtused: `low`, `substantial`, `high`. <br>Kui parameeter on määramata, siis vaikimisi loetakse väärtuseks `low`. |
 | `RelayState` |	Ei | Parameeter, mis saadetakse edasi konnektorteenusele muutmata kujul. |
 Tabel 3.
