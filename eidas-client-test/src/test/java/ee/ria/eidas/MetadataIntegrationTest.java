@@ -42,7 +42,6 @@ public class MetadataIntegrationTest extends TestsBase {
                         hasItem("http://www.w3.org/2007/05/xmldsig-more#sha512-rsa-MGF1"), hasItem("http://www.w3.org/2007/05/xmldsig-more#sha256-rsa-MGF1")));
     }
 
-    @Ignore
     @Test
     public void metap3_validUtnilIsPresentInEntityDescriptor() {
         Instant currentTime = Instant.now();

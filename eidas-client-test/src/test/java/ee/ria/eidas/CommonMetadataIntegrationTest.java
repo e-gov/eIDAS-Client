@@ -63,7 +63,6 @@ public class CommonMetadataIntegrationTest extends TestsBase {
         assertThat("The entityID must be the same as entpointUrl", xmlPath.getString("EntityDescriptor.@entityID"), endsWith(spMetadataUrl));
     }
 
-    @Ignore
     @Test
     public void metap2_mandatoryValuesArePresentInExtensions() {
         XmlPath xmlPath = getMetadataBodyXML();
@@ -79,7 +78,7 @@ public class CommonMetadataIntegrationTest extends TestsBase {
                 xmlPath.getString("EntityDescriptor.SPSSODescriptor.@protocolSupportEnumeration"));
     }
 
-    @Ignore
+    @Ignore //TODO: Signing and encryption certificates must be different
     @Test
     public void metap2_certificatesArePresentInSpssoDescriptorBlock() {
         XmlPath xmlPath = getMetadataBodyXML();
@@ -92,7 +91,6 @@ public class CommonMetadataIntegrationTest extends TestsBase {
         assertThat("Signing and encryption certificates must be different", signingCertificate, not(equalTo(encryptionCertificate)));
     }
 
-    @Ignore
     @Test
     public void metap2_nameIdFormatIsCorrectInSpssoDescriptor() {
         XmlPath xmlPath = getMetadataBodyXML();

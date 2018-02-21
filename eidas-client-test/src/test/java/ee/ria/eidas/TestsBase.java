@@ -31,6 +31,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.CertificateExpiredException;
 import java.security.cert.CertificateNotYetValidException;
 import java.util.Base64;
+import java.util.Map;
 
 import static io.restassured.RestAssured.given;
 import static io.restassured.config.EncoderConfig.encoderConfig;
@@ -181,6 +182,23 @@ public class TestsBase {
                 .post(spStartUrl).then().extract().body().asString();
     }
 
+    protected String getAuthenticationReqForm(Map<String,String> values) {
+        return given()
+                .formParams(values)
+                .contentType("application/x-www-form-urlencoded")
+                .config(RestAssured.config().encoderConfig(encoderConfig().defaultContentCharset("UTF-8")))
+                .when()
+                .post(spStartUrl).then().extract().body().asString();
+    }
+
+    protected String getLoginPage() {
+        return given()
+                .contentType("application/x-www-form-urlencoded")
+                .config(RestAssured.config().encoderConfig(encoderConfig().defaultContentCharset("UTF-8")))
+                .when()
+                .get(spStartUrl).then().extract().body().asString();
+    }
+
     protected Boolean validateSignature(String body) {
         XmlPath metadataXml = new XmlPath(body);
         try {
@@ -227,6 +245,7 @@ public class TestsBase {
     protected Boolean isCertificateValid(String certString) {
         try {
             java.security.cert.X509Certificate x509 = X509Support.decodeCertificate(certString);
+            isCertificateValid(x509);
             x509.checkValidity();
             return true;
         } catch (CertificateExpiredException e) {

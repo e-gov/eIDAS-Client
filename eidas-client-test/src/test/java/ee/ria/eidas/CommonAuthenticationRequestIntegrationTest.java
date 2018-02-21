@@ -16,7 +16,6 @@ import java.util.List;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 @Category(IntegrationTest.class)
 public class CommonAuthenticationRequestIntegrationTest extends TestsBase {
@@ -73,12 +72,12 @@ public class CommonAuthenticationRequestIntegrationTest extends TestsBase {
     @Test
     public void auth2_authenticationLevelIsPresent() {
         XmlPath xmlPath = getDecodedSamlRequestBodyXml(getAuthenticationReqWithDefault());
-        List<String> signingMethods = xmlPath.getList("AuthnRequest.RequestedAuthnContext.AuthnContextClassRef");
-        assertThat("One of the accepted authentication levels must be present", signingMethods,
+        List<String> loa = xmlPath.getList("AuthnRequest.RequestedAuthnContext.AuthnContextClassRef");
+        assertThat("One of the accepted authentication levels must be present", loa,
                 anyOf(hasItem("http://eidas.europa.eu/LoA/low"), hasItem("http://eidas.europa.eu/LoA/substantial"), hasItem("http://eidas.europa.eu/LoA/high")));
     }
 
-    @Ignore
+    @Ignore //TODO: IsPassive value is missing
     @Test //TODO: Need a method to validate NCName format
     public void auth3_mandatoryValuesArePresentInEntityDescriptor() {
         XmlPath xmlPath = getDecodedSamlRequestBodyXml(getAuthenticationReqWithDefault());
