@@ -76,7 +76,7 @@ Lihtsustatult toimib isikutuvastusprotsess eIDAS kliendi ja eIDAS konnektorteenu
 
 3. Sirvik suunab kasutaja automaatselt eIDAS konnektorteenusesse koos `SAMLRequest`, `RelayState` ja `Country` parameetritega, kus teostatakse järgnevate sammudena ära kogu ülepiirilise isikutuvastuse sammud. Sealhulgas suunatakse kasutaja ümber sihtriigi eIDAS Node teenusesse, vajadusel küsitakse kasutaja nõusolekut andmete avaldamiseks ning teostatakse isikutuvastus.
 
-4. Peale ülepiirilise isikutuvastusprotsessi läbimist suunab eIDAS konnektorteenus tulemuse eIDAS kliendi `/returnUrl` aadressile, koos `SAMLResponse` ja `RelayState` parameetriga. eIDAS klient valideerib vastuse, dekrüpteerib sisu ning kuvab tuvastatud isiku andmed. NB! Vorming on juhitav `RelayState` parameetri abil (inimloetav kuju, vs masinloetav)
+4. Peale ülepiirilise isikutuvastusprotsessi läbimist suunab eIDAS konnektorteenus tulemuse eIDAS kliendi `/returnUrl` aadressile, koos `SAMLResponse` ja `RelayState` parameetriga. eIDAS klient valideerib vastuse, dekrüpteerib sisu ning kuvab tuvastatud isiku andmed.
 
 <img src='doc/img/EidasClient-Isikutuvastus.png'>
 Joonis 1.
@@ -85,7 +85,7 @@ Joonis 1.
 -----------
 
 Eidas klient paketeeritakse war failina.
-Eidas kliendi teenuskiht toetub [pac4j](https://github.com/pac4j/pac4j) ja [Spring Security](https://projects.spring.io/spring-security/) alusteekidele. (Vt teekide valiku põhjendused [TARAEI-16](https://jira.ria.ee/browse/TARAEI-16)  &#128273;).
+Eidas kliendi teenuskiht toetub [OpenSAML 3](https://wiki.shibboleth.net/confluence/display/OS30/Home) ja [Spring Boot](https://projects.spring.io/spring-boot/) alusteekidele. (Vt teekide valiku põhjendused [TARAEI-16](https://jira.ria.ee/browse/TARAEI-16)  &#128273;).
 
 <img src='doc/img/EidasClient.png'></img>
 
@@ -97,8 +97,7 @@ Joonis 2.
 
 | Otspunkt        | Toetatud meetodid | Selgitus  |
 | ------------- | :------: | :-------------|
-| `/login`  | GET |	  Kuvab inimloetava HTML vormi riigivalikuga, mille esitamisel algatatakse isikutuvastusprotsessi. Lisaparameetrite loetelu vt LISA 1. |
-| `/login`  | POST |	Algatab isikutuvastusprotsessi valitud riigi eIDAS sõlmpunkti vastu. |
+| `/login`  | GET, POST |	  GET meetodil pöördudes kuvatakse inimloetav HTML vormi riigivalikuga, mille esitamisel algatatakse isikutuvastusprotsessi. <br><br>POST meetodil pöördudes algatatakse isikutuvastusprotsess valitud riigi eIDAS sõlmpunkti vastu. Lisaparameetrite loetelu vt LISA 1. |
 | `/returnUrl`  | POST |	Isikutuvastuse tulemuse vastuvõtt. Isikuandmete või vea kuvamine vastavalt parameetritele (vt LISA 1). |
 | `/metadata`  | GET |	SAML 2.0 standardijärgne metadata otspunkt. Vajalik eIDAS konnektorteenuse ja kliendi vahelise usalduse loomiseks. |
 Tabel 1.
@@ -121,7 +120,7 @@ Tabel 2.
 
 Rakenduse käivitamiseks vajalikud tegevused (eeldab Java 1.8+):
 
-1. Tõmba lähtekood
+1. Hangi lähtekood
 `git clone https://github.com/e-gov/eIDAS-Client.git`
 2. Ehita veebirakendus
 `mvn clean install`
