@@ -10,6 +10,7 @@ import static org.junit.Assert.assertEquals;
 import ee.ria.eidas.config.IntegrationTest;
 import io.restassured.RestAssured;
 import io.restassured.path.xml.XmlPath;
+import org.hamcrest.Matchers;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -94,75 +95,47 @@ public class MetadataIntegrationTest extends TestsBase {
         given()
                 .config(RestAssured.config().encoderConfig(encoderConfig().defaultContentCharset("UTF-8")))
                 .when()
-                .get("/SP/MeTaDaTa").then().statusCode(404); //Currently 404 is returned
-        given()
-                .config(RestAssured.config().encoderConfig(encoderConfig().defaultContentCharset("UTF-8")))
-                .when()
-                .get(spMetadata).then().statusCode(200);
-    }
-
-    @Ignore
-    @Test //Should return GET?
-    public void metap3_optionsOnMetadataEndpoint() {
-        given()
-                .config(RestAssured.config().encoderConfig(encoderConfig().defaultContentCharset("UTF-8")))
-                .when()
-                .options(spMetadata).then().statusCode(200).header("3","s").body(equalTo("2"));
-        given()
-                .config(RestAssured.config().encoderConfig(encoderConfig().defaultContentCharset("UTF-8")))
-                .when()
-                .get(spMetadata).then().statusCode(200);
-    }
-
-    @Ignore
-    @Test //should return 404?
-    public void metap3_postOnMetadataEndpoint() {
-        given()
-                .config(RestAssured.config().encoderConfig(encoderConfig().defaultContentCharset("UTF-8")))
-                .when()
-                .post(spMetadata).then().statusCode(200).body(equalTo("2"));
-        given()
-                .config(RestAssured.config().encoderConfig(encoderConfig().defaultContentCharset("UTF-8")))
-                .when()
-                .get(spMetadata).then().statusCode(200);
-    }
-
-    @Ignore
-    @Test //should return 404?
-    public void metap3_putOnMetadataEndpoint() {
-        given()
-                .config(RestAssured.config().encoderConfig(encoderConfig().defaultContentCharset("UTF-8")))
-                .when()
-                .put(spMetadata).then().statusCode(200).body(equalTo("2"));
-        given()
-                .config(RestAssured.config().encoderConfig(encoderConfig().defaultContentCharset("UTF-8")))
-                .when()
-                .get(spMetadata).then().statusCode(200);
+                .get("/SP/MeTaDaTa").then().log().ifValidationFails().statusCode(405).body("error",equalTo("Not Found"));
     }
 
     @Test
-    public void metap3_headOnMetadataEndpoint() {
+    public void metap3_optionsMethodShouldReturnAllowedMethods() {
         given()
                 .config(RestAssured.config().encoderConfig(encoderConfig().defaultContentCharset("UTF-8")))
                 .when()
-                .head(spMetadata).then().statusCode(200).body(isEmptyOrNullString());
-        given()
-                .config(RestAssured.config().encoderConfig(encoderConfig().defaultContentCharset("UTF-8")))
-                .when()
-                .get(spMetadata).then().statusCode(200);
+                .options(spMetadata).then().log().ifValidationFails().statusCode(200).header("Allow","GET,HEAD");
     }
 
-    @Ignore
-    @Test //what should be the output for that?
-    public void metap3_deleteOnMetadataEndpoint() {
+    @Test
+    public void metap3_notSupportedHttpPostMethodShouldReturnError() {
         given()
                 .config(RestAssured.config().encoderConfig(encoderConfig().defaultContentCharset("UTF-8")))
                 .when()
-                .delete(spMetadata).then().statusCode(200).body(equalTo("2"));
+                .post(spMetadata).then().log().ifValidationFails().statusCode(405).header("Allow","GET").body("error",Matchers.equalTo("Method Not Allowed"));
+    }
+
+    @Test
+    public void metap3_notSupportedHttpPutMethodShouldReturnError() {
         given()
                 .config(RestAssured.config().encoderConfig(encoderConfig().defaultContentCharset("UTF-8")))
                 .when()
-                .get(spMetadata).then().statusCode(200);
+                .put(spMetadata).then().log().ifValidationFails().statusCode(405).header("Allow","GET").body("error",Matchers.equalTo("Method Not Allowed"));
+    }
+
+    @Test
+    public void metap3_headHttpMethodShouldNotReturnBody() {
+        given()
+                .config(RestAssured.config().encoderConfig(encoderConfig().defaultContentCharset("UTF-8")))
+                .when()
+                .head(spMetadata).then().log().ifValidationFails().statusCode(200).body(isEmptyOrNullString());
+    }
+
+    @Test
+    public void metap3_notSupportedHttpDeleteMethodShouldReturnError() {
+        given()
+                .config(RestAssured.config().encoderConfig(encoderConfig().defaultContentCharset("UTF-8")))
+                .when()
+                .delete(spMetadata).then().log().ifValidationFails().statusCode(405).header("Allow","GET").body("error", Matchers.equalTo("Method Not Allowed"));
     }
 
 

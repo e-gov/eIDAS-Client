@@ -58,18 +58,11 @@ public class TestsBase {
         RestAssured.port = serverPort;
     }
 
-    protected Response getMetadata() {
-        return given()
-                .config(RestAssured.config().encoderConfig(encoderConfig().defaultContentCharset("UTF-8")))
-                .when()
-                .get(spMetadataUrl);
-    }
-
     protected String getMetadataBody() {
         return given()
                 .config(RestAssured.config().encoderConfig(encoderConfig().defaultContentCharset("UTF-8")))
                 .when()
-                .get(spMetadataUrl).then().extract().body().asString();
+                .get(spMetadataUrl).then().log().ifError().statusCode(200).extract().body().asString();
     }
 
     protected XmlPath getMetadataBodyXML() {
@@ -83,7 +76,7 @@ public class TestsBase {
         .config(RestAssured.config().xmlConfig(XmlConfig.xmlConfig().disableLoadingOfExternalDtd()))
                 .when()
                 .get(spMetadataUrl)
-                .then()
+                .then().log().ifError()
                 .statusCode(200)
                 .body(matchesXsdInClasspath("SPschema.xsd").using(new ClasspathResourceResolver()));
         return true;
@@ -179,7 +172,7 @@ public class TestsBase {
                 .contentType("application/x-www-form-urlencoded")
                 .config(RestAssured.config().encoderConfig(encoderConfig().defaultContentCharset("UTF-8")))
                 .when()
-                .post(spStartUrl).then().extract().body().asString();
+                .post(spStartUrl).then().log().ifError().extract().body().asString();
     }
 
     protected String getAuthenticationReqForm(Map<String,String> values) {
@@ -188,7 +181,7 @@ public class TestsBase {
                 .contentType("application/x-www-form-urlencoded")
                 .config(RestAssured.config().encoderConfig(encoderConfig().defaultContentCharset("UTF-8")))
                 .when()
-                .post(spStartUrl).then().extract().body().asString();
+                .post(spStartUrl).then().log().ifError().extract().body().asString();
     }
 
     protected String getLoginPage() {
@@ -196,7 +189,7 @@ public class TestsBase {
                 .contentType("application/x-www-form-urlencoded")
                 .config(RestAssured.config().encoderConfig(encoderConfig().defaultContentCharset("UTF-8")))
                 .when()
-                .get(spStartUrl).then().extract().body().asString();
+                .get(spStartUrl).then().log().ifError().extract().body().asString();
     }
 
     protected Boolean validateSignature(String body) {
