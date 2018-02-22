@@ -3,9 +3,11 @@ package ee.ria.eidas.client.config;
 import javax.validation.constraints.NotNull;
 
 import ee.ria.eidas.client.authnrequest.SPType;
+import org.opensaml.xmlsec.signature.support.SignatureConstants;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
+import java.util.Arrays;
 import java.util.List;
 
 @Validated
@@ -29,6 +31,15 @@ public class EidasClientProperties {
 
     @NotNull
     private String metadataSigningKeyPass;
+
+    @NotNull
+    private String metadataSignatureAlgorithm = SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA512;
+
+    @NotNull
+    private List<String> metadataExtensionsDigestmethods = Arrays.asList(SignatureConstants.ALGO_ID_DIGEST_SHA512);
+
+    @NotNull
+    private Integer metadataValidityInDays = 1;
 
     @NotNull
     private String requestSigningKeyId;
@@ -82,6 +93,30 @@ public class EidasClientProperties {
 
     public void setMetadataSigningKeyPass(String metadataSigningKeyPass) {
         this.metadataSigningKeyPass = metadataSigningKeyPass;
+    }
+
+    public String getMetadataSignatureAlgorithm() {
+        return metadataSignatureAlgorithm;
+    }
+
+    public void setMetadataSignatureAlgorithm(String metadataSignatureAlgorithm) {
+        this.metadataSignatureAlgorithm = metadataSignatureAlgorithm;
+    }
+
+    public List<String> getMetadataExtensionsDigestmethods() {
+        return metadataExtensionsDigestmethods;
+    }
+
+    public void setMetadataExtensionsDigestmethods(List<String> metadataExtensionsDigestmethods) {
+        this.metadataExtensionsDigestmethods = metadataExtensionsDigestmethods;
+    }
+
+    public Integer getMetadataValidityInDays() {
+        return metadataValidityInDays;
+    }
+
+    public void setMetadataValidityInDays(Integer metadataValidityInDays) {
+        this.metadataValidityInDays = metadataValidityInDays;
     }
 
     public String getRequestSigningKeyId() {
@@ -211,4 +246,5 @@ public class EidasClientProperties {
     public void setAvailableCountries(List<String> availableCountries) {
         this.availableCountries = availableCountries;
     }
+
 }

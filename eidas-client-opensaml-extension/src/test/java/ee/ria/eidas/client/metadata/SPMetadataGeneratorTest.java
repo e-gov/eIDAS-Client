@@ -14,6 +14,8 @@ import org.opensaml.saml.saml2.core.NameIDType;
 import org.opensaml.saml.saml2.metadata.*;
 import org.opensaml.security.credential.Credential;
 import org.opensaml.security.credential.UsageType;
+import org.opensaml.xmlsec.signature.Signature;
+import org.opensaml.xmlsec.signature.support.SignatureConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
@@ -57,22 +59,27 @@ public class SPMetadataGeneratorTest {
 
     private void assertEntityDescriptor(EntityDescriptor entityDescriptor) {
         assertEquals(properties.getSpEntityId(), entityDescriptor.getEntityID());
-        assertTrue(entityDescriptor.getValidUntil().isBefore(DateTime.now().plusDays(1)));
+        assertTrue(entityDescriptor.getValidUntil().isBefore(DateTime.now().plusDays(2)));
 
-        assertNotNull(entityDescriptor.getSignature().getSigningCredential());
-        assertNotNull(entityDescriptor.getSignature().getKeyInfo().getX509Datas().get(0).getX509Certificates().get(0));
-
-        List<XMLObject> extensions = entityDescriptor.getExtensions().getUnknownXMLObjects();
-        assertExtensions(extensions);
-
+        assertSignature(entityDescriptor.getSignature());
+        assertExtensions(entityDescriptor.getExtensions());
         assertSPSSODescriptor(entityDescriptor);
     }
 
-    private void assertExtensions(List<XMLObject> extensions) {
-        XMLObject spType = extensions.get(0);
+    private void assertSignature(Signature signature) {
+        assertNotNull(signature.getSigningCredential());
+        assertNotNull(signature.getKeyInfo().getX509Datas().get(0).getX509Certificates().get(0));
+        assertEquals(SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA256, signature.getSignatureAlgorithm());
+    }
+
+    private void assertExtensions(Extensions extensions) {
+        List<XMLObject> extensionObjects = extensions.getUnknownXMLObjects();
+        XMLObject spType = extensionObjects.get(0);
         assertSpType(spType);
-        XMLObject digestMethod = extensions.get(1);
-        assertEquals("http://www.w3.org/2001/04/xmlenc#sha512", digestMethod.getDOM().getAttribute("Algorithm"));
+        XMLObject digestMethod = extensionObjects.get(1);
+        assertEquals("http://www.w3.org/2001/04/xmlenc#sha256", digestMethod.getDOM().getAttribute("Algorithm"));
+        XMLObject digestMethod2 = extensionObjects.get(2);
+        assertEquals("http://www.w3.org/2001/04/xmlenc#sha512", digestMethod2.getDOM().getAttribute("Algorithm"));
     }
 
     private void assertSpType(XMLObject spType) {

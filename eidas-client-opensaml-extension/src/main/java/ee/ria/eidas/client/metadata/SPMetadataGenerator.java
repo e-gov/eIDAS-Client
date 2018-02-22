@@ -53,7 +53,7 @@ public class SPMetadataGenerator {
                     .getBuilder(Signature.DEFAULT_ELEMENT_NAME)
                     .buildObject(Signature.DEFAULT_ELEMENT_NAME);
             signature.setSigningCredential(metadataSigningCredential);
-            signature.setSignatureAlgorithm(SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA512);
+            signature.setSignatureAlgorithm(eidasClientProperties.getMetadataSignatureAlgorithm());
             signature.setCanonicalizationAlgorithm(SignatureConstants.ALGO_ID_C14N_EXCL_OMIT_COMMENTS);
 
             X509KeyInfoGeneratorFactory x509KeyInfoGeneratorFactory = new X509KeyInfoGeneratorFactory();
@@ -75,7 +75,7 @@ public class SPMetadataGenerator {
     private EntityDescriptor buildEntityDescriptor() {
         EntityDescriptor descriptor = OpenSAMLUtils.buildSAMLObject(EntityDescriptor.class);
         descriptor.setEntityID(eidasClientProperties.getSpEntityId());
-        descriptor.setValidUntil(DateTime.now().plusDays(1));
+        descriptor.setValidUntil(DateTime.now().plusDays(eidasClientProperties.getMetadataValidityInDays()));
         descriptor.setID(generateEntityDescriptorId());
         descriptor.setExtensions(generateMetadataExtensions());
         descriptor.getRoleDescriptors().add(buildSPSSODescriptor());
@@ -90,9 +90,11 @@ public class SPMetadataGenerator {
         spType.setTextContent(eidasClientProperties.getSpType().getValue());
         extensions.getUnknownXMLObjects().add(spType);
 
-        DigestMethod method = OpenSAMLUtils.buildSAMLObject(DigestMethod.class);
-        method.setAlgorithm("http://www.w3.org/2001/04/xmlenc#sha512");
-        extensions.getUnknownXMLObjects().add(method);
+        eidasClientProperties.getMetadataExtensionsDigestmethods().forEach( digestMethod -> {
+            DigestMethod method = OpenSAMLUtils.buildSAMLObject(DigestMethod.class);
+            method.setAlgorithm(digestMethod);
+            extensions.getUnknownXMLObjects().add(method);
+        });
 
         return extensions;
     }
