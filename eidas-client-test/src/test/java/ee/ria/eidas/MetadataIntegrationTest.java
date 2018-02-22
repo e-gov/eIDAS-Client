@@ -48,8 +48,11 @@ public class MetadataIntegrationTest extends TestsBase {
         Instant currentTime = Instant.now();
         XmlPath xmlPath = getMetadataBodyXML();
         Instant validUntil = Instant.parse(xmlPath.getString("EntityDescriptor.@validUntil"));
+        xmlPath = getMetadataBodyXML();
+        Instant validUntil2 = Instant.parse(xmlPath.getString("EntityDescriptor.@validUntil"));
         assertThat("The metadata should be valid for 24h",currentTime.plus(Duration.ofHours(23).plusMinutes(50)), lessThan(validUntil));
         assertThat("The metadata should be valid for 24h",validUntil, allOf(lessThan(currentTime.plus(Duration.ofHours(24).plusMinutes(5))), greaterThan(currentTime.plus(Duration.ofHours(23).plusMinutes(55)))));
+        assertThat("Metadata should be generated on each request", validUntil, not(equalTo(validUntil2)));
     }
 
     @Ignore

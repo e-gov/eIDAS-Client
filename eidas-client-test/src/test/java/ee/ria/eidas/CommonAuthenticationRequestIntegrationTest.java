@@ -3,10 +3,13 @@ package ee.ria.eidas;
 
 import ee.ria.eidas.config.IntegrationTest;
 import io.restassured.path.xml.XmlPath;
+import org.hamcrest.Matcher;
+import org.hamcrest.text.MatchesPattern;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mockito.Matchers;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.time.Duration;
@@ -16,6 +19,7 @@ import java.util.List;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Matchers.matches;
 
 @Category(IntegrationTest.class)
 public class CommonAuthenticationRequestIntegrationTest extends TestsBase {
@@ -78,11 +82,11 @@ public class CommonAuthenticationRequestIntegrationTest extends TestsBase {
     }
 
     @Ignore //TODO: IsPassive value is missing
-    @Test //TODO: Need a method to validate NCName format
+    @Test
     public void auth3_mandatoryValuesArePresentInEntityDescriptor() {
         XmlPath xmlPath = getDecodedSamlRequestBodyXml(getAuthenticationReqWithDefault());
         assertEquals("The Destination must be the connected eIDAS node URL", idpStartUrl, xmlPath.getString("AuthnRequest.@Destination"));
-        //assertTrue("ID must be in NCName format" , validateNCNameFormat(xmlPath.getString("AuthnRequest.@ID")));
+        assertThat("ID must be in NCName format" ,  xmlPath.getString("AuthnRequest.@ID"), MatchesPattern.matchesPattern("^[a-zA-Z_]*$"));//This regex may not be proper.
         assertEquals("The ForceAuthn must be: true", "true", xmlPath.getString("AuthnRequest.@ForceAuthn"));
         assertEquals("The IsPassive must be: false", "false", xmlPath.getString("AuthnRequest.@IsPassive"));
         assertEquals("The Version must be: 2.0", "2.0", xmlPath.getString("AuthnRequest.@Version"));

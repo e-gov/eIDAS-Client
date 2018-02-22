@@ -4,6 +4,7 @@ package ee.ria.eidas;
 import ee.ria.eidas.config.IntegrationTest;
 import io.restassured.RestAssured;
 import io.restassured.path.xml.XmlPath;
+import org.apache.commons.lang.RandomStringUtils;
 import org.hamcrest.Matchers;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -67,8 +68,7 @@ public class AuthenticationRequestIntegrationTest extends TestsBase {
         assertEquals("Country code is present","http://eidas.europa.eu/LoA/high", samlRequest.getString("AuthnRequest.RequestedAuthnContext.AuthnContextClassRef"));
     }
 
-    @Ignore //TODO: No check is currently made for country code format
-    @Test
+    @Test //TODO: needs a method to fetch the supported country codes
     public void auth6_invalidCountryIsNotAccepted() {
         given()
                 .formParam("relayState","")
@@ -77,13 +77,21 @@ public class AuthenticationRequestIntegrationTest extends TestsBase {
                 .contentType("application/x-www-form-urlencoded")
                 .config(RestAssured.config().encoderConfig(encoderConfig().defaultContentCharset("UTF-8")))
                 .when()
-                .post(spStartUrl).then().log().ifValidationFails().statusCode(400);
+                .post(spStartUrl).then().log().ifValidationFails().statusCode(400).body("error", Matchers.equalTo("Invalid country! Valid countries:[EE, CA]"));
+
+        given()
+                .formParam("relayState","")
+                .formParam("loa","LOW")
+                .formParam("country","ee")
+                .contentType("application/x-www-form-urlencoded")
+                .config(RestAssured.config().encoderConfig(encoderConfig().defaultContentCharset("UTF-8")))
+                .when()
+                .post(spStartUrl).then().log().ifValidationFails().statusCode(400).body("error", Matchers.equalTo("Invalid country! Valid countries:[EE, CA]"));
 
         XmlPath samlRequest = getDecodedSamlRequestBodyXml(getAuthenticationReq("EE", "HIGH", "relayState"));
         assertEquals("Country code is present","http://eidas.europa.eu/LoA/high", samlRequest.getString("AuthnRequest.RequestedAuthnContext.AuthnContextClassRef"));
     }
 
-    @Ignore //TODO: No check is currently made for country code support
     @Test
     public void auth6_notSupportedCountryIsNotAccepted() {
         given()
@@ -93,7 +101,7 @@ public class AuthenticationRequestIntegrationTest extends TestsBase {
                 .contentType("application/x-www-form-urlencoded")
                 .config(RestAssured.config().encoderConfig(encoderConfig().defaultContentCharset("UTF-8")))
                 .when()
-                .post(spStartUrl).then().log().ifValidationFails().statusCode(400);
+                .post(spStartUrl).then().log().ifValidationFails().statusCode(400).body("error", Matchers.equalTo("Invalid country! Valid countries:[EE, CA]"));
 
         XmlPath samlRequest = getDecodedSamlRequestBodyXml(getAuthenticationReq("EE", "HIGH", "relayState"));
         assertEquals("Country code is present","http://eidas.europa.eu/LoA/high", samlRequest.getString("AuthnRequest.RequestedAuthnContext.AuthnContextClassRef"));
@@ -145,6 +153,30 @@ public class AuthenticationRequestIntegrationTest extends TestsBase {
     public void auth9_loginPageIsDisplayed() {
         XmlPath html = new XmlPath(XmlPath.CompatibilityMode.HTML, getLoginPage());
         assertEquals("Login page is loaded", "eIDAS Client Login", html.getString("html.body.div.div.h1"));
+    }
+
+    @Test
+    public void auth6_errorIsReturnedOnWrongRelayStatePattern() {
+        String relayState = RandomStringUtils.randomAlphanumeric(81);
+        given()
+                .formParam("relayState",relayState)
+                .formParam("loa","LOW")
+                .formParam("country","CA")
+                .contentType("application/x-www-form-urlencoded")
+                .config(RestAssured.config().encoderConfig(encoderConfig().defaultContentCharset("UTF-8")))
+                .when()
+                .post(spStartUrl).then().log().ifValidationFails().statusCode(400).body("error", Matchers.equalTo("Invalid RelayState! Must match the following regexp: ^[a-zA-Z0-9-_]{0,80}$"));
+
+        relayState = "<>$";
+        given()
+                .formParam("relayState",relayState)
+                .formParam("loa","LOW")
+                .formParam("country","CA")
+                .contentType("application/x-www-form-urlencoded")
+                .config(RestAssured.config().encoderConfig(encoderConfig().defaultContentCharset("UTF-8")))
+                .when()
+                .post(spStartUrl).then().log().ifValidationFails().statusCode(400).body("error", Matchers.equalTo("Invalid RelayState! Must match the following regexp: ^[a-zA-Z0-9-_]{0,80}$"));
+
     }
 
     @Test
