@@ -60,9 +60,9 @@ eIDAS kliendi kasutajaliides kuvab isikutuvastuse tulemuse nii inimloetaval (HTM
 eIDAS konnektorteenuse SAML metaandmete laadimine ja kliendi enda metaandmete avaldamine toimub pärast eIDAS kliendi teenuse käivitamist (kuid enne kasutaja päringute teenindamist).
 
 SAML metadata laadimine:
-1. eIDAS klient genereerib oma metaandmed teenuse käivitamise korral ja publitseerib tulemuse XML failina kohalikku failisüsteemi. Genereeritud XML faili alusel kuvatakse sisu metadata otspunkti poole pöördujatele.
+1. eIDAS klient serverrib oma metateabe `/metadata` otspunktis. Metateave genereeritakse ja allkirjastatakse iga pöördumise korral.
 
-2. eIDAS konnektorteenuse metaandmed loetakse sisse rakenduse käivitamisel (eenevalt seadistatud URLilt) ja puhverdatakse (vt paigaldusjuhendit, et kontrollida puhvri aegumist jm parameetreid).
+2. eIDAS konnektorteenuse metateave loetakse sisse rakenduse käivitamisel (eenevalt seadistatud URLilt) ja puhverdatakse (vt paigaldusjuhendit, et kontrollida puhvri aegumist jm parameetreid). Ilma konnektorteenusele ligipääsu omamata rakendus ei käivitu.
 
 NB! Toetatud sihtriikide nimekiri (JSON vormingus) laetakse konfiguratsioonis määratud URL-lt rakenduse käivitamise ajal ning puhverdatakse (puhvri aegumine on seadistatav). JSON vorming vt [Toetatud riikide nimekiri](https://github.com/e-gov/eIDAS-Connector/blob/master/Spetsifikatsioon.md#toetatud-riikide-nimekiri).
 
@@ -120,14 +120,16 @@ Tabel 2.
 
 Rakenduse käivitamiseks vajalikud tegevused (eeldab Java 1.8+):
 
-1. Hangi lähtekood
+1. Hangi githubist viimane lähtekood
 `git clone https://github.com/e-gov/eIDAS-Client.git`
 2. Ehita veebirakendus
 `mvn clean install`
-3. Käivita veebirakendus
-`java -jar eidas-client-webapp/target/eidas-client-webapp-1.0-SNAPSHOT.war`
 
-NB! Alternatiivina näidiskliendi `eidas-client-webapp-1.0-SNAPSHOT.war` faili paigaldada ka traditisiooonilisse Java Servlet tuge pakkuvasse veebiserverisse.
+3. Käivita veebirakendus
+`java -jar eidas-client-webapp/target/eidas-client-webapp-1.0-SNAPSHOT.war` <br><br>NB! `War` faili saab paigaldada ka traditisiooonilisse Java Servlet tuge pakkuvasse veebiserverisse. <br><br>NB! Vaikimisi on veebirakendus seadistatud Eesti eIDAS konnektorteenuse vastu aadressil: `https://eidastest.eesti.ee/EidasNode/ConnectorResponderMetadata`. Tutvu konfiguratsiooniparameetritega seadistuse muutmiseks.
+
+4. Ava brauser urlil http://localhost:8889/
+
 
 ### Konfiguratsiooniparameetrid
 
@@ -138,11 +140,11 @@ Tabel 3.1 - Teenusepakkuja metateabe seadistus
 | :---------------- | :---------- | :----------------|
 | `eidas.client.keystore` | Jah | Võtmehoidla asukoht. Peab olema JKS tüüpi. classpath:samlKeystore.jks |
 | `eidas.client.keystorePass` | Jah | Võtmehoidla parool. |
-| `eidas.client.metadataSigningKeyId` | Jah | SAML metateabe allkirjastamisvõtme ID. |
+| `eidas.client.metadataSigningKeyId` | Jah | SAML metateabe allkirjastamisvõtme alias. |
 | `eidas.client.metadataSigningKeyPass` | Jah | SAML metateabe allkirjastamisvõtme parool. |
-| `eidas.client.requestSigningKeyId` | Jah | SAML autentimispäringu allkirjastamisvõtme ID. |
+| `eidas.client.requestSigningKeyId` | Jah | SAML autentimispäringu allkirjastamisvõtme alias. |
 | `eidas.client.requestSigningKeyPass` | Jah | SAML autentimispäringu allkirjastamisvõtme parool. |
-| `eidas.client.responseDecryptionKeyId` | Jah | SAML autentimisvastuse dekrüpteerimisvõtme ID. |
+| `eidas.client.responseDecryptionKeyId` | Jah | SAML autentimisvastuse dekrüpteerimisvõtme alias. |
 | `eidas.client.responseDecryptionKeyPass` | Jah | SAML autentimisvastuse dekrüpteerimisvõtme parool. |
 | `eidas.client.spEntityId` | Jah | `/md:EntityDescriptor/@Issuer` väärtus metateabes. Näiteks: https://hostname:8889/metadata |
 | `eidas.client.callbackUrl` | Jah | `/md:EntityDescriptor/md:SPSSODescriptor/md:AssertionConsumerService/@Location` väärtus metateabes. |
@@ -182,7 +184,7 @@ POST puhul algatab autentimisprotsessi. Võimalike parameetrite loetelu on toodu
 | ------------- |:-------------:| :-----|
 | `Country` |	Jah | Kohustuslik POST meetodi puhul. Parameeter määrab ära tuvastatava kodaniku riigi. Väärtus peab vastama [ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2) standardis toodule. |
 | `LoA` |	Ei | Parameeter, mis määrab ära nõutava isikutuvastuse taseme. Lubatud väärtused: `low`, `substantial`, `high`. <br>Kui parameeter on määramata, siis vaikimisi loetakse väärtuseks `low`. |
-| `RelayState` |	Ei | Parameeter, mis saadetakse edasi konnektorteenusele muutmata kujul. |
+| `RelayState` |	Ei | Parameeter, mis saadetakse edasi konnektorteenusele muutmata kujul. Väärtus peab vastama regulaaravaldisele `[a-zA-Z0-9-_]{0,80}`. |
 Tabel 3.
 
 ### /returnUrl
