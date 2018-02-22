@@ -2,6 +2,7 @@ package ee.ria.eidas.client.authnrequest;
 
 import ee.ria.eidas.client.config.EidasClientConfiguration;
 import ee.ria.eidas.client.config.EidasClientProperties;
+import ee.ria.eidas.client.exception.EidasClientException;
 import net.shibboleth.utilities.java.support.codec.HTMLEncoder;
 import org.junit.Before;
 import org.junit.Test;
@@ -54,6 +55,22 @@ public class EidasAuthenticationServiceTest {
         assertTrue(httpResponse.getContentAsString().contains("<input type=\"hidden\" name=\"SAMLRequest\""));
         assertTrue(httpResponse.getContentAsString().contains("<input type=\"hidden\" name=\"country\" value=\"EE\"/>"));
         assertTrue(httpResponse.getContentAsString().contains("<input type=\"hidden\" name=\"RelayState\" value=\"test\"/>"));
+    }
+
+    @Test(expected = EidasClientException.class)
+    public void invalidRelayState_throwsException() {
+        MockHttpServletRequest httpRequest = new MockHttpServletRequest();
+        MockHttpServletResponse httpResponse = new MockHttpServletResponse();
+
+        authenticationService.authenticate(httpRequest, httpResponse, "EE", AssuranceLevel.LOW, "ä");
+    }
+
+    @Test(expected = EidasClientException.class)
+    public void invalidCountry_throwsException() {
+        MockHttpServletRequest httpRequest = new MockHttpServletRequest();
+        MockHttpServletResponse httpResponse = new MockHttpServletResponse();
+
+        authenticationService.authenticate(httpRequest, httpResponse, "NEVERLAND", AssuranceLevel.LOW, "test");
     }
 
 }

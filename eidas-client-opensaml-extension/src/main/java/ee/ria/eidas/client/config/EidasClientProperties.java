@@ -2,6 +2,7 @@ package ee.ria.eidas.client.config;
 
 import javax.validation.constraints.NotNull;
 
+import ee.ria.eidas.client.authnrequest.AssuranceLevel;
 import ee.ria.eidas.client.authnrequest.SPType;
 import org.opensaml.xmlsec.signature.support.SignatureConstants;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -70,6 +71,12 @@ public class EidasClientProperties {
 
     @NotNull
     private SPType spType = SPType.PUBLIC;
+
+    @NotNull
+    private AssuranceLevel defaultLoa = AssuranceLevel.SUBSTANTIAL;
+
+    @NotNull
+    private String requestSignatureAlgorithm = SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA512;
 
     private int maximumAuthenticationLifetime = DEFAULT_MAXIMUM_AUTHENTICTION_LIFETIME;
 
@@ -247,4 +254,19 @@ public class EidasClientProperties {
         this.availableCountries = availableCountries;
     }
 
+    public AssuranceLevel getDefaultLoa() {
+        return defaultLoa;
+    }
+
+    public void setDefaultLoa(AssuranceLevel defaultLoa) {
+        this.defaultLoa = defaultLoa;
+    }
+
+    public String getRequestSignatureAlgorithm() {
+        return requestSignatureAlgorithm;
+    }
+
+    public void setRequestSignatureAlgorithm(String requestSignatureAlgorithm) {
+        this.requestSignatureAlgorithm = requestSignatureAlgorithm;
+    }
 }

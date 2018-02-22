@@ -207,16 +207,12 @@ public class TestsBase {
     protected Boolean validateSignature(String body, java.security.cert.X509Certificate x509) {
         try {
             x509.checkValidity();
-            SignableSAMLObject signableObj = (SignableSAMLObject) XmlUtils.unmarshallElement(body);
+            SignableSAMLObject signableObj = XmlUtils.unmarshallElement(body);
             X509Credential credential = CredentialSupport.getSimpleCredential(x509,null);
             SignatureValidator.validate(signableObj.getSignature(), credential);
             return true;
         } catch (SignatureException e) {
             throw new RuntimeException("Signature validation in validateSignature() failed: " + e.getMessage(), e);
-        } catch (XMLParserException e) {
-            throw new RuntimeException("XML parsing in validateSignature() failed: " + e.getMessage(), e);
-        } catch (UnmarshallingException e) {
-            throw new RuntimeException("Message body unmarshalling in validateSignature() failed: " + e.getMessage(), e);
         } catch (CertificateNotYetValidException e) {
             throw new RuntimeException("Certificate is not yet valid: " + e.getMessage(), e);
         } catch (CertificateExpiredException e) {

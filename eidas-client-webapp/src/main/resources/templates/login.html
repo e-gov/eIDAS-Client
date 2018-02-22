@@ -24,6 +24,7 @@
                     <label for="loa" class="col-sm-2 col-form-label col-form-label-sm">Level of assurance</label>
                     <div class="col-sm-4">
                         <select class="form-control" name="loa" id="loa">
+                            <option/>
                             <option th:each="loa : ${loas}" th:value="${loa}" th:text="${loa}"/>
                         </select>
                     </div>

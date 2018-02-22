@@ -15,8 +15,7 @@ import java.nio.charset.StandardCharsets;
 
 public class XmlUtils {
 
-    public static <T extends org.opensaml.core.xml.XMLObject> T unmarshallElement(String xml)
-            throws XMLParserException, UnmarshallingException {
+    public static <T extends org.opensaml.core.xml.XMLObject> T unmarshallElement(String xml) {
         try {
             final Document doc = parseXMLDocument(xml);
             final Element element = doc.getDocumentElement();

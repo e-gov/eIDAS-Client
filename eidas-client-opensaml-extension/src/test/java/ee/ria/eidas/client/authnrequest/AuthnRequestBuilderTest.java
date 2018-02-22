@@ -3,6 +3,7 @@ package ee.ria.eidas.client.authnrequest;
 import ee.ria.eidas.client.config.EidasClientConfiguration;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.metadata.IDPMetadataResolver;
+import ee.ria.eidas.client.util.OpenSAMLUtils;
 import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Before;
@@ -11,13 +12,26 @@ import org.junit.runner.RunWith;
 import org.opensaml.core.xml.XMLObject;
 import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.saml2.core.*;
+import org.opensaml.saml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml.saml2.metadata.SingleSignOnService;
 import org.opensaml.security.credential.Credential;
+import org.opensaml.xmlsec.signature.Signature;
+import org.opensaml.xmlsec.signature.support.SignatureConstants;
+import org.opensaml.xmlsec.signature.support.SignatureValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.xml.sax.SAXException;
 
+import javax.xml.XMLConstants;
+import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.Schema;
+import javax.xml.validation.SchemaFactory;
+import javax.xml.validation.Validator;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -47,8 +61,13 @@ public class AuthnRequestBuilderTest {
 
     @Test
     public void buildAuthnRequest() {
-        AuthnRequest authnRequest = requestBuilder.buildAuthnRequest(AssuranceLevel.LOW);
+        AuthnRequest authnRequest = requestBuilder.buildAuthnRequest(AssuranceLevel.SUBSTANTIAL);
+
         assertAuthnRequest(authnRequest);
+
+        InputStream authnRequestInputStream = new ByteArrayInputStream(OpenSAMLUtils.getXmlString(authnRequest).getBytes());
+        InputStream schemaInputStream = getClass().getResourceAsStream("/saml-schema-protocol-2.0");
+        validateXMLAgainstSchema(authnRequestInputStream, schemaInputStream);
     }
 
     private void assertAuthnRequest(AuthnRequest authnRequest) {
@@ -63,13 +82,16 @@ public class AuthnRequestBuilderTest {
 
         RequestedAuthnContext(authnRequest.getRequestedAuthnContext());
 
-        assertNotNull(authnRequest.getSignature().getSigningCredential());
-        assertNotNull(authnRequest.getSignature().getKeyInfo().getX509Datas().get(0).getX509Certificates().get(0));
+        assertSignature(authnRequest.getSignature());
 
         List<XMLObject> extensions = authnRequest.getExtensions().getUnknownXMLObjects();
         assertExtensions(extensions);
+    }
 
-        Assert.assertEquals(AssuranceLevel.LOW.getUri(), authnRequest.getRequestedAuthnContext().getAuthnContextClassRefs().get(0).getAuthnContextClassRef());
+    private void assertSignature(Signature signature) {
+        assertNotNull(signature.getSigningCredential());
+        assertNotNull(signature.getKeyInfo().getX509Datas().get(0).getX509Certificates().get(0));
+        assertEquals(SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA256, signature.getSignatureAlgorithm());
     }
 
     private void assertNameIDPolicy(NameIDPolicy nameIDPolicy) {
@@ -79,19 +101,17 @@ public class AuthnRequestBuilderTest {
 
     private void RequestedAuthnContext(RequestedAuthnContext requestedAuthnContext) {
         assertEquals(AuthnContextComparisonTypeEnumeration.MINIMUM, requestedAuthnContext.getComparison());
-        assertEquals(AssuranceLevel.LOW.getUri(), requestedAuthnContext.getAuthnContextClassRefs().get(0).getAuthnContextClassRef());
+        assertEquals(AssuranceLevel.SUBSTANTIAL.getUri(), requestedAuthnContext.getAuthnContextClassRefs().get(0).getAuthnContextClassRef());
     }
 
     private void assertExtensions(List<XMLObject> extensions) {
         assertSpType(extensions.get(0));
 
         XMLObject requestedAttributes = extensions.get(1);
-        assertRequestedAttribute(requestedAttributes.getOrderedChildren().get(0), "DateOfBirth", "http://eidas.europa.eu/attributes/naturalperson/DateOfBirth", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri");
-        assertRequestedAttribute(requestedAttributes.getOrderedChildren().get(1), "LegalName", "http://eidas.europa.eu/attributes/legalperson/LegalName", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri");
-        assertRequestedAttribute(requestedAttributes.getOrderedChildren().get(2), "LegalPersonIdentifier", "http://eidas.europa.eu/attributes/legalperson/LegalPersonIdentifier", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri");
-        assertRequestedAttribute(requestedAttributes.getOrderedChildren().get(3), "FamilyName", "http://eidas.europa.eu/attributes/naturalperson/CurrentFamilyName", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri");
-        assertRequestedAttribute(requestedAttributes.getOrderedChildren().get(4), "FirstName", "http://eidas.europa.eu/attributes/naturalperson/CurrentGivenName", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri");
-        assertRequestedAttribute(requestedAttributes.getOrderedChildren().get(5), "PersonIdentifier", "http://eidas.europa.eu/attributes/naturalperson/PersonIdentifier", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri");
+        assertRequestedAttribute(requestedAttributes.getOrderedChildren().get(0), "FirstName", "http://eidas.europa.eu/attributes/naturalperson/CurrentGivenName", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri");
+        assertRequestedAttribute(requestedAttributes.getOrderedChildren().get(1), "FamilyName", "http://eidas.europa.eu/attributes/naturalperson/CurrentFamilyName", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri");
+        assertRequestedAttribute(requestedAttributes.getOrderedChildren().get(2), "PersonIdentifier", "http://eidas.europa.eu/attributes/naturalperson/PersonIdentifier", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri");
+        assertRequestedAttribute(requestedAttributes.getOrderedChildren().get(3), "DateOfBirth", "http://eidas.europa.eu/attributes/naturalperson/DateOfBirth", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri");
     }
 
     private void assertSpType(XMLObject spType) {
@@ -104,6 +124,19 @@ public class AuthnRequestBuilderTest {
         assertEquals(expectedName, requestedAttribute.getDOM().getAttribute("Name"));
         assertEquals(expectedNameFormat, requestedAttribute.getDOM().getAttribute("NameFormat"));
         assertEquals("true", requestedAttribute.getDOM().getAttribute("isRequired"));
+    }
+
+    private boolean validateXMLAgainstSchema(InputStream xml, InputStream xsd) {
+        try {
+            SchemaFactory factory =
+                    SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+            Schema schema = factory.newSchema(new StreamSource(xsd));
+            Validator validator = schema.newValidator();
+            validator.validate(new StreamSource(xml));
+        } catch (IOException | SAXException e) {
+            return false;
+        }
+        return true;
     }
 
 }

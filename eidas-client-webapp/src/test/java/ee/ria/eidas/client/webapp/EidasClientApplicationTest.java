@@ -76,12 +76,12 @@ public class EidasClientApplicationTest {
             .statusCode(200)
             .extract().body();
 
-        EntityDescriptor signableObj = (EntityDescriptor)XmlUtils.unmarshallElement(body.asString());
+        EntityDescriptor signableObj = XmlUtils.unmarshallElement(body.asString());
         SignatureValidator.validate(signableObj.getSignature(), metadataSigningCredential);
     }
 
     @Test
-    public void httpPostBinding() {
+    public void httpPostBinding_shouldPass_whenAllParamsPresent() {
         given()
             .port(port)
             .queryParam("country", "EE")
@@ -95,6 +95,46 @@ public class EidasClientApplicationTest {
             .body("html.body.form.div.input[0].@value", equalTo("test"))
             .body("html.body.form.div.input[1].@value", not(empty()))
             .body("html.body.form.div.input[2].@value", equalTo("EE"));
+    }
+
+    @Test
+    public void httpPostBinding_shouldPass_whenOnlyCountryParamPresent() {
+        given()
+            .port(port)
+            .queryParam("country", "EE")
+        .when()
+            .post("/login")
+        .then()
+            .statusCode(200)
+            .body("html.body.form.@action", equalTo("http://localhost:8080/EidasNode/ServiceProvider"))
+            .body("html.body.form.div.input[0].@value", not(empty()))
+            .body("html.body.form.div.input[1].@value", equalTo("EE"));
+    }
+
+    @Test
+    public void httpPostBinding_shouldFail_whenCountryRequestParamInvalid() {
+        given()
+                .port(port)
+                .queryParam("country", "NEVERLAND")
+                .queryParam("relayState", "test")
+                .when()
+                .post("/login")
+                .then()
+                .statusCode(400)
+                .body("error", equalTo("Invalid country! Valid countries:[EE, CA]"));
+    }
+
+    @Test
+    public void httpPostBinding_shouldFail_whenRelayStateRequestParamInvalid() {
+        given()
+            .port(port)
+            .queryParam("country", "EE")
+            .queryParam("relayState", "ä")
+        .when()
+            .post("/login")
+        .then()
+            .statusCode(400)
+            .body("error", equalTo("Invalid RelayState! Must match the following regexp: ^[a-zA-Z0-9-_]{0,80}$"));
     }
 
     public static String readFileBody(String fileName) {

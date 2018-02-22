@@ -43,7 +43,7 @@ public class AuthnRequestBuilder {
                     .getBuilder(Signature.DEFAULT_ELEMENT_NAME)
                     .buildObject(Signature.DEFAULT_ELEMENT_NAME);
             signature.setSigningCredential(authnReqSigningCredential);
-            signature.setSignatureAlgorithm(SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA512);
+            signature.setSignatureAlgorithm(eidasClientProperties.getRequestSignatureAlgorithm());
             signature.setCanonicalizationAlgorithm(SignatureConstants.ALGO_ID_C14N_EXCL_OMIT_COMMENTS);
 
             X509KeyInfoGeneratorFactory x509KeyInfoGeneratorFactory = new X509KeyInfoGeneratorFactory();
@@ -92,6 +92,10 @@ public class AuthnRequestBuilder {
         requestedAuthnContext.setComparison(AuthnContextComparisonTypeEnumeration.MINIMUM);
 
         AuthnContextClassRef loaAuthnContextClassRef = OpenSAMLUtils.buildSAMLObject(AuthnContextClassRef.class);
+
+        if (loa == null) {
+            loa = eidasClientProperties.getDefaultLoa();
+        }
         loaAuthnContextClassRef.setAuthnContextClassRef(loa.getUri());
 
         requestedAuthnContext.getAuthnContextClassRefs().add(loaAuthnContextClassRef);
@@ -107,12 +111,10 @@ public class AuthnRequestBuilder {
         extensions.getUnknownXMLObjects().add(spType);
 
         XSAny requestedAttributes = new XSAnyBuilder().buildObject("http://eidas.europa.eu/saml-extensions", "RequestedAttributes", "eidas");
-        requestedAttributes.getUnknownXMLObjects().add(buildRequestedAttribute("DateOfBirth", "http://eidas.europa.eu/attributes/naturalperson/DateOfBirth", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri"));
-        requestedAttributes.getUnknownXMLObjects().add(buildRequestedAttribute("LegalName", "http://eidas.europa.eu/attributes/legalperson/LegalName", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri"));
-        requestedAttributes.getUnknownXMLObjects().add(buildRequestedAttribute("LegalPersonIdentifier", "http://eidas.europa.eu/attributes/legalperson/LegalPersonIdentifier", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri"));
-        requestedAttributes.getUnknownXMLObjects().add(buildRequestedAttribute("FamilyName", "http://eidas.europa.eu/attributes/naturalperson/CurrentFamilyName", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri"));
         requestedAttributes.getUnknownXMLObjects().add(buildRequestedAttribute("FirstName", "http://eidas.europa.eu/attributes/naturalperson/CurrentGivenName", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri"));
+        requestedAttributes.getUnknownXMLObjects().add(buildRequestedAttribute("FamilyName", "http://eidas.europa.eu/attributes/naturalperson/CurrentFamilyName", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri"));
         requestedAttributes.getUnknownXMLObjects().add(buildRequestedAttribute("PersonIdentifier", "http://eidas.europa.eu/attributes/naturalperson/PersonIdentifier", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri"));
+        requestedAttributes.getUnknownXMLObjects().add(buildRequestedAttribute("DateOfBirth", "http://eidas.europa.eu/attributes/naturalperson/DateOfBirth", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri"));
         extensions.getUnknownXMLObjects().add(requestedAttributes);
 
         return extensions;
