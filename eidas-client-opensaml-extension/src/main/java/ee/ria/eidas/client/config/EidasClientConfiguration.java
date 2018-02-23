@@ -57,9 +57,13 @@ public class EidasClientConfiguration {
     }
 
     @Bean
-    public IDPMetadataResolver idpMetadataResolver(@Qualifier("metadataSignatureTrustEngine") ExplicitKeySignatureTrustEngine metadataSignatureTrustEngine) throws IOException {
-        InputStream idpMetadata = resourceLoader.getResource(eidasClientProperties.getIdpMetadataUrl()).getInputStream();
-        return new IDPMetadataResolver(idpMetadata, metadataSignatureTrustEngine);
+    public IDPMetadataResolver idpMetadataResolver(@Qualifier("metadataSignatureTrustEngine") ExplicitKeySignatureTrustEngine metadataSignatureTrustEngine)  {
+        try {
+            InputStream idpMetadata = resourceLoader.getResource(eidasClientProperties.getIdpMetadataUrl()).getInputStream();
+            return new IDPMetadataResolver(idpMetadata, metadataSignatureTrustEngine);
+        } catch (IOException e) {
+            throw new IllegalStateException("Connection problems? Could not read IDP metadata from the following URL: " + eidasClientProperties.getIdpMetadataUrl(), e);
+        }
     }
 
     @Bean

@@ -3,6 +3,7 @@ package ee.ria.eidas;
 import com.sun.org.apache.xerces.internal.dom.DOMInputImpl;
 import ee.ria.eidas.client.utils.XmlUtils;
 import ee.ria.eidas.client.webapp.EidasClientApplication;
+import ee.ria.eidas.config.SystemPropertyActiveProfileResolver;
 import io.restassured.RestAssured;
 import io.restassured.config.XmlConfig;
 import io.restassured.path.xml.XmlPath;
@@ -37,8 +38,7 @@ import static io.restassured.internal.matcher.xml.XmlXsdMatcher.matchesXsdInClas
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(classes = EidasClientApplication.class, webEnvironment= SpringBootTest.WebEnvironment.DEFINED_PORT)
-@ActiveProfiles("test")
-@TestPropertySource(locations="classpath:application-test.properties")
+@ActiveProfiles( profiles={"test"}, resolver=SystemPropertyActiveProfileResolver.class)
 public class TestsBase {
 
     @Value("${local.server.port}")
