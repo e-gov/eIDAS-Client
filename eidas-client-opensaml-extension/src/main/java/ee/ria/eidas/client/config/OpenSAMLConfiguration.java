@@ -4,6 +4,7 @@ import ee.ria.eidas.client.exception.EidasClientException;
 import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
 import net.shibboleth.utilities.java.support.xml.BasicParserPool;
 import net.shibboleth.utilities.java.support.xml.ParserPool;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.opensaml.core.config.ConfigurationService;
 import org.opensaml.core.config.InitializationException;
 import org.opensaml.core.config.InitializationService;
@@ -13,6 +14,8 @@ import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.security.Provider;
+import java.security.Security;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,6 +28,7 @@ public class OpenSAMLConfiguration {
 
     static {
         LOGGER.info("Bootstrapping OpenSAML configuration");
+        Security.addProvider(new BouncyCastleProvider());
         bootstrap();
     }
 
@@ -57,7 +61,7 @@ public class OpenSAMLConfiguration {
         try {
             parserPool.initialize();
         } catch (final ComponentInitializationException e) {
-            throw new EidasClientException("Errir initializing parserPool", e);
+            throw new EidasClientException("Error initializing parserPool", e);
         }
         try {
             InitializationService.initialize();

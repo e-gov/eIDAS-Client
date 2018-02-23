@@ -63,7 +63,7 @@ public class EidasAuthenticationService {
         try {
             javaCryptoValidationInitializer.init();
             for (Provider jceProvider : Security.getProviders()) {
-                LOGGER.info(jceProvider.getInfo());
+                LOGGER.info(jceProvider.getName());
             }
             InitializationService.initialize();
         } catch (InitializationException e) {
