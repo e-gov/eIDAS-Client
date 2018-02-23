@@ -98,7 +98,7 @@ public class MetadataIntegrationTest extends TestsBase {
         given()
                 .config(RestAssured.config().encoderConfig(encoderConfig().defaultContentCharset("UTF-8")))
                 .when()
-                .get("/SP/MeTaDaTa").then().log().ifValidationFails().statusCode(405).body("error",equalTo("Not Found"));
+                .get("/SP/MeTaDaTa").then().log().ifValidationFails().statusCode(404).body("error",equalTo("Not Found"));
     }
 
     @Test
