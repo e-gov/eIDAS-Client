@@ -6,11 +6,8 @@ import ee.ria.eidas.client.webapp.EidasClientApplication;
 import io.restassured.RestAssured;
 import io.restassured.config.XmlConfig;
 import io.restassured.path.xml.XmlPath;
-import io.restassured.response.Response;
-import net.shibboleth.utilities.java.support.xml.XMLParserException;
 import org.junit.Before;
 import org.junit.runner.RunWith;
-import org.opensaml.core.xml.io.UnmarshallingException;
 import org.opensaml.saml.common.SignableSAMLObject;
 import org.opensaml.security.credential.CredentialSupport;
 import org.opensaml.security.x509.X509Credential;
@@ -95,69 +92,6 @@ public class TestsBase {
         String SAMLRequestString = html.getString("**.findAll { it.@name == 'SAMLRequest' }.@value");
         String decodedSAMLrequest = new String(Base64.getDecoder().decode(SAMLRequestString), StandardCharsets.UTF_8);
         return decodedSAMLrequest;
-    }
-
-    // This function is for DemoSP
-    protected String getAuthenticationReqBodyDemoSp() {
-        return given()
-                .formParam("eidasconnector","http://localhost:8080//EidasNode/ConnectorResponderMetadata")
-                .formParam("nodeMetadataUrl","http://localhost:8080//EidasNode/ConnectorResponderMetadata")
-                .formParam("citizenEidas","CA")
-                .formParam("returnUrl","http://localhost:8080/SP/ReturnPage")
-                .formParam("eidasNameIdentifier","urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified")
-                .formParam("eidasloa","http://eidas.europa.eu/LoA/low")
-                .formParam("eidasloaCompareType","minimum")
-                .formParam("eidasSPType","public")
-                .formParam("SPType","public")
-                .formParam("http://eidas.europa.eu/attributes/naturalperson/AdditionalAttribute","http://eidas.europa.eu/attributes/naturalperson/AdditionalAttribute")
-                .formParam("http://eidas.europa.eu/attributes/naturalperson/AdditionalAttributeType","false")
-                .formParam("http://eidas.europa.eu/attributes/naturalperson/BirthName","http://eidas.europa.eu/attributes/naturalperson/BirthName")
-                .formParam("http://eidas.europa.eu/attributes/naturalperson/BirthNameType","false")
-                .formParam("http://eidas.europa.eu/attributes/naturalperson/CurrentAddress","http://eidas.europa.eu/attributes/naturalperson/CurrentAddress")
-                .formParam("http://eidas.europa.eu/attributes/naturalperson/CurrentAddressType","false")
-                .formParam("http://eidas.europa.eu/attributes/naturalperson/CurrentFamilyName","http://eidas.europa.eu/attributes/naturalperson/CurrentFamilyName")
-                .formParam("http://eidas.europa.eu/attributes/naturalperson/CurrentFamilyNameType","true")
-                .formParam("http://eidas.europa.eu/attributes/naturalperson/CurrentGivenName","http://eidas.europa.eu/attributes/naturalperson/CurrentGivenName")
-                .formParam("http://eidas.europa.eu/attributes/naturalperson/CurrentGivenNameType","true")
-                .formParam("http://eidas.europa.eu/attributes/naturalperson/DateOfBirth","http://eidas.europa.eu/attributes/naturalperson/DateOfBirth")
-                .formParam("http://eidas.europa.eu/attributes/naturalperson/DateOfBirthType","true")
-                .formParam("http://eidas.europa.eu/attributes/naturalperson/CurrentFamilyNameType","true")
-                .formParam("http://eidas.europa.eu/attributes/naturalperson/Gender","http://eidas.europa.eu/attributes/naturalperson/Gender")
-                .formParam("http://eidas.europa.eu/attributes/naturalperson/GenderType","false")
-                .formParam("http://eidas.europa.eu/attributes/naturalperson/PersonIdentifier","http://eidas.europa.eu/attributes/naturalperson/PersonIdentifier")
-                .formParam("http://eidas.europa.eu/attributes/naturalperson/PlaceOfBirthType","false")
-                .formParam("allTypeEidas","none")
-                .contentType("application/x-www-form-urlencoded")
-                .config(RestAssured.config().encoderConfig(encoderConfig().defaultContentCharset("UTF-8")))
-                .when()
-                .post(spStartUrl).then().extract().body().asString();
-    }
-
-    // This function is for DemoSP
-    protected String getAuthenticationReqMinimalDataDemoSp() {
-        return given()
-                .formParam("eidasconnector","http://localhost:8080//EidasNode/ConnectorResponderMetadata")
-                .formParam("nodeMetadataUrl","http://localhost:8080//EidasNode/ConnectorResponderMetadata")
-                .formParam("citizenEidas","CA")
-                .formParam("returnUrl","http://localhost:8080/SP/ReturnPage")
-                .formParam("eidasNameIdentifier","urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified")
-                .formParam("eidasloa","http://eidas.europa.eu/LoA/low")
-                .formParam("eidasloaCompareType","minimum")
-                .formParam("eidasSPType","public")
-                .formParam("SPType","public")
-                .formParam("http://eidas.europa.eu/attributes/naturalperson/CurrentFamilyName","http://eidas.europa.eu/attributes/naturalperson/CurrentFamilyName")
-                .formParam("http://eidas.europa.eu/attributes/naturalperson/CurrentFamilyNameType","true")
-                .formParam("http://eidas.europa.eu/attributes/naturalperson/CurrentGivenName","http://eidas.europa.eu/attributes/naturalperson/CurrentGivenName")
-                .formParam("http://eidas.europa.eu/attributes/naturalperson/CurrentGivenNameType","true")
-                .formParam("http://eidas.europa.eu/attributes/naturalperson/DateOfBirth","http://eidas.europa.eu/attributes/naturalperson/DateOfBirth")
-                .formParam("http://eidas.europa.eu/attributes/naturalperson/DateOfBirthType","true")
-                .formParam("http://eidas.europa.eu/attributes/naturalperson/PersonIdentifier","http://eidas.europa.eu/attributes/naturalperson/PersonIdentifier")
-                .formParam("http://eidas.europa.eu/attributes/naturalperson/PersonIdentifierType","true")
-                .formParam("allTypeEidas","none")
-                .contentType("application/x-www-form-urlencoded")
-                .config(RestAssured.config().encoderConfig(encoderConfig().defaultContentCharset("UTF-8")))
-                .when()
-                .post(spStartUrl).then().extract().body().asString();
     }
 
     protected String getAuthenticationReqWithDefault() {

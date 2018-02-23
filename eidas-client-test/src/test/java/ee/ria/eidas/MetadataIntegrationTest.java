@@ -29,7 +29,7 @@ public class MetadataIntegrationTest extends TestsBase {
     private String spReturnUrl;
 
     @Ignore
-    @Test // Not relevant anymore
+    @Test // This is optional block
     public void metap2_mandatoryValuesArePresentInExtensions() {
         XmlPath xmlPath = getMetadataBodyXML();
 

@@ -3,13 +3,11 @@ package ee.ria.eidas;
 
 import ee.ria.eidas.config.IntegrationTest;
 import io.restassured.path.xml.XmlPath;
-import org.hamcrest.Matcher;
 import org.hamcrest.text.MatchesPattern;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.mockito.Matchers;
 import org.springframework.beans.factory.annotation.Value;
 
 import java.time.Duration;
@@ -19,7 +17,6 @@ import java.util.List;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Matchers.matches;
 
 @Category(IntegrationTest.class)
 public class CommonAuthenticationRequestIntegrationTest extends TestsBase {
@@ -46,6 +43,13 @@ public class CommonAuthenticationRequestIntegrationTest extends TestsBase {
         }
     }
 
+    @Test
+    public void auth1_parametersArePresent() {
+        XmlPath html = new XmlPath(XmlPath.CompatibilityMode.HTML, getAuthenticationReq("EE", "LOW", "relayState"));
+        assertEquals("Country code is present","EE", html.getString("**.findAll { it.@name == 'country' }.@value"));
+        assertEquals("RelayState is present","relayState", html.getString("**.findAll { it.@name == 'RelayState' }.@value"));
+    }
+
     @Ignore
     @Test //TODO: Does SAML request has also schema to validate against?
     public void auth1_verifySamlAuthRequestSchema() {
@@ -53,7 +57,7 @@ public class CommonAuthenticationRequestIntegrationTest extends TestsBase {
     }
 
     @Test
-    public void auth2_mandatoryValuesArePresentAndSetTrueForNaturalPersons() {
+    public void auth2_mandatoryAttributessArePresentAndSetTrueForNaturalPersons() {
         XmlPath xmlPath = getDecodedSamlRequestBodyXml(getAuthenticationReqWithDefault());
         assertEquals("Family name must be present and required set to: true", "true",
                 xmlPath.getString("**.findAll { it.@Name == 'http://eidas.europa.eu/attributes/naturalperson/CurrentFamilyName' }.@isRequired"));
@@ -96,8 +100,4 @@ public class CommonAuthenticationRequestIntegrationTest extends TestsBase {
         // This assertion may cause flakyness if the client server clock is different
         assertThat("The issuing time should be within 5 seconds of current time",issuingTime, allOf(lessThan(currentTime), greaterThan(currentTime.minus(Duration.ofMillis(5000)))));
     }
-
-
-
-
 }

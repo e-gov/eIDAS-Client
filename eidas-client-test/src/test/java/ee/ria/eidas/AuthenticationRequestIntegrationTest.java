@@ -35,14 +35,7 @@ public class AuthenticationRequestIntegrationTest extends TestsBase {
     private String spReturnUrl;
 
     @Test
-    public void auth6_parametersArePresent() {
-        XmlPath html = new XmlPath(XmlPath.CompatibilityMode.HTML, getAuthenticationReq("EE", "LOW", "relayState"));
-        assertEquals("Country code is present","EE", html.getString("**.findAll { it.@name == 'country' }.@value"));
-        assertEquals("RelayState is present","relayState", html.getString("**.findAll { it.@name == 'RelayState' }.@value"));
-    }
-
-    @Test
-    public void auth6_allLoaLevelsAreAccepted() {
+    public void auth4_allLoaLevelsAreAccepted() {
         XmlPath samlRequest = getDecodedSamlRequestBodyXml(getAuthenticationReq("EE", "LOW", "relayState"));
         assertEquals("Country code is present","http://eidas.europa.eu/LoA/low", samlRequest.getString("AuthnRequest.RequestedAuthnContext.AuthnContextClassRef"));
 
@@ -150,12 +143,6 @@ public class AuthenticationRequestIntegrationTest extends TestsBase {
     }
 
     @Test
-    public void auth9_loginPageIsDisplayed() {
-        XmlPath html = new XmlPath(XmlPath.CompatibilityMode.HTML, getLoginPage());
-        assertEquals("Login page is loaded", "eIDAS Client Login", html.getString("html.body.div.div.h1"));
-    }
-
-    @Test
     public void auth6_errorIsReturnedOnWrongRelayStatePattern() {
         String relayState = RandomStringUtils.randomAlphanumeric(81);
         given()
@@ -227,4 +214,9 @@ public class AuthenticationRequestIntegrationTest extends TestsBase {
                 .options(spStartUrl).then().log().ifValidationFails().statusCode(200).header("Allow",Matchers.equalTo("POST,GET,HEAD"));
     }
 
+    @Test
+    public void auth9_loginPageIsDisplayed() {
+        XmlPath html = new XmlPath(XmlPath.CompatibilityMode.HTML, getLoginPage());
+        assertEquals("Login page is loaded", "eIDAS Client Login", html.getString("html.body.div.div.h1"));
+    }
 }

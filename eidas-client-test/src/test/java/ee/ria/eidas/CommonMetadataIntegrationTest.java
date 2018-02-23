@@ -36,25 +36,16 @@ public class CommonMetadataIntegrationTest extends TestsBase {
         }
     }
 
-    @Test //this test is redundant, this will fail in hasValidSignature anyway
-    public void metap1_certificateIsPresentInSignature() {
-        XmlPath xmlPath = getMetadataBodyXML();
-        String signingCertificate = xmlPath.getString("EntityDescriptor.Signature.KeyInfo.X509Data.X509Certificate");
-        assertThat("Signing certificate must be present", signingCertificate, startsWith("MII"));
-    }
-
-
     @Test
     public void metap1_verifySamlMetadataSchema() {
         assertTrue("Metadata must be based on urn:oasis:names:tc:SAML:2.0:metadata schema", validateMetadataSchema());
     }
 
-    @Ignore //Not needed, because we have schema check?
-    @Test
+    @Test //TODO: Not needed, because we have schema check?
     public void metap1_verifySamlMetadataIdentifier() {
         String response = getMetadataBody();
         XmlPath xmlPath = new XmlPath(response).using(xmlPathConfig().namespaceAware(false));
-        assertEquals("The namespace should be expected", "urn:oasis:names:tc:SAML:2.0:metadata2", xmlPath.getString("EntityDescriptor.@xmlns:md"));
+        assertEquals("The namespace should be expected", "urn:oasis:names:tc:SAML:2.0:metadata", xmlPath.getString("EntityDescriptor.@xmlns:md"));
     }
 
     @Test
