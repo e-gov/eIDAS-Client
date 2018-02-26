@@ -91,7 +91,7 @@ public class AuthnRequestBuilderTest {
     private void assertSignature(Signature signature) {
         assertNotNull(signature.getSigningCredential());
         assertNotNull(signature.getKeyInfo().getX509Datas().get(0).getX509Certificates().get(0));
-        assertEquals(SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA256, signature.getSignatureAlgorithm());
+        assertEquals(properties.getRequestSignatureAlgorithm(), signature.getSignatureAlgorithm());
     }
 
     private void assertNameIDPolicy(NameIDPolicy nameIDPolicy) {

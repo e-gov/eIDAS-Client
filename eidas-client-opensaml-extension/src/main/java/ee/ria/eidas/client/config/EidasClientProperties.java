@@ -16,7 +16,6 @@ import java.util.List;
 public class EidasClientProperties {
 
     private static final int DEFAULT_MAXIMUM_AUTHENTICTION_LIFETIME = 3600;
-    private static final String DEFAULT_NAMEID_POLICY_FORMAT = "urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified";
     public static final String SESSION_ATTRIBUTE_USER_AUTHENTICATED = "authenticated";
     public static final String SESSION_ATTRIBUTE_ORIGINALLY_REQUESTED_URL = "originally_requested_url";
     public static final String DEFAULT_IDP_METADATA_SIGN_CERT_KEY = "metadata";
@@ -79,8 +78,6 @@ public class EidasClientProperties {
     private String requestSignatureAlgorithm = SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA256;
 
     private int maximumAuthenticationLifetime = DEFAULT_MAXIMUM_AUTHENTICTION_LIFETIME;
-
-    private String nameIdPolicyFormat = DEFAULT_NAMEID_POLICY_FORMAT;
 
     private String idpMetadataSigningCertificateKeyId = DEFAULT_IDP_METADATA_SIGN_CERT_KEY;
 
@@ -180,14 +177,6 @@ public class EidasClientProperties {
 
     public void setMaximumAuthenticationLifetime(int maximumAuthenticationLifetime) {
         this.maximumAuthenticationLifetime = maximumAuthenticationLifetime;
-    }
-
-    public String getNameIdPolicyFormat() {
-        return nameIdPolicyFormat;
-    }
-
-    public void setNameIdPolicyFormat(String nameIdPolicyFormat) {
-        this.nameIdPolicyFormat = nameIdPolicyFormat;
     }
 
     public String getSpEntityId() {

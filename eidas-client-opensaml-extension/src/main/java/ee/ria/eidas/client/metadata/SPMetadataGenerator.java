@@ -10,6 +10,7 @@ import org.opensaml.core.xml.schema.XSAny;
 import org.opensaml.core.xml.schema.impl.XSAnyBuilder;
 import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.ext.saml2alg.DigestMethod;
+import org.opensaml.saml.ext.saml2alg.SigningMethod;
 import org.opensaml.saml.saml2.core.NameIDType;
 import org.opensaml.saml.saml2.metadata.*;
 import org.opensaml.security.SecurityException;
@@ -26,8 +27,7 @@ import org.opensaml.xmlsec.signature.support.Signer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Collection;
-import java.util.LinkedList;
+import java.util.*;
 
 public class SPMetadataGenerator {
 
@@ -90,13 +90,29 @@ public class SPMetadataGenerator {
         spType.setTextContent(eidasClientProperties.getSpType().getValue());
         extensions.getUnknownXMLObjects().add(spType);
 
+        addUsedDigestMethodsToExtensions(extensions);
+        addUsedSigingMethodsToExtensions(extensions);
+
+        return extensions;
+    }
+
+    private void addUsedSigingMethodsToExtensions(Extensions extensions) {
+        Set<String> usedSigningMethods = new LinkedHashSet<String>();
+        usedSigningMethods.add(eidasClientProperties.getMetadataSignatureAlgorithm());
+        usedSigningMethods.add(eidasClientProperties.getRequestSignatureAlgorithm());
+        usedSigningMethods.forEach( signingMethod -> {
+            SigningMethod method = OpenSAMLUtils.buildSAMLObject(SigningMethod.class);
+            method.setAlgorithm(signingMethod);
+            extensions.getUnknownXMLObjects().add(method);
+        });
+    }
+
+    private void addUsedDigestMethodsToExtensions(Extensions extensions) {
         eidasClientProperties.getMetadataExtensionsDigestmethods().forEach( digestMethod -> {
             DigestMethod method = OpenSAMLUtils.buildSAMLObject(DigestMethod.class);
             method.setAlgorithm(digestMethod);
             extensions.getUnknownXMLObjects().add(method);
         });
-
-        return extensions;
     }
 
     private String generateEntityDescriptorId() {

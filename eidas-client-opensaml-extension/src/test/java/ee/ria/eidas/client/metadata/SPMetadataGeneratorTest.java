@@ -59,7 +59,7 @@ public class SPMetadataGeneratorTest {
 
     private void assertEntityDescriptor(EntityDescriptor entityDescriptor) {
         assertEquals(properties.getSpEntityId(), entityDescriptor.getEntityID());
-        assertTrue(entityDescriptor.getValidUntil().isBefore(DateTime.now().plusDays(2)));
+        assertTrue(entityDescriptor.getValidUntil().isBefore(DateTime.now().plusDays(properties.getMetadataValidityInDays())));
 
         assertSignature(entityDescriptor.getSignature());
         assertExtensions(entityDescriptor.getExtensions());
@@ -69,17 +69,21 @@ public class SPMetadataGeneratorTest {
     private void assertSignature(Signature signature) {
         assertNotNull(signature.getSigningCredential());
         assertNotNull(signature.getKeyInfo().getX509Datas().get(0).getX509Certificates().get(0));
-        assertEquals(SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA256, signature.getSignatureAlgorithm());
+        assertEquals(properties.getRequestSignatureAlgorithm(), signature.getSignatureAlgorithm());
     }
 
     private void assertExtensions(Extensions extensions) {
         List<XMLObject> extensionObjects = extensions.getUnknownXMLObjects();
+        assertSpType(extensionObjects);
+        XMLObject digestMethod2 = extensionObjects.get(1);
+        assertEquals("http://www.w3.org/2001/04/xmlenc#sha512", digestMethod2.getDOM().getAttribute("Algorithm"));
+        XMLObject signingMethod = extensionObjects.get(2);
+        assertEquals("http://www.w3.org/2001/04/xmldsig-more#rsa-sha512", signingMethod.getDOM().getAttribute("Algorithm"));
+    }
+
+    private void assertSpType(List<XMLObject> extensionObjects) {
         XMLObject spType = extensionObjects.get(0);
         assertSpType(spType);
-        XMLObject digestMethod = extensionObjects.get(1);
-        assertEquals("http://www.w3.org/2001/04/xmlenc#sha256", digestMethod.getDOM().getAttribute("Algorithm"));
-        XMLObject digestMethod2 = extensionObjects.get(2);
-        assertEquals("http://www.w3.org/2001/04/xmlenc#sha512", digestMethod2.getDOM().getAttribute("Algorithm"));
     }
 
     private void assertSpType(XMLObject spType) {
