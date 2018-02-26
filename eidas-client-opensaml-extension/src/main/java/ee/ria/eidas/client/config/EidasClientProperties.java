@@ -34,7 +34,7 @@ public class EidasClientProperties {
     private String metadataSigningKeyPass;
 
     @NotNull
-    private String metadataSignatureAlgorithm = SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA512;
+    private String metadataSignatureAlgorithm = SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA256;
 
     @NotNull
     private List<String> metadataExtensionsDigestmethods = Arrays.asList(SignatureConstants.ALGO_ID_DIGEST_SHA512);
@@ -76,7 +76,7 @@ public class EidasClientProperties {
     private AssuranceLevel defaultLoa = AssuranceLevel.SUBSTANTIAL;
 
     @NotNull
-    private String requestSignatureAlgorithm = SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA512;
+    private String requestSignatureAlgorithm = SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA256;
 
     private int maximumAuthenticationLifetime = DEFAULT_MAXIMUM_AUTHENTICTION_LIFETIME;
 
