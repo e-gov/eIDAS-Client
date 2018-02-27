@@ -3,19 +3,17 @@ package ee.ria.eidas.client.authnrequest;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.exception.EidasClientException;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
+import ee.ria.eidas.client.util.SAMLSigner;
 import org.joda.time.DateTime;
-import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
+import org.opensaml.core.xml.io.MarshallingException;
 import org.opensaml.core.xml.schema.XSAny;
 import org.opensaml.core.xml.schema.impl.XSAnyBuilder;
 import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.saml2.core.*;
 import org.opensaml.saml.saml2.metadata.SingleSignOnService;
+import org.opensaml.security.SecurityException;
 import org.opensaml.security.credential.Credential;
-import org.opensaml.xmlsec.keyinfo.impl.X509KeyInfoGeneratorFactory;
-import org.opensaml.xmlsec.signature.KeyInfo;
-import org.opensaml.xmlsec.signature.Signature;
-import org.opensaml.xmlsec.signature.support.SignatureConstants;
-import org.opensaml.xmlsec.signature.support.Signer;
+import org.opensaml.xmlsec.signature.support.SignatureException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,18 +37,6 @@ public class AuthnRequestBuilder {
 
     public AuthnRequest buildAuthnRequest(AssuranceLevel loa) {
         try {
-            Signature signature = (Signature) XMLObjectProviderRegistrySupport.getBuilderFactory()
-                    .getBuilder(Signature.DEFAULT_ELEMENT_NAME)
-                    .buildObject(Signature.DEFAULT_ELEMENT_NAME);
-            signature.setSigningCredential(authnReqSigningCredential);
-            signature.setSignatureAlgorithm(eidasClientProperties.getRequestSignatureAlgorithm());
-            signature.setCanonicalizationAlgorithm(SignatureConstants.ALGO_ID_C14N_EXCL_OMIT_COMMENTS);
-
-            X509KeyInfoGeneratorFactory x509KeyInfoGeneratorFactory = new X509KeyInfoGeneratorFactory();
-            x509KeyInfoGeneratorFactory.setEmitEntityCertificate(true);
-            KeyInfo keyInfo = x509KeyInfoGeneratorFactory.newInstance().generate(authnReqSigningCredential);
-            signature.setKeyInfo(keyInfo);
-
             AuthnRequest authnRequest = OpenSAMLUtils.buildSAMLObject(AuthnRequest.class);
             authnRequest.setIssueInstant(new DateTime());
             authnRequest.setForceAuthn(true);
@@ -64,15 +50,17 @@ public class AuthnRequestBuilder {
             authnRequest.setNameIDPolicy(buildNameIdPolicy());
             authnRequest.setRequestedAuthnContext(buildRequestedAuthnContext(loa));
             authnRequest.setExtensions(buildExtensions());
-            authnRequest.setSignature(signature);
 
-            XMLObjectProviderRegistrySupport.getMarshallerFactory().getMarshaller(authnRequest).marshall(authnRequest);
-            Signer.signObject(signature);
+            addSignature(authnRequest);
 
             return authnRequest;
         } catch (Exception e) {
             throw new EidasClientException("Failed to create authnRequest: " + e.getMessage(), e);
         }
+    }
+
+    private void addSignature(AuthnRequest authnRequest) throws SecurityException, MarshallingException, SignatureException {
+        new SAMLSigner(eidasClientProperties.getRequestSignatureAlgorithm(), authnReqSigningCredential).sign(authnRequest);
     }
 
     private NameIDPolicy buildNameIdPolicy() {

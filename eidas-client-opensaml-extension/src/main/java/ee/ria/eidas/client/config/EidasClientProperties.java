@@ -36,9 +36,6 @@ public class EidasClientProperties {
     private String metadataSignatureAlgorithm = SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA256;
 
     @NotNull
-    private List<String> metadataExtensionsDigestmethods = Arrays.asList(SignatureConstants.ALGO_ID_DIGEST_SHA512);
-
-    @NotNull
     private Integer metadataValidityInDays = 1;
 
     @NotNull
@@ -105,14 +102,6 @@ public class EidasClientProperties {
 
     public void setMetadataSignatureAlgorithm(String metadataSignatureAlgorithm) {
         this.metadataSignatureAlgorithm = metadataSignatureAlgorithm;
-    }
-
-    public List<String> getMetadataExtensionsDigestmethods() {
-        return metadataExtensionsDigestmethods;
-    }
-
-    public void setMetadataExtensionsDigestmethods(List<String> metadataExtensionsDigestmethods) {
-        this.metadataExtensionsDigestmethods = metadataExtensionsDigestmethods;
     }
 
     public Integer getMetadataValidityInDays() {

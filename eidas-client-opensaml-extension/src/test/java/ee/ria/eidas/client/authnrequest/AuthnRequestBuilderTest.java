@@ -10,6 +10,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opensaml.core.xml.XMLObject;
+import org.opensaml.saml.common.SAMLObjectContentReference;
 import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.saml2.core.*;
 import org.opensaml.saml.saml2.metadata.EntityDescriptor;
@@ -92,6 +93,7 @@ public class AuthnRequestBuilderTest {
         assertNotNull(signature.getSigningCredential());
         assertNotNull(signature.getKeyInfo().getX509Datas().get(0).getX509Certificates().get(0));
         assertEquals(properties.getRequestSignatureAlgorithm(), signature.getSignatureAlgorithm());
+        assertEquals(OpenSAMLUtils.getRelatedDigestAlgorithm(properties.getRequestSignatureAlgorithm()).getURI(), ((SAMLObjectContentReference) signature.getContentReferences().get(0)).getDigestAlgorithm());
     }
 
     private void assertNameIDPolicy(NameIDPolicy nameIDPolicy) {

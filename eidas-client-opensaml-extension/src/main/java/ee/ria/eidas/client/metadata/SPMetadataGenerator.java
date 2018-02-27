@@ -2,12 +2,14 @@ package ee.ria.eidas.client.metadata;
 
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.exception.EidasClientException;
+import ee.ria.eidas.client.util.SAMLSigner;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
 import org.apache.commons.lang.RandomStringUtils;
 import org.joda.time.DateTime;
-import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
+
 import org.opensaml.core.xml.schema.XSAny;
 import org.opensaml.core.xml.schema.impl.XSAnyBuilder;
+
 import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.ext.saml2alg.DigestMethod;
 import org.opensaml.saml.ext.saml2alg.SigningMethod;
@@ -16,14 +18,12 @@ import org.opensaml.saml.saml2.metadata.*;
 import org.opensaml.security.SecurityException;
 import org.opensaml.security.credential.Credential;
 import org.opensaml.security.credential.UsageType;
+
 import org.opensaml.xmlsec.config.DefaultSecurityConfigurationBootstrap;
 import org.opensaml.xmlsec.keyinfo.KeyInfoGenerator;
 import org.opensaml.xmlsec.keyinfo.NamedKeyInfoGeneratorManager;
-import org.opensaml.xmlsec.keyinfo.impl.X509KeyInfoGeneratorFactory;
+
 import org.opensaml.xmlsec.signature.KeyInfo;
-import org.opensaml.xmlsec.signature.Signature;
-import org.opensaml.xmlsec.signature.support.SignatureConstants;
-import org.opensaml.xmlsec.signature.support.Signer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -49,23 +49,8 @@ public class SPMetadataGenerator {
 
     public EntityDescriptor getMetadata() {
         try {
-            Signature signature = (Signature) XMLObjectProviderRegistrySupport.getBuilderFactory()
-                    .getBuilder(Signature.DEFAULT_ELEMENT_NAME)
-                    .buildObject(Signature.DEFAULT_ELEMENT_NAME);
-            signature.setSigningCredential(metadataSigningCredential);
-            signature.setSignatureAlgorithm(eidasClientProperties.getMetadataSignatureAlgorithm());
-            signature.setCanonicalizationAlgorithm(SignatureConstants.ALGO_ID_C14N_EXCL_OMIT_COMMENTS);
-
-            X509KeyInfoGeneratorFactory x509KeyInfoGeneratorFactory = new X509KeyInfoGeneratorFactory();
-            x509KeyInfoGeneratorFactory.setEmitEntityCertificate(true);
-            KeyInfo keyInfo = x509KeyInfoGeneratorFactory.newInstance().generate(metadataSigningCredential);
-            signature.setKeyInfo(keyInfo);
-
             EntityDescriptor entityDescriptor = buildEntityDescriptor();
-
-            entityDescriptor.setSignature(signature);
-            XMLObjectProviderRegistrySupport.getMarshallerFactory().getMarshaller(entityDescriptor).marshall(entityDescriptor);
-            Signer.signObject(signature);
+            new SAMLSigner(eidasClientProperties.getMetadataSignatureAlgorithm(), metadataSigningCredential).sign(entityDescriptor);
             return entityDescriptor;
         } catch (Exception e) {
             throw new EidasClientException("Error generating metadata", e);
@@ -89,8 +74,6 @@ public class SPMetadataGenerator {
         XSAny spType = new XSAnyBuilder().buildObject("http://eidas.europa.eu/saml-extensions", "SPType", "eidas");
         spType.setTextContent(eidasClientProperties.getSpType().getValue());
         extensions.getUnknownXMLObjects().add(spType);
-
-        addUsedDigestMethodsToExtensions(extensions);
         addUsedSigingMethodsToExtensions(extensions);
 
         return extensions;
@@ -103,14 +86,6 @@ public class SPMetadataGenerator {
         usedSigningMethods.forEach( signingMethod -> {
             SigningMethod method = OpenSAMLUtils.buildSAMLObject(SigningMethod.class);
             method.setAlgorithm(signingMethod);
-            extensions.getUnknownXMLObjects().add(method);
-        });
-    }
-
-    private void addUsedDigestMethodsToExtensions(Extensions extensions) {
-        eidasClientProperties.getMetadataExtensionsDigestmethods().forEach( digestMethod -> {
-            DigestMethod method = OpenSAMLUtils.buildSAMLObject(DigestMethod.class);
-            method.setAlgorithm(digestMethod);
             extensions.getUnknownXMLObjects().add(method);
         });
     }
@@ -184,4 +159,6 @@ public class SPMetadataGenerator {
         NamedKeyInfoGeneratorManager generatorManager = DefaultSecurityConfigurationBootstrap.buildBasicKeyInfoGeneratorManager();
         return generatorManager.getDefaultManager().getFactory(credential).newInstance();
     }
+
+
 }

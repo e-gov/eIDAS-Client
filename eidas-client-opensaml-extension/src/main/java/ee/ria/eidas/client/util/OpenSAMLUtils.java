@@ -7,8 +7,13 @@ import org.opensaml.core.xml.XMLObject;
 import org.opensaml.core.xml.XMLObjectBuilderFactory;
 import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
 import org.opensaml.core.xml.io.MarshallingException;
+import org.opensaml.xmlsec.algorithm.AlgorithmDescriptor;
+import org.opensaml.xmlsec.algorithm.AlgorithmSupport;
+import org.opensaml.xmlsec.algorithm.DigestAlgorithm;
+import org.opensaml.xmlsec.algorithm.SignatureAlgorithm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.util.Assert;
 import org.w3c.dom.Element;
 
 import javax.xml.namespace.QName;
@@ -42,5 +47,19 @@ public class OpenSAMLUtils {
         } catch (MarshallingException e) {
             throw new EidasClientException("Error generating xml from: " + object);
         }
+    }
+
+    public static SignatureAlgorithm getSignatureAlgorithm(String signatureAlgorithmId) {
+        AlgorithmDescriptor signatureAlgorithm =  AlgorithmSupport.getGlobalAlgorithmRegistry().get(signatureAlgorithmId);
+        Assert.notNull(signatureAlgorithm, "No signature algorithm support for: " + signatureAlgorithmId);
+        Assert.isInstanceOf(SignatureAlgorithm.class, signatureAlgorithm, "This is not a valid XML signature algorithm! Please check your configuration!");
+        return (SignatureAlgorithm) signatureAlgorithm;
+    }
+
+    public static DigestAlgorithm getRelatedDigestAlgorithm(String signatureAlgorithmId) {
+        SignatureAlgorithm signatureAlgorithm = getSignatureAlgorithm(signatureAlgorithmId);
+        DigestAlgorithm digestAlgorithm =  AlgorithmSupport.getGlobalAlgorithmRegistry().getDigestAlgorithm(signatureAlgorithm.getDigest());
+        Assert.notNull(digestAlgorithm, "No corresponding message digest algorithm support for signature algorithm: " + signatureAlgorithm.getURI());
+        return digestAlgorithm;
     }
 }

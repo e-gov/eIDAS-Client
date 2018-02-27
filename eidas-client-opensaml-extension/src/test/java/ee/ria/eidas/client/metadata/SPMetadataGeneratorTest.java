@@ -3,19 +3,20 @@ package ee.ria.eidas.client.metadata;
 import ee.ria.eidas.client.authnrequest.SPType;
 import ee.ria.eidas.client.config.EidasClientConfiguration;
 import ee.ria.eidas.client.config.EidasClientProperties;
+import ee.ria.eidas.client.util.OpenSAMLUtils;
 import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opensaml.core.xml.XMLObject;
+import org.opensaml.saml.common.SAMLObjectContentReference;
 import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.saml2.core.NameIDType;
 import org.opensaml.saml.saml2.metadata.*;
 import org.opensaml.security.credential.Credential;
 import org.opensaml.security.credential.UsageType;
 import org.opensaml.xmlsec.signature.Signature;
-import org.opensaml.xmlsec.signature.support.SignatureConstants;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
@@ -69,15 +70,14 @@ public class SPMetadataGeneratorTest {
     private void assertSignature(Signature signature) {
         assertNotNull(signature.getSigningCredential());
         assertNotNull(signature.getKeyInfo().getX509Datas().get(0).getX509Certificates().get(0));
-        assertEquals(properties.getRequestSignatureAlgorithm(), signature.getSignatureAlgorithm());
+        assertEquals(properties.getMetadataSignatureAlgorithm(), signature.getSignatureAlgorithm());
+        assertEquals(OpenSAMLUtils.getRelatedDigestAlgorithm(properties.getMetadataSignatureAlgorithm()).getURI(), ((SAMLObjectContentReference) signature.getContentReferences().get(0)).getDigestAlgorithm());
     }
 
     private void assertExtensions(Extensions extensions) {
         List<XMLObject> extensionObjects = extensions.getUnknownXMLObjects();
         assertSpType(extensionObjects);
-        XMLObject digestMethod2 = extensionObjects.get(1);
-        assertEquals("http://www.w3.org/2001/04/xmlenc#sha512", digestMethod2.getDOM().getAttribute("Algorithm"));
-        XMLObject signingMethod = extensionObjects.get(2);
+        XMLObject signingMethod = extensionObjects.get(1);
         assertEquals("http://www.w3.org/2001/04/xmldsig-more#rsa-sha512", signingMethod.getDOM().getAttribute("Algorithm"));
     }
 
