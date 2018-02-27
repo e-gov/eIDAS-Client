@@ -54,6 +54,7 @@ public class AuthnRequestBuilder {
             AuthnRequest authnRequest = OpenSAMLUtils.buildSAMLObject(AuthnRequest.class);
             authnRequest.setIssueInstant(new DateTime());
             authnRequest.setForceAuthn(true);
+            authnRequest.setIsPassive(false);
             authnRequest.setProviderName(eidasClientProperties.getProviderName());
             authnRequest.setDestination(singleSignOnService.getLocation());
             authnRequest.setProtocolBinding(SAMLConstants.SAML2_POST_BINDING_URI);
