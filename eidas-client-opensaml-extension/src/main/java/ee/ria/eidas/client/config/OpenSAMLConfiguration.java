@@ -11,9 +11,13 @@ import org.opensaml.core.config.InitializationService;
 import org.opensaml.core.xml.XMLObjectBuilderFactory;
 import org.opensaml.core.xml.config.XMLObjectProviderRegistry;
 import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
+import org.opensaml.xmlsec.algorithm.AlgorithmRegistry;
+import org.opensaml.xmlsec.algorithm.AlgorithmSupport;
+import org.opensaml.xmlsec.algorithm.SignatureAlgorithm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nonnull;
 import java.security.Provider;
 import java.security.Security;
 import java.util.HashMap;
@@ -65,6 +69,7 @@ public class OpenSAMLConfiguration {
         }
         try {
             InitializationService.initialize();
+            AlgorithmSupport.getGlobalAlgorithmRegistry().register(new OpenSAMLConfiguration.SignatureRSASHA256MGF1());
         } catch (final InitializationException e) {
             throw new EidasClientException("Error initializing OpenSAML", e);
         }
@@ -80,4 +85,33 @@ public class OpenSAMLConfiguration {
         registry.setParserPool(parserPool);
     }
 
+    public static final class SignatureRSASHA256MGF1 implements SignatureAlgorithm {
+        public SignatureRSASHA256MGF1() {
+        }
+
+        @Nonnull
+        public String getKey() {
+            return "RSA";
+        }
+
+        @Nonnull
+        public String getURI() {
+            return "http://www.w3.org/2007/05/xmldsig-more#sha256-rsa-MGF1";
+        }
+
+        @Nonnull
+        public AlgorithmType getType() {
+            return AlgorithmType.Signature;
+        }
+
+        @Nonnull
+        public String getJCAAlgorithmID() {
+            return "SHA256withRSAandMGF1";
+        }
+
+        @Nonnull
+        public String getDigest() {
+            return "SHA-256";
+        }
+    }
 }

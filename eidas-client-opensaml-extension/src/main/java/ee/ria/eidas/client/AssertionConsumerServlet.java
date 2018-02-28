@@ -64,14 +64,6 @@ public class AssertionConsumerServlet extends HttpServlet {
         this.spAssertionDecryptionCredential = spAssertionDecryptionCredential;
     }
 
-    public void init() {
-        try {
-            InitializationService.initialize();
-        } catch (Exception e) {
-            LOGGER.error("Error: ", e);
-        }
-    }
-
     public Response getSamlResponse(String samlResponse) throws XMLParserException, UnmarshallingException{
         return (Response) XMLObjectSupport.unmarshallFromInputStream(
                 OpenSAMLConfiguration.getParserPool(), new ByteArrayInputStream(samlResponse.getBytes(StandardCharsets.UTF_8)));

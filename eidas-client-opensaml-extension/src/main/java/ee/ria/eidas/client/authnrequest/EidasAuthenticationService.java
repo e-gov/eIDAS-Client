@@ -5,8 +5,6 @@ import ee.ria.eidas.client.exception.EidasClientException;
 import ee.ria.eidas.client.exception.InvalidEidasParamException;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
 import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
-import org.opensaml.core.config.InitializationException;
-import org.opensaml.core.config.InitializationService;
 import org.opensaml.messaging.context.MessageContext;
 import org.opensaml.messaging.encoder.MessageEncodingException;
 import org.opensaml.saml.common.messaging.context.SAMLEndpointContext;
@@ -15,7 +13,6 @@ import org.opensaml.saml.saml2.core.AuthnRequest;
 import org.opensaml.saml.saml2.metadata.SingleSignOnService;
 import org.opensaml.security.credential.Credential;
 import org.opensaml.xmlsec.SignatureSigningParameters;
-import org.opensaml.xmlsec.config.JavaCryptoValidationInitializer;
 import org.opensaml.xmlsec.context.SecurityParametersContext;
 import org.opensaml.xmlsec.signature.support.SignatureConstants;
 import org.slf4j.Logger;
@@ -23,8 +20,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.security.Provider;
-import java.security.Security;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -40,10 +35,6 @@ public class EidasAuthenticationService {
 
     private SingleSignOnService singleSignOnService;
 
-    static {
-        init();
-    }
-
     public EidasAuthenticationService(Credential authnReqSigningCredential, EidasClientProperties eidasClientProperties, SingleSignOnService singleSignOnService) {
         this.authnReqSigningCredential = authnReqSigningCredential;
         this.eidasClientProperties = eidasClientProperties;
@@ -56,19 +47,6 @@ public class EidasAuthenticationService {
 
         setGotoURLOnSession(request);
         redirectUserForAuthentication(response, country, loa, relayState);
-    }
-
-    private static void init() {
-        JavaCryptoValidationInitializer javaCryptoValidationInitializer = new JavaCryptoValidationInitializer();
-        try {
-            javaCryptoValidationInitializer.init();
-            for (Provider jceProvider : Security.getProviders()) {
-                LOGGER.info(jceProvider.getName());
-            }
-            InitializationService.initialize();
-        } catch (InitializationException e) {
-            throw new InvalidEidasParamException("Error initializing Authentication service!", e);
-        }
     }
 
     private void setGotoURLOnSession(HttpServletRequest request) {

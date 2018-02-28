@@ -135,7 +135,7 @@ Rakenduse käivitamiseks vajalikud tegevused (eeldab Java 1.8+):
 Veebirakendus käivitub vaikeseadistustes kui konfiguratsioonifaili asukohta ei täpsustata (vt Seadistusparameetrid allpool). Seadistust on võimalik muuta, andes käivitamisel kaasa oma konfiguratisoonifaili koos soovitud parameetritega.
 
 Näide 1 - Käsurealt käivitamine
-`java -Dspring.config.location=/etc/eidas-client/application.properties -jar eidas-client-webapp/target/eidas-client-webapp-1.0-SNAPSHOT.war`
+`java -Dspring.config.location="/etc/eidas-client/application.properties" -jar eidas-client-webapp/target/eidas-client-webapp-1.0-SNAPSHOT.war`
 
 Näide 2 - war failina paigaldades (Tomcat veebiserverisse)
 
@@ -150,11 +150,10 @@ Tabel 3.1 - Teenusepakkuja metateabe seadistus
 | Parameeter        | Kohustuslik | Kirjeldus, näide |
 | :---------------- | :---------- | :----------------|
 | `eidas.client.keystore` | Jah | Võtmehoidla asukoha kirjeldus. Näide: `classpath:samlKeystore.jks`, kui fail loetakse classpathi kaudu või `file:/etc/eidas-client/samlKeystore.jks` kui loetakse otse failisüsteemist. Võtmehoidla peab olema JKS tüüpi. |
-| `eidas.client.keystorePass` | Jah | Võtmehoidla parool. |
+| `eidas.client.keystorePass` | Jah | SAML võtmehoidla parool. |
 | `eidas.client.metadataSigningKeyId` | Jah | SAML metateabe allkirjastamisvõtme alias. |
 | `eidas.client.metadataSigningKeyPass` | Jah | SAML metateabe allkirjastamisvõtme parool. |
-| `eidas.client.requestSigningKeyId` | Jah | SAML autentimispäringu allkirjastamisvõtme alias. |
-| `eidas.client.requestSigningKeyPass` | Jah | SAML autentimispäringu allkirjastamisvõtme parool. |
+| `eidas.client.metadataSignatureAlgorithm` | Ei | Metateabe allkirja algoritm. Lubatud väärtused vastavalt. Vaikimisi `http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha512`  |
 | `eidas.client.responseDecryptionKeyId` | Jah | SAML autentimisvastuse dekrüpteerimisvõtme alias. |
 | `eidas.client.responseDecryptionKeyPass` | Jah | SAML autentimisvastuse dekrüpteerimisvõtme parool. |
 | `eidas.client.spEntityId` | Jah | URL, mis viitab teenusepakkuja metateabele. `/md:EntityDescriptor/@entityID` väärtus metateabes. Näiteks: https://hostname:8889/metadata |
@@ -170,14 +169,15 @@ Tabel 3.2 - Konnektorteenuse metateabe küsimise seadistus
 | `eidas.client.idpMetadataUrl`  | Jah | URL. Konnektorteenuse metateabe asukoht. https://eidastest.eesti.ee/EidasNode/ConnectorResponderMetadata |
 | `eidas.client.idpMetadataSigningCertificateKeyId` | Ei | Konnektorteeenuse metateabe allkirjastamiseks kasutatud sertifikaadi alias võtmehoidlas. Vaikimisi alias: `metadata`. |
 
-
 Tabel 3.3 - Saadetava AuthnRequesti seadistus
 
 | Parameeter        | Kohustuslik | Kirjeldus, näide |
 | :---------------- | :---------- | :----------------|
 | `eidas.client.providerName` | Jah | Teenusepakkuja lühinimetus. `/saml2p:AuthnRequest/@ProviderName` väärtus. |
+| `eidas.client.requestSigningKeyId` | Jah | SAML autentimispäringu allkirjastamisvõtme alias. |
+| `eidas.client.requestSigningKeyPass` | Jah | SAML autentimispäringu allkirjastamisvõtme parool. |
 | `eidas.client.maximumAuthenticationLifetime` | Ei | Autentimispäringu eluiga sekundites. Vaikimisi 3600.|
-| `eidas.client.requestSignatureAlgorithm` | Ei | Autentimispäringu allkirja algoritm. Lubatud väärtused vastavalt https://www.w3.org/TR/xmlenc-core1/ toodule. Vaikimisi `http://www.w3.org/2001/04/xmldsig-more#rsa-sha512`  |
+| `eidas.client.requestSignatureAlgorithm` | Ei | Autentimispäringu allkirja algoritm. Vaikimisi `http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha512`  |
 
 
 Tabel 3.4 - Demo veebirakenduse seadistus

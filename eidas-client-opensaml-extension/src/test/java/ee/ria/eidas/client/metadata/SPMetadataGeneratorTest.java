@@ -78,7 +78,7 @@ public class SPMetadataGeneratorTest {
         List<XMLObject> extensionObjects = extensions.getUnknownXMLObjects();
         assertSpType(extensionObjects);
         XMLObject signingMethod = extensionObjects.get(1);
-        assertEquals("http://www.w3.org/2001/04/xmldsig-more#rsa-sha512", signingMethod.getDOM().getAttribute("Algorithm"));
+        assertEquals("http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha512", signingMethod.getDOM().getAttribute("Algorithm"));
     }
 
     private void assertSpType(List<XMLObject> extensionObjects) {
