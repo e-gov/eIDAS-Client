@@ -1,6 +1,7 @@
 package ee.ria.eidas.client.config;
 
-import ee.ria.eidas.client.authnrequest.EidasAuthenticationService;
+import ee.ria.eidas.client.AuthInitiationService;
+import ee.ria.eidas.client.AuthResponseService;
 import ee.ria.eidas.client.exception.EidasClientException;
 import ee.ria.eidas.client.metadata.IDPMetadataResolver;
 import ee.ria.eidas.client.metadata.SPMetadataGenerator;
@@ -26,6 +27,7 @@ import org.opensaml.xmlsec.signature.support.impl.ExplicitKeySignatureTrustEngin
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
@@ -132,13 +134,6 @@ public class EidasClientConfiguration {
     }
 
     @Bean
-    public EidasAuthenticationService eidasAuthProtectedUrlFilterRegistration(
-            @Qualifier("authnReqSigningCredential") Credential signingCredential,
-            SingleSignOnService singleSignOnService) {
-        return new EidasAuthenticationService(signingCredential, eidasClientProperties, singleSignOnService);
-    }
-
-    @Bean
     public ExplicitKeySignatureTrustEngine metadataSignatureTrustEngine(KeyStore keyStore) {
         try {
             X509Certificate cert = (X509Certificate) keyStore.getCertificate(eidasClientProperties.getIdpMetadataSigningCertificateKeyId());
@@ -186,6 +181,18 @@ public class EidasClientConfiguration {
         }
 
         return new ExplicitKeySignatureTrustEngine(metadataCredentialResolver, keyResolver);
+    }
+
+    @Bean
+    public AuthInitiationService authInitiationService(@Qualifier("authnReqSigningCredential") Credential signingCredential, SingleSignOnService singleSignOnService) {
+        return new AuthInitiationService(signingCredential, eidasClientProperties, singleSignOnService);
+    }
+
+    @Bean
+    public AuthResponseService authResponseService(
+            @Qualifier("responseSignatureTrustEngine") ExplicitKeySignatureTrustEngine explicitKeySignatureTrustEngine,
+            @Qualifier("responseAssertionDecryptionCredential") Credential responseAssertionDecryptionCredential) {
+        return new AuthResponseService(eidasClientProperties, explicitKeySignatureTrustEngine, responseAssertionDecryptionCredential);
     }
 
     private Credential getCredential(KeyStore keystore, String keyPairId, String privateKeyPass) {

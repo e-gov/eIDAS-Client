@@ -1,5 +1,7 @@
-package ee.ria.eidas.client.authnrequest;
+package ee.ria.eidas.client;
 
+import ee.ria.eidas.client.AuthInitiationService;
+import ee.ria.eidas.client.authnrequest.AssuranceLevel;
 import ee.ria.eidas.client.config.EidasClientConfiguration;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.exception.EidasClientException;
@@ -11,7 +13,6 @@ import org.opensaml.saml.saml2.metadata.SingleSignOnService;
 import org.opensaml.security.credential.Credential;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.mock.web.MockFilterChain;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.context.ContextConfiguration;
@@ -24,7 +25,7 @@ import static org.junit.Assert.assertTrue;
 @TestPropertySource(locations="classpath:application-test.properties")
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = EidasClientConfiguration.class)
-public class EidasAuthenticationServiceTest {
+public class AuthInitiationServiceTest {
 
     @Autowired
     private EidasClientProperties properties;
@@ -35,19 +36,17 @@ public class EidasAuthenticationServiceTest {
     @Autowired
     private SingleSignOnService singleSignOnService;
 
-    private EidasAuthenticationService authenticationService;
+    private AuthInitiationService authenticationService;
 
     @Before
     public void setUp() {
-        authenticationService = new EidasAuthenticationService(authnReqSigningCredential, properties, singleSignOnService);
+        authenticationService = new AuthInitiationService(authnReqSigningCredential, properties, singleSignOnService);
     }
 
     @Test
     public void returnsHttpPostBindingResponse() throws Exception {
-        MockHttpServletRequest httpRequest = new MockHttpServletRequest();
         MockHttpServletResponse httpResponse = new MockHttpServletResponse();
-
-        authenticationService.authenticate(httpRequest, httpResponse, "EE", AssuranceLevel.LOW, "test");
+        authenticationService.authenticate(httpResponse, "EE", AssuranceLevel.LOW, "test");
 
         assertEquals(HttpStatus.OK.value(), httpResponse.getStatus());
         String htmlForm = "<form action=\"" + HTMLEncoder.encodeForHTMLAttribute(singleSignOnService.getLocation()) + "\" method=\"post\">";
@@ -59,18 +58,14 @@ public class EidasAuthenticationServiceTest {
 
     @Test(expected = EidasClientException.class)
     public void invalidRelayState_throwsException() {
-        MockHttpServletRequest httpRequest = new MockHttpServletRequest();
         MockHttpServletResponse httpResponse = new MockHttpServletResponse();
-
-        authenticationService.authenticate(httpRequest, httpResponse, "EE", AssuranceLevel.LOW, "ä");
+        authenticationService.authenticate(httpResponse, "EE", AssuranceLevel.LOW, "ä");
     }
 
     @Test(expected = EidasClientException.class)
     public void invalidCountry_throwsException() {
-        MockHttpServletRequest httpRequest = new MockHttpServletRequest();
         MockHttpServletResponse httpResponse = new MockHttpServletResponse();
-
-        authenticationService.authenticate(httpRequest, httpResponse, "NEVERLAND", AssuranceLevel.LOW, "test");
+        authenticationService.authenticate(httpResponse, "NEVERLAND", AssuranceLevel.LOW, "test");
     }
 
 }

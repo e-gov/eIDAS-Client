@@ -1,5 +1,8 @@
-package ee.ria.eidas.client.authnrequest;
+package ee.ria.eidas.client;
 
+import ee.ria.eidas.client.authnrequest.AssuranceLevel;
+import ee.ria.eidas.client.authnrequest.AuthnRequestBuilder;
+import ee.ria.eidas.client.authnrequest.EidasHTTPPostEncoder;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.exception.EidasClientException;
 import ee.ria.eidas.client.exception.InvalidEidasParamException;
@@ -18,14 +21,13 @@ import org.opensaml.xmlsec.signature.support.SignatureConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class EidasAuthenticationService {
+public class AuthInitiationService {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(EidasAuthenticationService.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(AuthInitiationService.class);
 
     private static String RELAYSTATE_VALIDATION_REGEXP = "^[a-zA-Z0-9-_]{0,80}$";
 
@@ -35,22 +37,17 @@ public class EidasAuthenticationService {
 
     private SingleSignOnService singleSignOnService;
 
-    public EidasAuthenticationService(Credential authnReqSigningCredential, EidasClientProperties eidasClientProperties, SingleSignOnService singleSignOnService) {
+    public AuthInitiationService(Credential authnReqSigningCredential, EidasClientProperties eidasClientProperties, SingleSignOnService singleSignOnService) {
         this.authnReqSigningCredential = authnReqSigningCredential;
         this.eidasClientProperties = eidasClientProperties;
         this.singleSignOnService = singleSignOnService;
     }
 
-    public void authenticate(HttpServletRequest request, HttpServletResponse response, String country, AssuranceLevel loa, String relayState) {
+    public void authenticate(HttpServletResponse response, String country, AssuranceLevel loa, String relayState) {
         validateCountry(country);
         validateRelayState(relayState);
 
-        setGotoURLOnSession(request);
         redirectUserForAuthentication(response, country, loa, relayState);
-    }
-
-    private void setGotoURLOnSession(HttpServletRequest request) {
-        request.getSession().setAttribute(EidasClientProperties.SESSION_ATTRIBUTE_ORIGINALLY_REQUESTED_URL, request.getRequestURL().toString());
     }
 
     private void redirectUserForAuthentication(HttpServletResponse httpServletResponse, String country, AssuranceLevel loa, String relayState) {

@@ -1,14 +1,14 @@
-package ee.ria.eidas.client.assertion;
+package ee.ria.eidas.client;
 
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.config.OpenSAMLConfiguration;
 import ee.ria.eidas.client.exception.EidasClientException;
+import ee.ria.eidas.client.response.AuthenticationResult;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
 import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
 import net.shibboleth.utilities.java.support.resolver.CriteriaSet;
 import net.shibboleth.utilities.java.support.resolver.ResolverException;
 import net.shibboleth.utilities.java.support.xml.XMLParserException;
-import org.opensaml.core.config.InitializationService;
 import org.opensaml.core.criterion.EntityIdCriterion;
 import org.opensaml.core.xml.XMLObject;
 import org.opensaml.core.xml.io.UnmarshallingException;
@@ -48,9 +48,9 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
-public class AssertionConsumerServlet extends HttpServlet {
+public class AuthResponseService {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(AssertionConsumerServlet.class);
+    private static Logger LOGGER = LoggerFactory.getLogger(AuthResponseService.class);
 
     private EidasClientProperties eidasClientProperties;
 
@@ -58,13 +58,13 @@ public class AssertionConsumerServlet extends HttpServlet {
 
     private Credential spAssertionDecryptionCredential;
 
-    public AssertionConsumerServlet(EidasClientProperties eidasClientProperties, ExplicitKeySignatureTrustEngine explicitKeySignatureTrustEngine, Credential spAssertionDecryptionCredential) {
+    public AuthResponseService(EidasClientProperties eidasClientProperties, ExplicitKeySignatureTrustEngine explicitKeySignatureTrustEngine, Credential spAssertionDecryptionCredential) {
         this.eidasClientProperties = eidasClientProperties;
         this.explicitKeySignatureTrustEngine = explicitKeySignatureTrustEngine;
         this.spAssertionDecryptionCredential = spAssertionDecryptionCredential;
     }
 
-    public void doPost(final HttpServletRequest req, final HttpServletResponse resp) {
+    public AuthenticationResult getAuthenticationResult(HttpServletRequest req) {
         Response samlResponse;
         try {
             String encodedSamlResponse = req.getParameter("SAMLResponse");
@@ -88,8 +88,7 @@ public class AssertionConsumerServlet extends HttpServlet {
         logAuthenticationInstant(assertion);
         logAuthenticationMethod(assertion);
 
-        setAuthenticatedSession(req);
-        redirectToGotoURL(req, resp);
+        return new AuthenticationResult(samlResponse, assertion);
     }
 
     private Response getSamlResponse(String samlResponse) throws XMLParserException, UnmarshallingException{
@@ -105,7 +104,7 @@ public class AssertionConsumerServlet extends HttpServlet {
         messageInfoContext.setMessageIssueInstant(samlResponse.getIssueInstant());
 
         MessageLifetimeSecurityHandler lifetimeSecurityHandler = new MessageLifetimeSecurityHandler();
-        lifetimeSecurityHandler.setClockSkew(100000);
+        lifetimeSecurityHandler.setClockSkew(1000);
         lifetimeSecurityHandler.setMessageLifetime(2000);
         lifetimeSecurityHandler.setRequiredRule(true);
 
@@ -163,20 +162,6 @@ public class AssertionConsumerServlet extends HttpServlet {
             throw new IllegalStateException("Signature verification failed!", e);
         }
 
-    }
-
-    private void setAuthenticatedSession(HttpServletRequest req) {
-        req.getSession().setAttribute(EidasClientProperties.SESSION_ATTRIBUTE_USER_AUTHENTICATED, true);
-    }
-
-    private void redirectToGotoURL(HttpServletRequest req, HttpServletResponse resp) {
-        String gotoURL = (String) req.getSession().getAttribute(EidasClientProperties.SESSION_ATTRIBUTE_ORIGINALLY_REQUESTED_URL);
-        LOGGER.info("Redirecting to requested URL: " + gotoURL);
-        try {
-            resp.sendRedirect(gotoURL);
-        } catch (IOException e) {
-            throw new EidasClientException("Error sending redirect response");
-        }
     }
 
     private void logAuthenticationMethod(Assertion assertion) {

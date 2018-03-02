@@ -1,8 +1,10 @@
-package ee.ria.eidas.client.assertion;
+package ee.ria.eidas.client;
 
+import ee.ria.eidas.client.AuthResponseService;
 import ee.ria.eidas.client.authnrequest.AssuranceLevel;
 import ee.ria.eidas.client.config.EidasClientConfiguration;
 import ee.ria.eidas.client.config.EidasClientProperties;
+import ee.ria.eidas.client.response.AuthenticationResult;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
 import net.shibboleth.utilities.java.support.resolver.CriteriaSet;
 import net.shibboleth.utilities.java.support.resolver.Criterion;
@@ -51,7 +53,7 @@ import static org.junit.Assert.assertEquals;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = EidasClientConfiguration.class)
 @TestPropertySource(locations="classpath:application-test.properties")
-public class AssertionConsumerServletTest {
+public class AuthResponseServiceTest {
 
     @Autowired
     private EidasClientProperties properties;
@@ -65,31 +67,25 @@ public class AssertionConsumerServletTest {
     @Autowired
     public KeyStore samlKeystore;
 
-    AssertionConsumerServlet assertionConsumerServlet;
+    AuthResponseService authResponseService;
+
+    private MockHttpServletRequest httpRequest;
 
     @Before
-    public void setUp() {
-        assertionConsumerServlet = new AssertionConsumerServlet(properties, responseSignatureTrustEngine, responseAssertionDecryptionCredential);
+    public void setUp() throws Exception {
+        authResponseService = new AuthResponseService(properties, responseSignatureTrustEngine, responseAssertionDecryptionCredential);
+
+        httpRequest = new MockHttpServletRequest();
+        httpRequest.setParameter("SAMLResponse", Base64.getEncoder().encodeToString(OpenSAMLUtils.getXmlString(buildResponse()).getBytes()));
+        httpRequest.setServerName("localhost");
+        httpRequest.setServerPort(8889);
+        httpRequest.setRequestURI("/returnUrl");
     }
 
     @Test
-    public void test() throws Exception {
-        MockHttpServletRequest httpRequest = new MockHttpServletRequest();
-        httpRequest.setParameter("SAMLResponse", Base64.getEncoder().encodeToString(OpenSAMLUtils.getXmlString(buildResponse()).getBytes()));
-        httpRequest.setServerName("192.168.1.177");
-        httpRequest.setServerPort(8889);
-        httpRequest.setRequestURI("/returnUrl");
-
-        MockHttpSession httpSession = new MockHttpSession();
-        httpSession.setAttribute(EidasClientProperties.SESSION_ATTRIBUTE_ORIGINALLY_REQUESTED_URL, "http:/localhost:8080");
-        httpRequest.setSession(httpSession);
-
-        MockHttpServletResponse httpResponse = new MockHttpServletResponse();
-
-        assertionConsumerServlet.init();
-        assertionConsumerServlet.doPost(httpRequest, httpResponse);
-
-        assertEquals("http:/localhost:8080", httpResponse.getRedirectedUrl());
+    public void test() {
+        AuthenticationResult result = authResponseService.getAuthenticationResult(httpRequest);
+        assertAuthenticationResult(result);
     }
 
     private Response buildResponse() throws Exception {
@@ -110,7 +106,7 @@ public class AssertionConsumerServletTest {
 
         Response authnResponse = OpenSAMLUtils.buildSAMLObject(Response.class);
         authnResponse.setIssueInstant(now);
-        authnResponse.setDestination("http://192.168.1.177:8889/returnUrl");
+        authnResponse.setDestination("http://localhost:8889/returnUrl");
         authnResponse.setInResponseTo("sqajsja");
         authnResponse.setVersion(SAMLVersion.VERSION_20);
         authnResponse.setID(OpenSAMLUtils.generateSecureRandomId());
@@ -286,6 +282,15 @@ public class AssertionConsumerServletTest {
         criteriaSet.add(criterion);
 
         return resolver.resolveSingle(criteriaSet);
+    }
+
+    private void assertAuthenticationResult(AuthenticationResult result) {
+        assertEquals(StatusCode.SUCCESS, result.getStatusCode());
+        assertEquals(AssuranceLevel.LOW.getUri(), result.getLevelOfAssurance());
+        assertEquals("javier", result.getAttributes().get("FirstName"));
+        assertEquals("Garcia", result.getAttributes().get("FamilyName"));
+        assertEquals("CA/CA/12345", result.getAttributes().get("PersonIdendifier"));
+        assertEquals("1965-01-01", result.getAttributes().get("DateOfBirth"));
     }
 
 }
