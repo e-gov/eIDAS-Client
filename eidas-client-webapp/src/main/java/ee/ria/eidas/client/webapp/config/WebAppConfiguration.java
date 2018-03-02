@@ -1,6 +1,6 @@
 package ee.ria.eidas.client.webapp.config;
 
-import ee.ria.eidas.client.AssertionConsumerServlet;
+import ee.ria.eidas.client.assertion.AssertionConsumerServlet;
 import ee.ria.eidas.client.config.EidasClientConfiguration;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import org.opensaml.security.credential.Credential;
@@ -21,7 +21,7 @@ public class WebAppConfiguration {
 
     @Bean
     public ServletRegistrationBean eidasAuthAssertionConsumerServlet(
-            @Qualifier("metadataSignatureTrustEngine") ExplicitKeySignatureTrustEngine explicitKeySignatureTrustEngine,
+            @Qualifier("responseSignatureTrustEngine") ExplicitKeySignatureTrustEngine explicitKeySignatureTrustEngine,
             @Qualifier("responseAssertionDecryptionCredential") Credential responseAssertionDecryptionCredential) {
         ServletRegistrationBean bean = new ServletRegistrationBean(
                 new AssertionConsumerServlet(eidasClientProperties, explicitKeySignatureTrustEngine, responseAssertionDecryptionCredential), eidasClientProperties.getSamlAssertionConsumerUrl());

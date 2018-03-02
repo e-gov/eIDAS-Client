@@ -1,4 +1,4 @@
-package ee.ria.eidas.client;
+package ee.ria.eidas.client.assertion;
 
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.config.OpenSAMLConfiguration;
@@ -64,12 +64,6 @@ public class AssertionConsumerServlet extends HttpServlet {
         this.spAssertionDecryptionCredential = spAssertionDecryptionCredential;
     }
 
-    public Response getSamlResponse(String samlResponse) throws XMLParserException, UnmarshallingException{
-        return (Response) XMLObjectSupport.unmarshallFromInputStream(
-                OpenSAMLConfiguration.getParserPool(), new ByteArrayInputStream(samlResponse.getBytes(StandardCharsets.UTF_8)));
-
-    }
-
     public void doPost(final HttpServletRequest req, final HttpServletResponse resp) {
         Response samlResponse;
         try {
@@ -98,6 +92,11 @@ public class AssertionConsumerServlet extends HttpServlet {
         redirectToGotoURL(req, resp);
     }
 
+    private Response getSamlResponse(String samlResponse) throws XMLParserException, UnmarshallingException{
+        return (Response) XMLObjectSupport.unmarshallFromInputStream(
+                OpenSAMLConfiguration.getParserPool(), new ByteArrayInputStream(samlResponse.getBytes(StandardCharsets.UTF_8)));
+    }
+
     private void validateDestinationAndLifetime(Response samlResponse, HttpServletRequest request) {
         MessageContext context = new MessageContext<Response>();
         context.setMessage(samlResponse);
@@ -106,7 +105,7 @@ public class AssertionConsumerServlet extends HttpServlet {
         messageInfoContext.setMessageIssueInstant(samlResponse.getIssueInstant());
 
         MessageLifetimeSecurityHandler lifetimeSecurityHandler = new MessageLifetimeSecurityHandler();
-        lifetimeSecurityHandler.setClockSkew(1000);
+        lifetimeSecurityHandler.setClockSkew(100000);
         lifetimeSecurityHandler.setMessageLifetime(2000);
         lifetimeSecurityHandler.setRequiredRule(true);
 
@@ -123,9 +122,9 @@ public class AssertionConsumerServlet extends HttpServlet {
             handlerChain.initialize();
             handlerChain.doInvoke(context);
         } catch (ComponentInitializationException e) {
-            throw new RuntimeException(e);
+            throw new EidasClientException("Error initializing handler chain", e);
         } catch (MessageHandlerException e) {
-            throw new RuntimeException(e);
+            throw new EidasClientException("Error handling message", e);
         }
 
     }
@@ -176,7 +175,7 @@ public class AssertionConsumerServlet extends HttpServlet {
         try {
             resp.sendRedirect(gotoURL);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new EidasClientException("Error sending redirect response");
         }
     }
 
@@ -200,6 +199,9 @@ public class AssertionConsumerServlet extends HttpServlet {
 
     private EncryptedAssertion getEncryptedAssertion(Response samlResponse) {
         List<EncryptedAssertion> response = samlResponse.getEncryptedAssertions();
+        if (response == null || response.isEmpty()) {
+            throw new EidasClientException("Saml Response does not contain any encrypted assertions");
+        }
         return response.get(0);
     }
 }

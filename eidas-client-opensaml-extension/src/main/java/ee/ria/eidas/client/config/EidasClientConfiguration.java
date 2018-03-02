@@ -139,11 +139,26 @@ public class EidasClientConfiguration {
     }
 
     @Bean
-    public ExplicitKeySignatureTrustEngine metadataSignatureTrustEngine(KeyStore keyStore){
+    public ExplicitKeySignatureTrustEngine metadataSignatureTrustEngine(KeyStore keyStore) {
         try {
             X509Certificate cert = (X509Certificate) keyStore.getCertificate(eidasClientProperties.getIdpMetadataSigningCertificateKeyId());
             if (cert == null)
                 throw new IllegalStateException("It seems you are missing a certificate with alias '" + eidasClientProperties.getIdpMetadataSigningCertificateKeyId() + "' in your " + eidasClientProperties.getKeystore() + " keystore. We need it in order to verify IDP metadata's signature.");
+
+            X509Credential switchCred = CredentialSupport.getSimpleCredential(cert, null);
+            StaticCredentialResolver switchCredResolver = new StaticCredentialResolver(switchCred);
+            return new ExplicitKeySignatureTrustEngine(switchCredResolver, DefaultSecurityConfigurationBootstrap.buildBasicInlineKeyInfoCredentialResolver());
+        } catch (KeyStoreException e) {
+            throw new EidasClientException("Error initializing. Cannot get IDP metadata trusted certificate" ,e);
+        }
+    }
+
+    @Bean
+    public ExplicitKeySignatureTrustEngine responseSignatureTrustEngine(KeyStore keyStore) {
+        try {
+            X509Certificate cert = (X509Certificate) keyStore.getCertificate(eidasClientProperties.getResponseSigningCertificateKeyId());
+            if (cert == null)
+                throw new IllegalStateException("It seems you are missing a certificate with alias '" + eidasClientProperties.getResponseSigningCertificateKeyId() + "' in your " + eidasClientProperties.getKeystore() + " keystore. We need it in order to verify SAML response's asserion signature.");
 
             X509Credential switchCred = CredentialSupport.getSimpleCredential(cert, null);
             StaticCredentialResolver switchCredResolver = new StaticCredentialResolver(switchCred);
