@@ -11,6 +11,7 @@ import net.shibboleth.utilities.java.support.resolver.Criterion;
 import net.shibboleth.utilities.java.support.resolver.ResolverException;
 import org.joda.time.DateTime;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opensaml.core.criterion.EntityIdCriterion;
@@ -83,13 +84,13 @@ public class AuthResponseServiceTest {
     }
 
     @Test
-    public void test() {
+    public void whenResponseValidatesSuccessfully_AuthenticationResultIsReturned() {
         AuthenticationResult result = authResponseService.getAuthenticationResult(httpRequest);
         assertAuthenticationResult(result);
     }
 
     private Response buildResponse() throws Exception {
-        Credential credential = getCredential("test_ecc", "changeit");
+        Credential credential = getCredential("stork", "changeit");
 
         Signature signature = (Signature) XMLObjectProviderRegistrySupport.getBuilderFactory()
                 .getBuilder(Signature.DEFAULT_ELEMENT_NAME).buildObject(Signature.DEFAULT_ELEMENT_NAME);
@@ -140,7 +141,7 @@ public class AuthResponseServiceTest {
     }
 
     private EncryptedAssertion buildAssertion(DateTime issueInstant) throws Exception {
-        Credential credential = getCredential("test_ecc", "changeit");
+        Credential credential = getCredential("stork", "changeit");
 
         Signature signature = (Signature) XMLObjectProviderRegistrySupport.getBuilderFactory()
                 .getBuilder(Signature.DEFAULT_ELEMENT_NAME).buildObject(Signature.DEFAULT_ELEMENT_NAME);

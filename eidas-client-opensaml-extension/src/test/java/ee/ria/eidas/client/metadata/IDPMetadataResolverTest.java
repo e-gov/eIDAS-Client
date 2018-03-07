@@ -12,6 +12,8 @@ import org.opensaml.core.criterion.EntityIdCriterion;
 import org.opensaml.saml.metadata.resolver.MetadataResolver;
 import org.opensaml.xmlsec.signature.support.impl.ExplicitKeySignatureTrustEngine;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -29,10 +31,13 @@ public class IDPMetadataResolverTest {
     @Autowired
     private ExplicitKeySignatureTrustEngine metadataSignatureTrustEngine;
 
+    @Autowired
+    private ResourceLoader resourceLoader;
+
     @Test
     public void resolveValidIdpMetadata() throws Exception {
-        InputStream metadataInputStream = getClass().getResourceAsStream("/idp-metadata.xml");
-        IDPMetadataResolver idpMetadataResolver = new IDPMetadataResolver(metadataInputStream, metadataSignatureTrustEngine);
+        Resource idpMetadataResource = resourceLoader.getResource("classpath:idp-metadata.xml");
+        IDPMetadataResolver idpMetadataResolver = new IDPMetadataResolver(idpMetadataResource, metadataSignatureTrustEngine);
         MetadataResolver metadataResolver = idpMetadataResolver.resolve();
         Assert.assertNotNull(metadataResolver);
         Assert.assertTrue(metadataResolver.isRequireValidMetadata());
@@ -42,7 +47,7 @@ public class IDPMetadataResolverTest {
     @Test
     public void resolveNonexistingMetadata() throws Exception {
         expectedEx.expect(EidasClientException.class);
-        expectedEx.expectMessage("Idp metadata was not found. Please check your configuration.");
+        expectedEx.expectMessage("Idp metadata resource not set! Please check your configuration.");
 
         assertResolveFails(null);
     }
@@ -52,7 +57,7 @@ public class IDPMetadataResolverTest {
         expectedEx.expect(RuntimeException.class);
         expectedEx.expectMessage("No valid EntityDescriptors found!");
 
-        assertResolveFails(getClass().getResourceAsStream("/idp-metadata-invalid_signature.xml"));
+        assertResolveFails(resourceLoader.getResource("classpath:idp-metadata-invalid_signature.xml"));
     }
 
     @Test
@@ -60,11 +65,11 @@ public class IDPMetadataResolverTest {
         expectedEx.expect(RuntimeException.class);
         expectedEx.expectMessage("No valid EntityDescriptors found!");
 
-        assertResolveFails(getClass().getResourceAsStream("/idp-metadata-expired.xml"));
+        assertResolveFails(resourceLoader.getResource("classpath:idp-metadata-expired.xml"));
     }
 
-    private void assertResolveFails(InputStream input) {
-        IDPMetadataResolver idpMetadataResolver = new IDPMetadataResolver(input, metadataSignatureTrustEngine);
+    private void assertResolveFails(Resource idpMetadataResource) {
+        IDPMetadataResolver idpMetadataResolver = new IDPMetadataResolver(idpMetadataResource, metadataSignatureTrustEngine);
         MetadataResolver metadataResolver = idpMetadataResolver.resolve();
         Assert.fail("Test should not reach this!");
     }

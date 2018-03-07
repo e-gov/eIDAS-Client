@@ -47,6 +47,11 @@
             <artifactId>java-support</artifactId>
             <version>7.3.0</version>
         </dependency>
+        <dependency>
+            <groupId>net.shibboleth.ext</groupId>
+            <artifactId>spring-extensions</artifactId>
+            <version>5.3.0</version>
+        </dependency>
 
         <dependency>
             <groupId>org.springframework.boot</groupId>

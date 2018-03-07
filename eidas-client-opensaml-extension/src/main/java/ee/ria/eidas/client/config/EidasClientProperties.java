@@ -15,10 +15,8 @@ import java.util.List;
 public class EidasClientProperties {
 
     private static final int DEFAULT_MAXIMUM_AUTHENTICTION_LIFETIME = 3600;
-    public static final String SESSION_ATTRIBUTE_USER_AUTHENTICATED = "authenticated";
-    public static final String SESSION_ATTRIBUTE_ORIGINALLY_REQUESTED_URL = "originally_requested_url";
     public static final String DEFAULT_IDP_METADATA_SIGN_CERT_KEY = "metadata";
-    public static final String DEFAULT_RESPONSE_ASSERTION_SIGN_CERT_KEY = "test_ecc";
+    public static final String DEFAULT_RESPONSE_ASSERTION_SIGN_CERT_KEY = "test";
     public static final String DEFAULT_SAML_ASSERTION_CONSUMER_URL = "/returnUrl";
 
     @NotNull
@@ -80,9 +78,6 @@ public class EidasClientProperties {
 
     @NotNull
     private String idpMetadataSigningCertificateKeyId = DEFAULT_IDP_METADATA_SIGN_CERT_KEY;
-
-    @NotNull
-    private String responseSigningCertificateKeyId = DEFAULT_RESPONSE_ASSERTION_SIGN_CERT_KEY;
 
     @NotNull
     private String samlAssertionConsumerUrl = DEFAULT_SAML_ASSERTION_CONSUMER_URL;
@@ -253,13 +248,5 @@ public class EidasClientProperties {
 
     public void setRequestSignatureAlgorithm(String requestSignatureAlgorithm) {
         this.requestSignatureAlgorithm = requestSignatureAlgorithm;
-    }
-
-    public String getResponseSigningCertificateKeyId() {
-        return responseSigningCertificateKeyId;
-    }
-
-    public void setResponseSigningCertificateKeyId(String responseSigningCertificateKeyId) {
-        this.responseSigningCertificateKeyId = responseSigningCertificateKeyId;
     }
 }

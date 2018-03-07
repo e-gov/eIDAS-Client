@@ -8,7 +8,9 @@ import com.jayway.restassured.config.XmlConfig;
 import com.jayway.restassured.response.ResponseBodyExtractionOptions;
 import ee.ria.eidas.client.utils.ClasspathResourceResolver;
 import ee.ria.eidas.client.utils.XmlUtils;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opensaml.saml.saml2.metadata.EntityDescriptor;
@@ -46,6 +48,15 @@ public class EidasClientApplicationTest {
     @BeforeClass
     public static void initExternalDependencies() {
         wireMockServer.start();
+
+        /**
+         * Due to {@link org.springframework.core.io.AbstractFileResolvingResource#exists()}'s use of HTTP HEAD request to check whether the http resource is available
+         */
+        wireMockServer.stubFor(WireMock.head(urlEqualTo("/EidasNode/ConnectorResponderMetadata"))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                ));
+
         wireMockServer.stubFor(WireMock.get(urlEqualTo("/EidasNode/ConnectorResponderMetadata"))
                 .willReturn(aResponse()
                         .withStatus(200)
@@ -151,4 +162,10 @@ public class EidasClientApplicationTest {
             throw new RuntimeException("Exception: " + e.getMessage(), e);
         }
     }
+
+    @AfterClass
+    public static void teardown() throws Exception {
+        wireMockServer.stop();
+    }
+
 }
