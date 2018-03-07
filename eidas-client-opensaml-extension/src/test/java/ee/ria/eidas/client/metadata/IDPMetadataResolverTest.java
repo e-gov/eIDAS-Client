@@ -36,8 +36,7 @@ public class IDPMetadataResolverTest {
 
     @Test
     public void resolveValidIdpMetadata() throws Exception {
-        Resource idpMetadataResource = resourceLoader.getResource("classpath:idp-metadata.xml");
-        IDPMetadataResolver idpMetadataResolver = new IDPMetadataResolver(idpMetadataResource, metadataSignatureTrustEngine);
+        IDPMetadataResolver idpMetadataResolver = new IDPMetadataResolver("classpath:idp-metadata.xml", metadataSignatureTrustEngine);
         MetadataResolver metadataResolver = idpMetadataResolver.resolve();
         Assert.assertNotNull(metadataResolver);
         Assert.assertTrue(metadataResolver.isRequireValidMetadata());
@@ -57,7 +56,7 @@ public class IDPMetadataResolverTest {
         expectedEx.expect(RuntimeException.class);
         expectedEx.expectMessage("No valid EntityDescriptors found!");
 
-        assertResolveFails(resourceLoader.getResource("classpath:idp-metadata-invalid_signature.xml"));
+        assertResolveFails("classpath:idp-metadata-invalid_signature.xml");
     }
 
     @Test
@@ -65,11 +64,11 @@ public class IDPMetadataResolverTest {
         expectedEx.expect(RuntimeException.class);
         expectedEx.expectMessage("No valid EntityDescriptors found!");
 
-        assertResolveFails(resourceLoader.getResource("classpath:idp-metadata-expired.xml"));
+        assertResolveFails("classpath:idp-metadata-expired.xml");
     }
 
-    private void assertResolveFails(Resource idpMetadataResource) {
-        IDPMetadataResolver idpMetadataResolver = new IDPMetadataResolver(idpMetadataResource, metadataSignatureTrustEngine);
+    private void assertResolveFails(String url) {
+        IDPMetadataResolver idpMetadataResolver = new IDPMetadataResolver(url, metadataSignatureTrustEngine);
         MetadataResolver metadataResolver = idpMetadataResolver.resolve();
         Assert.fail("Test should not reach this!");
     }

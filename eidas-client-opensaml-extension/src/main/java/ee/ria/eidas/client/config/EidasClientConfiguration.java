@@ -152,8 +152,7 @@ public class EidasClientConfiguration {
 
     @Bean
     public IDPMetadataResolver idpMetadataResolver(@Qualifier("metadataSignatureTrustEngine") ExplicitKeySignatureTrustEngine metadataSignatureTrustEngine) {
-        Resource idpMetadataResource = resourceLoader.getResource(eidasClientProperties.getIdpMetadataUrl());
-        return new IDPMetadataResolver(idpMetadataResource, metadataSignatureTrustEngine);
+        return new IDPMetadataResolver(eidasClientProperties.getIdpMetadataUrl(), metadataSignatureTrustEngine);
     }
 
     @Bean

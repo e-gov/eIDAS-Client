@@ -49,14 +49,6 @@ public class EidasClientApplicationTest {
     public static void initExternalDependencies() {
         wireMockServer.start();
 
-        /**
-         * Due to {@link org.springframework.core.io.AbstractFileResolvingResource#exists()}'s use of HTTP HEAD request to check whether the http resource is available
-         */
-        wireMockServer.stubFor(WireMock.head(urlEqualTo("/EidasNode/ConnectorResponderMetadata"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                ));
-
         wireMockServer.stubFor(WireMock.get(urlEqualTo("/EidasNode/ConnectorResponderMetadata"))
                 .willReturn(aResponse()
                         .withStatus(200)
