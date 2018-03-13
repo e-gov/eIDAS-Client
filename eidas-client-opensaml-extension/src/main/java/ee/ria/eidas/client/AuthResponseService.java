@@ -6,6 +6,8 @@ import ee.ria.eidas.client.exception.EidasClientException;
 import ee.ria.eidas.client.response.AuthenticationResult;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
 import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
+import net.shibboleth.utilities.java.support.net.URIComparator;
+import net.shibboleth.utilities.java.support.net.URIException;
 import net.shibboleth.utilities.java.support.resolver.CriteriaSet;
 import net.shibboleth.utilities.java.support.resolver.ResolverException;
 import net.shibboleth.utilities.java.support.xml.XMLParserException;
@@ -39,6 +41,7 @@ import org.opensaml.xmlsec.signature.support.impl.ExplicitKeySignatureTrustEngin
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
@@ -110,6 +113,12 @@ public class AuthResponseService {
         List handlers = new ArrayList<MessageHandler>();
         handlers.add(lifetimeSecurityHandler);
         handlers.add(receivedEndpointSecurityHandler);
+        receivedEndpointSecurityHandler.setURIComparator(new URIComparator() {
+            @Override
+            public boolean compare(@Nullable String messageDestination, @Nullable String receiverEndpoint) throws URIException {
+                return messageDestination.equals(eidasClientProperties.getCallbackUrl());
+            }
+        });
 
         BasicMessageHandlerChain<ArtifactResponse> handlerChain = new BasicMessageHandlerChain<ArtifactResponse>();
         handlerChain.setHandlers(handlers);
