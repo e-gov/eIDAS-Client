@@ -1,6 +1,5 @@
 package ee.ria.eidas.client;
 
-import ee.ria.eidas.client.AuthInitiationService;
 import ee.ria.eidas.client.authnrequest.AssuranceLevel;
 import ee.ria.eidas.client.config.EidasClientConfiguration;
 import ee.ria.eidas.client.config.EidasClientProperties;
@@ -13,7 +12,6 @@ import org.opensaml.saml.saml2.metadata.SingleSignOnService;
 import org.opensaml.security.credential.Credential;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
@@ -22,7 +20,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-@TestPropertySource(locations="classpath:application-test.properties")
+@TestPropertySource(locations = "classpath:application-test.properties")
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = EidasClientConfiguration.class)
 public class AuthInitiationServiceTest {

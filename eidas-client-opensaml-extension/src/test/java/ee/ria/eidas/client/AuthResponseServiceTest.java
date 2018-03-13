@@ -18,7 +18,6 @@ import org.opensaml.core.xml.schema.XSAny;
 import org.opensaml.core.xml.schema.impl.XSAnyBuilder;
 import org.opensaml.saml.common.SAMLVersion;
 import org.opensaml.saml.saml2.core.*;
-import org.opensaml.saml.saml2.core.AttributeValue;
 import org.opensaml.saml.saml2.core.impl.*;
 import org.opensaml.saml.saml2.encryption.Encrypter;
 import org.opensaml.security.credential.Credential;
@@ -49,7 +48,7 @@ import static org.junit.Assert.assertEquals;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = EidasClientConfiguration.class)
-@TestPropertySource(locations="classpath:application-test.properties")
+@TestPropertySource(locations = "classpath:application-test.properties")
 public class AuthResponseServiceTest {
 
     @Autowired

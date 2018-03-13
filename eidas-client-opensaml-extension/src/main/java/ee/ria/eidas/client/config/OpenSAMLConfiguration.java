@@ -8,17 +8,13 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.opensaml.core.config.ConfigurationService;
 import org.opensaml.core.config.InitializationException;
 import org.opensaml.core.config.InitializationService;
-import org.opensaml.core.xml.XMLObjectBuilderFactory;
 import org.opensaml.core.xml.config.XMLObjectProviderRegistry;
-import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
-import org.opensaml.xmlsec.algorithm.AlgorithmRegistry;
 import org.opensaml.xmlsec.algorithm.AlgorithmSupport;
 import org.opensaml.xmlsec.algorithm.SignatureAlgorithm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nonnull;
-import java.security.Provider;
 import java.security.Security;
 import java.util.HashMap;
 import java.util.Map;
@@ -28,7 +24,8 @@ public class OpenSAMLConfiguration {
 
     private static BasicParserPool parserPool;
 
-    private OpenSAMLConfiguration() {}
+    private OpenSAMLConfiguration() {
+    }
 
     static {
         LOGGER.info("Bootstrapping OpenSAML configuration");
@@ -36,7 +33,7 @@ public class OpenSAMLConfiguration {
         bootstrap();
     }
 
-    public static ParserPool getParserPool () {
+    public static ParserPool getParserPool() {
         return parserPool;
     }
 
@@ -75,7 +72,7 @@ public class OpenSAMLConfiguration {
         }
 
         XMLObjectProviderRegistry registry;
-        synchronized(ConfigurationService.class) {
+        synchronized (ConfigurationService.class) {
             registry = ConfigurationService.get(XMLObjectProviderRegistry.class);
             if (registry == null) {
                 registry = new XMLObjectProviderRegistry();

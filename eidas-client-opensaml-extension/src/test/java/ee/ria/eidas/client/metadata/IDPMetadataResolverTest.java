@@ -12,15 +12,12 @@ import org.opensaml.core.criterion.EntityIdCriterion;
 import org.opensaml.saml.metadata.resolver.MetadataResolver;
 import org.opensaml.xmlsec.signature.support.impl.ExplicitKeySignatureTrustEngine;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
-import java.io.InputStream;
-
-@TestPropertySource(locations="classpath:application-test.properties")
+@TestPropertySource(locations = "classpath:application-test.properties")
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = EidasClientConfiguration.class)
 public class IDPMetadataResolverTest {

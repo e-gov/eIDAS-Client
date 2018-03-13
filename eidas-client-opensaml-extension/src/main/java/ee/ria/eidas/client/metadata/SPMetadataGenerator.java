@@ -2,14 +2,12 @@ package ee.ria.eidas.client.metadata;
 
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.exception.EidasClientException;
-import ee.ria.eidas.client.util.SAMLSigner;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
+import ee.ria.eidas.client.util.SAMLSigner;
 import org.apache.commons.lang.RandomStringUtils;
 import org.joda.time.DateTime;
-
 import org.opensaml.core.xml.schema.XSAny;
 import org.opensaml.core.xml.schema.impl.XSAnyBuilder;
-
 import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.ext.saml2alg.DigestMethod;
 import org.opensaml.saml.ext.saml2alg.SigningMethod;
@@ -18,16 +16,17 @@ import org.opensaml.saml.saml2.metadata.*;
 import org.opensaml.security.SecurityException;
 import org.opensaml.security.credential.Credential;
 import org.opensaml.security.credential.UsageType;
-
 import org.opensaml.xmlsec.config.DefaultSecurityConfigurationBootstrap;
 import org.opensaml.xmlsec.keyinfo.KeyInfoGenerator;
 import org.opensaml.xmlsec.keyinfo.NamedKeyInfoGeneratorManager;
-
 import org.opensaml.xmlsec.signature.KeyInfo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.Set;
 
 public class SPMetadataGenerator {
 
@@ -83,7 +82,7 @@ public class SPMetadataGenerator {
         Set<String> usedSigningMethods = new LinkedHashSet<String>();
         usedSigningMethods.add(eidasClientProperties.getMetadataSignatureAlgorithm());
         usedSigningMethods.add(eidasClientProperties.getRequestSignatureAlgorithm());
-        usedSigningMethods.forEach( signingMethod -> {
+        usedSigningMethods.forEach(signingMethod -> {
             SigningMethod method = OpenSAMLUtils.buildSAMLObject(SigningMethod.class);
             method.setAlgorithm(signingMethod);
             extensions.getUnknownXMLObjects().add(method);

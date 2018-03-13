@@ -7,7 +7,8 @@ import org.opensaml.saml.common.SignableSAMLObject;
 import org.opensaml.security.SecurityException;
 import org.opensaml.security.credential.Credential;
 import org.opensaml.xmlsec.SignatureSigningParameters;
-import org.opensaml.xmlsec.algorithm.*;
+import org.opensaml.xmlsec.algorithm.DigestAlgorithm;
+import org.opensaml.xmlsec.algorithm.SignatureAlgorithm;
 import org.opensaml.xmlsec.keyinfo.KeyInfoGenerator;
 import org.opensaml.xmlsec.keyinfo.impl.X509KeyInfoGeneratorFactory;
 import org.opensaml.xmlsec.signature.Signature;
@@ -36,7 +37,7 @@ public class SAMLSigner {
         SignatureSigningParameters params = getSignatureSigningParameters(credential, signatureAlgorithm, digestAlgorithm);
         SignatureSupport.prepareSignatureParams(signature, params);
         samlObject.setSignature(signature);
-        ((SAMLObjectContentReference)signature.getContentReferences().get(0)).setDigestAlgorithm(params.getSignatureReferenceDigestMethod());
+        ((SAMLObjectContentReference) signature.getContentReferences().get(0)).setDigestAlgorithm(params.getSignatureReferenceDigestMethod());
         XMLObjectProviderRegistrySupport.getMarshallerFactory().getMarshaller(samlObject).marshall(samlObject);
         Signer.signObject(signature);
     }

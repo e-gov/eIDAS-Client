@@ -8,11 +8,8 @@ import net.shibboleth.utilities.java.support.resolver.ResolverException;
 import net.shibboleth.utilities.java.support.xml.ParserPool;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
-import org.opensaml.saml.metadata.resolver.MetadataResolver;
-import org.opensaml.saml.metadata.resolver.RefreshableMetadataResolver;
 import org.opensaml.saml.metadata.resolver.filter.impl.SignatureValidationFilter;
 import org.opensaml.saml.metadata.resolver.impl.AbstractReloadingMetadataResolver;
-import org.opensaml.saml.metadata.resolver.impl.DOMMetadataResolver;
 import org.opensaml.saml.metadata.resolver.impl.HTTPMetadataResolver;
 import org.opensaml.saml.metadata.resolver.impl.ResourceBackedMetadataResolver;
 import org.opensaml.saml.saml2.metadata.EntityDescriptor;
@@ -20,13 +17,9 @@ import org.opensaml.xmlsec.signature.support.impl.ExplicitKeySignatureTrustEngin
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
-import org.w3c.dom.Document;
-import org.w3c.dom.Element;
 
 import java.io.IOException;
-import java.io.InputStream;
 
 public class IDPMetadataResolver {
 

@@ -1,13 +1,13 @@
 package ee.ria.eidas.client.config;
 
-import javax.validation.constraints.NotNull;
-
 import ee.ria.eidas.client.authnrequest.AssuranceLevel;
 import ee.ria.eidas.client.authnrequest.SPType;
 import org.opensaml.xmlsec.signature.support.SignatureConstants;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.validation.annotation.Validated;
 
+import javax.validation.constraints.NotNull;
+import java.util.ArrayList;
 import java.util.List;
 
 @Validated
@@ -81,7 +81,7 @@ public class EidasClientProperties {
     private String idpMetadataSigningCertificateKeyId = DEFAULT_IDP_METADATA_SIGN_CERT_KEY;
 
     @NotNull
-    private int acceptedResponseSkew = DEFAULT_ACCEPTED_RESPONSE_SKEW;
+    private int acceptedClockSkew = DEFAULT_ACCEPTED_RESPONSE_SKEW;
 
     @NotNull
     private int responseMessageLifeTime = DEFAULT_RESPONSE_MESSAGE_LIFETIME;
@@ -234,11 +234,11 @@ public class EidasClientProperties {
     }
 
     public List<String> getAvailableCountries() {
-        return availableCountries;
+        return new ArrayList<>(availableCountries);
     }
 
     public void setAvailableCountries(List<String> availableCountries) {
-        this.availableCountries = availableCountries;
+        this.availableCountries = new ArrayList<>(availableCountries);
     }
 
     public AssuranceLevel getDefaultLoa() {
@@ -257,12 +257,12 @@ public class EidasClientProperties {
         this.requestSignatureAlgorithm = requestSignatureAlgorithm;
     }
 
-    public Integer getAcceptedResponseSkew() {
-        return acceptedResponseSkew;
+    public Integer getAcceptedClockSkew() {
+        return acceptedClockSkew;
     }
 
-    public void setAcceptedResponseSkew(Integer acceptedResponseSkew) {
-        this.acceptedResponseSkew = acceptedResponseSkew;
+    public void setAcceptedClockSkew(Integer acceptedClockSkew) {
+        this.acceptedClockSkew = acceptedClockSkew;
     }
 
     public Integer getResponseMessageLifeTime() {

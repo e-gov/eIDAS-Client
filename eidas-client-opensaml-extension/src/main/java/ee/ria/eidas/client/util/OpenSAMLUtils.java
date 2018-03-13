@@ -27,7 +27,7 @@ public class OpenSAMLUtils {
         T object;
         try {
             XMLObjectBuilderFactory builderFactory = XMLObjectProviderRegistrySupport.getBuilderFactory();
-            QName defaultElementName = (QName)clazz.getDeclaredField("DEFAULT_ELEMENT_NAME").get(null);
+            QName defaultElementName = (QName) clazz.getDeclaredField("DEFAULT_ELEMENT_NAME").get(null);
             object = (T) builderFactory.getBuilder(defaultElementName).buildObject(defaultElementName);
         } catch (IllegalAccessException | NoSuchFieldException e) {
             throw new EidasClientException("Could not create SAML object");
@@ -50,7 +50,7 @@ public class OpenSAMLUtils {
     }
 
     public static SignatureAlgorithm getSignatureAlgorithm(String signatureAlgorithmId) {
-        AlgorithmDescriptor signatureAlgorithm =  AlgorithmSupport.getGlobalAlgorithmRegistry().get(signatureAlgorithmId);
+        AlgorithmDescriptor signatureAlgorithm = AlgorithmSupport.getGlobalAlgorithmRegistry().get(signatureAlgorithmId);
         Assert.notNull(signatureAlgorithm, "No signature algorithm support for: " + signatureAlgorithmId);
         Assert.isInstanceOf(SignatureAlgorithm.class, signatureAlgorithm, "This is not a valid XML signature algorithm! Please check your configuration!");
         return (SignatureAlgorithm) signatureAlgorithm;
@@ -58,7 +58,7 @@ public class OpenSAMLUtils {
 
     public static DigestAlgorithm getRelatedDigestAlgorithm(String signatureAlgorithmId) {
         SignatureAlgorithm signatureAlgorithm = getSignatureAlgorithm(signatureAlgorithmId);
-        DigestAlgorithm digestAlgorithm =  AlgorithmSupport.getGlobalAlgorithmRegistry().getDigestAlgorithm(signatureAlgorithm.getDigest());
+        DigestAlgorithm digestAlgorithm = AlgorithmSupport.getGlobalAlgorithmRegistry().getDigestAlgorithm(signatureAlgorithm.getDigest());
         Assert.notNull(digestAlgorithm, "No corresponding message digest algorithm support for signature algorithm: " + signatureAlgorithm.getURI());
         return digestAlgorithm;
     }

@@ -88,7 +88,7 @@ public class AuthResponseService {
         return new AuthenticationResult(samlResponse, assertion);
     }
 
-    private Response getSamlResponse(String samlResponse) throws XMLParserException, UnmarshallingException{
+    private Response getSamlResponse(String samlResponse) throws XMLParserException, UnmarshallingException {
         return (Response) XMLObjectSupport.unmarshallFromInputStream(
                 OpenSAMLConfiguration.getParserPool(), new ByteArrayInputStream(samlResponse.getBytes(StandardCharsets.UTF_8)));
     }
@@ -101,7 +101,7 @@ public class AuthResponseService {
         messageInfoContext.setMessageIssueInstant(samlResponse.getIssueInstant());
 
         MessageLifetimeSecurityHandler lifetimeSecurityHandler = new MessageLifetimeSecurityHandler();
-        lifetimeSecurityHandler.setClockSkew(eidasClientProperties.getAcceptedResponseSkew() * 1000);
+        lifetimeSecurityHandler.setClockSkew(eidasClientProperties.getAcceptedClockSkew() * 1000);
         lifetimeSecurityHandler.setMessageLifetime(eidasClientProperties.getResponseMessageLifeTime() * 1000);
         lifetimeSecurityHandler.setRequiredRule(true);
 
@@ -155,7 +155,7 @@ public class AuthResponseService {
             SignatureValidator.validate(assertion.getSignature(), credential);
 
             LOGGER.info("SAML Assertion signature verified");
-        } catch (SignatureException|ResolverException e) {
+        } catch (SignatureException | ResolverException e) {
             throw new EidasClientException("Signature verification failed!", e);
         }
     }
@@ -163,7 +163,7 @@ public class AuthResponseService {
     private void validateAssertion(Assertion assertion) {
         for (final AuthnStatement statement : assertion.getAuthnStatements()) {
             DateTime now = new DateTime();
-            DateTime authenticationValidUntil = statement.getAuthnInstant().plusSeconds(eidasClientProperties.getMaximumAuthenticationLifetime()).plusSeconds(eidasClientProperties.getAcceptedResponseSkew());
+            DateTime authenticationValidUntil = statement.getAuthnInstant().plusSeconds(eidasClientProperties.getMaximumAuthenticationLifetime()).plusSeconds(eidasClientProperties.getAcceptedClockSkew());
             if (now.isBefore(statement.getAuthnInstant()) || now.isAfter(authenticationValidUntil)) {
                 throw new EidasClientException("Authentication issue instant is too old or in the future");
             }

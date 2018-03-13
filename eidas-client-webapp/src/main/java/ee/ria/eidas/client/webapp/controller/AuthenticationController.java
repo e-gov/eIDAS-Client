@@ -2,7 +2,7 @@ package ee.ria.eidas.client.webapp.controller;
 
 import ee.ria.eidas.client.AuthInitiationService;
 import ee.ria.eidas.client.AuthResponseService;
-import ee.ria.eidas.client.authnrequest.*;
+import ee.ria.eidas.client.authnrequest.AssuranceLevel;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.response.AuthenticationResult;
 import org.springframework.beans.factory.annotation.Autowired;

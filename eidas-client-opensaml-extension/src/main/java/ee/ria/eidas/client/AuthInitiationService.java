@@ -52,7 +52,7 @@ public class AuthInitiationService {
 
     private void redirectUserForAuthentication(HttpServletResponse httpServletResponse, String country, AssuranceLevel loa, String relayState) {
         AuthnRequestBuilder authnRequestBuilder = new AuthnRequestBuilder(authnReqSigningCredential, eidasClientProperties, singleSignOnService);
-        AuthnRequest authnRequest = authnRequestBuilder.buildAuthnRequest(loa) ;
+        AuthnRequest authnRequest = authnRequestBuilder.buildAuthnRequest(loa);
         redirectUserWithRequest(httpServletResponse, authnRequest, country, relayState);
     }
 

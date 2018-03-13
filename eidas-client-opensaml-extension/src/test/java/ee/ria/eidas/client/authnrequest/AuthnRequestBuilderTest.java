@@ -2,7 +2,6 @@ package ee.ria.eidas.client.authnrequest;
 
 import ee.ria.eidas.client.config.EidasClientConfiguration;
 import ee.ria.eidas.client.config.EidasClientProperties;
-import ee.ria.eidas.client.metadata.IDPMetadataResolver;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
 import org.joda.time.DateTime;
 import org.junit.Assert;
@@ -13,12 +12,9 @@ import org.opensaml.core.xml.XMLObject;
 import org.opensaml.saml.common.SAMLObjectContentReference;
 import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.saml2.core.*;
-import org.opensaml.saml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml.saml2.metadata.SingleSignOnService;
 import org.opensaml.security.credential.Credential;
 import org.opensaml.xmlsec.signature.Signature;
-import org.opensaml.xmlsec.signature.support.SignatureConstants;
-import org.opensaml.xmlsec.signature.support.SignatureValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
@@ -35,13 +31,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = EidasClientConfiguration.class)
-@TestPropertySource(locations="classpath:application-test.properties")
+@TestPropertySource(locations = "classpath:application-test.properties")
 public class AuthnRequestBuilderTest {
 
     @Autowired

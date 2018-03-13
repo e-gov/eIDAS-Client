@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.opensaml.saml.saml2.core.Attribute;
 import org.opensaml.saml.saml2.core.Response;
-import org.opensaml.saml.saml2.core.StatusCode;
 
 import java.util.HashMap;
 import java.util.Map;

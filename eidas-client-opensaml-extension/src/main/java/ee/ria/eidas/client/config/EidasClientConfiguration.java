@@ -9,11 +9,9 @@ import net.shibboleth.utilities.java.support.component.ComponentInitializationEx
 import net.shibboleth.utilities.java.support.resolver.CriteriaSet;
 import net.shibboleth.utilities.java.support.resolver.Criterion;
 import net.shibboleth.utilities.java.support.resolver.ResolverException;
-import org.opensaml.core.config.InitializationException;
 import org.opensaml.core.criterion.EntityIdCriterion;
 import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.metadata.resolver.impl.AbstractReloadingMetadataResolver;
-import org.opensaml.saml.metadata.resolver.impl.HTTPMetadataResolver;
 import org.opensaml.saml.metadata.resolver.impl.PredicateRoleDescriptorResolver;
 import org.opensaml.saml.saml2.metadata.EntityDescriptor;
 import org.opensaml.saml.saml2.metadata.KeyDescriptor;
@@ -115,8 +113,8 @@ public class EidasClientConfiguration {
             if (entityDescriptor == null) {
                 throw new EidasClientException("Could not find a valid EntityDescriptor in your IDP metadata! ");
             }
-            for ( SingleSignOnService ssoService : entityDescriptor.getIDPSSODescriptor(SAMLConstants.SAML20P_NS).getSingleSignOnServices() ) {
-                if ( ssoService.getBinding().equals(SAMLConstants.SAML2_POST_BINDING_URI) ) {
+            for (SingleSignOnService ssoService : entityDescriptor.getIDPSSODescriptor(SAMLConstants.SAML20P_NS).getSingleSignOnServices()) {
+                if (ssoService.getBinding().equals(SAMLConstants.SAML2_POST_BINDING_URI)) {
                     return ssoService;
                 }
             }
@@ -169,7 +167,7 @@ public class EidasClientConfiguration {
             metadataCredentialResolver.initialize();
             roleResolver.initialize();
         } catch (final ComponentInitializationException e) {
-            throw new EidasClientException("Error initializing metadataCredentialResolver" ,e);
+            throw new EidasClientException("Error initializing metadataCredentialResolver", e);
         }
 
         return new ExplicitKeySignatureTrustEngine(metadataCredentialResolver, keyResolver);
@@ -218,7 +216,7 @@ public class EidasClientConfiguration {
             X509Certificate cert = (X509Certificate) certFactory.generateCertificate(certInputStream);
             return cert;
         } catch (CertificateException e) {
-            throw new EidasClientException("Error initializing. Cannot get IDP metadata trusted certificate" ,e);
+            throw new EidasClientException("Error initializing. Cannot get IDP metadata trusted certificate", e);
         }
     }
 }

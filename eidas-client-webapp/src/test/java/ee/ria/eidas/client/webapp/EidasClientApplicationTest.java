@@ -10,7 +10,6 @@ import ee.ria.eidas.client.utils.ClasspathResourceResolver;
 import ee.ria.eidas.client.utils.XmlUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
-import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opensaml.saml.saml2.metadata.EntityDescriptor;
@@ -26,12 +25,14 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
+import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.matcher.RestAssuredMatchers.matchesXsdInClasspath;
-import static org.junit.Assert.assertNotNull;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.empty;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.core.IsEqual.equalTo;
+import static org.junit.Assert.assertNotNull;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
