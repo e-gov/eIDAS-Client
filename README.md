@@ -28,16 +28,16 @@ Lahendus koosneb kahest osast:
 eIDAS-klient veebiteenuse paigaldamiseks ja käivitamiseks vajalikud tegevused lühidalt (eeldab Java 1.8+):
 
 1. Hangi githubist viimane lähtekood
-`git clone https://github.com/e-gov/eIDAS-Client.git`
+>`git clone https://github.com/e-gov/eIDAS-Client.git`
 
 2. Ehita eIDAS-klient projekt
-`./mvnw clean install`
+>`./mvnw clean install`
 
 3. Genereeri näidisvõtmed ja nende viitav konfiguratsioonifail (või loo ise, vt [**Seadistamine**](/doc/Configuration.md))
-`eidas-client-webapp/src/test/resources/scripts/generateTestConfiguration.sh`
+>`eidas-client-webapp/src/test/resources/scripts/generateTestConfiguration.sh`
 
 4. Käivita veebiteenus
-`java -Dspring.config.location="./eidas-client-webapp/target/generated-test-conf/application.properties" -jar eidas-client-webapp/target/eidas-client-webapp-1.0-SNAPSHOT.war`
+>`java -Dspring.config.location="./eidas-client-webapp/target/generated-test-conf/application.properties" -jar eidas-client-webapp/target/eidas-client-webapp-1.0-SNAPSHOT.war`
 
 5. Veendumaks, et rakendus käivitus edukalt, ava brauseris URL http://localhost:8889/metadata
 
