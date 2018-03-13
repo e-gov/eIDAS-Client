@@ -15,9 +15,10 @@ import java.util.List;
 public class EidasClientProperties {
 
     private static final int DEFAULT_MAXIMUM_AUTHENTICTION_LIFETIME = 3600;
-    public static final String DEFAULT_IDP_METADATA_SIGN_CERT_KEY = "metadata";
-    public static final String DEFAULT_RESPONSE_ASSERTION_SIGN_CERT_KEY = "test";
-    public static final String DEFAULT_SAML_ASSERTION_CONSUMER_URL = "/returnUrl";
+    private static final String DEFAULT_IDP_METADATA_SIGN_CERT_KEY = "metadata";
+    private static final String DEFAULT_SAML_ASSERTION_CONSUMER_URL = "/returnUrl";
+    private static final int DEFAULT_ACCEPTED_RESPONSE_SKEW = 1;
+    private static final int DEFAULT_RESPONSE_MESSAGE_LIFETIME = 2;
 
     @NotNull
     private String keystore;
@@ -78,6 +79,12 @@ public class EidasClientProperties {
 
     @NotNull
     private String idpMetadataSigningCertificateKeyId = DEFAULT_IDP_METADATA_SIGN_CERT_KEY;
+
+    @NotNull
+    private int acceptedResponseSkew = DEFAULT_ACCEPTED_RESPONSE_SKEW;
+
+    @NotNull
+    private int responseMessageLifeTime = DEFAULT_RESPONSE_MESSAGE_LIFETIME;
 
     @NotNull
     private String samlAssertionConsumerUrl = DEFAULT_SAML_ASSERTION_CONSUMER_URL;
@@ -248,5 +255,21 @@ public class EidasClientProperties {
 
     public void setRequestSignatureAlgorithm(String requestSignatureAlgorithm) {
         this.requestSignatureAlgorithm = requestSignatureAlgorithm;
+    }
+
+    public Integer getAcceptedResponseSkew() {
+        return acceptedResponseSkew;
+    }
+
+    public void setAcceptedResponseSkew(Integer acceptedResponseSkew) {
+        this.acceptedResponseSkew = acceptedResponseSkew;
+    }
+
+    public Integer getResponseMessageLifeTime() {
+        return responseMessageLifeTime;
+    }
+
+    public void setResponseMessageLifeTime(Integer messageLifeTime) {
+        this.responseMessageLifeTime = messageLifeTime;
     }
 }

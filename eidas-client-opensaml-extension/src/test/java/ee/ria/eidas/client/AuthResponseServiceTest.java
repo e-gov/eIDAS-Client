@@ -1,6 +1,5 @@
 package ee.ria.eidas.client;
 
-import ee.ria.eidas.client.AuthResponseService;
 import ee.ria.eidas.client.authnrequest.AssuranceLevel;
 import ee.ria.eidas.client.config.EidasClientConfiguration;
 import ee.ria.eidas.client.config.EidasClientProperties;
@@ -11,7 +10,6 @@ import net.shibboleth.utilities.java.support.resolver.Criterion;
 import net.shibboleth.utilities.java.support.resolver.ResolverException;
 import org.joda.time.DateTime;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.opensaml.core.criterion.EntityIdCriterion;
@@ -37,8 +35,6 @@ import org.opensaml.xmlsec.signature.support.Signer;
 import org.opensaml.xmlsec.signature.support.impl.ExplicitKeySignatureTrustEngine;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockHttpServletRequest;
-import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -233,7 +229,7 @@ public class AuthResponseServiceTest {
 
     private AuthnStatement buildAuthnStatement(DateTime issueInstant) {
         AuthnStatement authnStatement = new AuthnStatementBuilder().buildObject();
-        authnStatement.setAuthnInstant(issueInstant);
+        authnStatement.setAuthnInstant(issueInstant.minusMinutes(1));
 
         AuthnContext authnContext = new AuthnContextBuilder().buildObject();
 

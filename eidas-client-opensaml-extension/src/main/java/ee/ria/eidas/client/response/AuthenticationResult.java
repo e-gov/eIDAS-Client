@@ -20,14 +20,16 @@ public class AuthenticationResult {
     private Map<String, String> attributes = new HashMap<>();
 
     public AuthenticationResult(Response samlResponse, Assertion assertion) {
-        statusCode = samlResponse.getStatus().getStatusCode().getValue();
+        this(samlResponse);
 
-        if (StatusCode.SUCCESS.equals(statusCode)) {
-            levelOfAssurance = assertion.getAuthnStatements().get(0).getAuthnContext().getAuthnContextClassRef().getAuthnContextClassRef();
-            for (Attribute attribute : assertion.getAttributeStatements().get(0).getAttributes()) {
-                attributes.put(attribute.getFriendlyName(), attribute.getAttributeValues().get(0).getDOM().getTextContent());
-            }
+        levelOfAssurance = assertion.getAuthnStatements().get(0).getAuthnContext().getAuthnContextClassRef().getAuthnContextClassRef();
+        for (Attribute attribute : assertion.getAttributeStatements().get(0).getAttributes()) {
+            attributes.put(attribute.getFriendlyName(), attribute.getAttributeValues().get(0).getDOM().getTextContent());
         }
+    }
+
+    public AuthenticationResult(Response samlResponse) {
+        statusCode = samlResponse.getStatus().getStatusCode().getValue();
     }
 
     public String getStatusCode() {

@@ -9,8 +9,8 @@ import net.shibboleth.utilities.java.support.component.ComponentInitializationEx
 import net.shibboleth.utilities.java.support.resolver.CriteriaSet;
 import net.shibboleth.utilities.java.support.resolver.ResolverException;
 import net.shibboleth.utilities.java.support.xml.XMLParserException;
+import org.joda.time.DateTime;
 import org.opensaml.core.criterion.EntityIdCriterion;
-import org.opensaml.core.xml.XMLObject;
 import org.opensaml.core.xml.io.UnmarshallingException;
 import org.opensaml.core.xml.util.XMLObjectSupport;
 import org.opensaml.messaging.context.MessageContext;
@@ -38,11 +38,9 @@ import org.opensaml.xmlsec.signature.support.SignatureValidator;
 import org.opensaml.xmlsec.signature.support.impl.ExplicitKeySignatureTrustEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import javax.servlet.http.HttpServlet;
+
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -75,18 +73,17 @@ public class AuthResponseService {
         } catch (Exception e) {
             throw new EidasClientException("Failed to read SAMLResponse. " + e.getMessage(), e);
         }
-
         validateDestinationAndLifetime(samlResponse, req);
+
+        if (!StatusCode.SUCCESS.equals(samlResponse.getStatus().getStatusCode().getValue())) {
+            return new AuthenticationResult(samlResponse);
+        }
 
         EncryptedAssertion encryptedAssertion = getEncryptedAssertion(samlResponse);
         Assertion assertion = decryptAssertion(encryptedAssertion);
         verifyAssertionSignature(assertion);
-        LOGGER.info("Decrypted Assertion: ");
-        LOGGER.info(OpenSAMLUtils.getXmlString(assertion));
-
-        logAssertionAttributes(assertion);
-        logAuthenticationInstant(assertion);
-        logAuthenticationMethod(assertion);
+        validateAssertion(assertion);
+        LOGGER.debug("Decrypted Assertion: ", OpenSAMLUtils.getXmlString(assertion));
 
         return new AuthenticationResult(samlResponse, assertion);
     }
@@ -104,8 +101,8 @@ public class AuthResponseService {
         messageInfoContext.setMessageIssueInstant(samlResponse.getIssueInstant());
 
         MessageLifetimeSecurityHandler lifetimeSecurityHandler = new MessageLifetimeSecurityHandler();
-        lifetimeSecurityHandler.setClockSkew(1000);
-        lifetimeSecurityHandler.setMessageLifetime(2000);
+        lifetimeSecurityHandler.setClockSkew(eidasClientProperties.getAcceptedResponseSkew() * 1000);
+        lifetimeSecurityHandler.setMessageLifetime(eidasClientProperties.getResponseMessageLifeTime() * 1000);
         lifetimeSecurityHandler.setRequiredRule(true);
 
         ReceivedEndpointSecurityHandler receivedEndpointSecurityHandler = new ReceivedEndpointSecurityHandler();
@@ -137,13 +134,13 @@ public class AuthResponseService {
         try {
             return decrypter.decrypt(encryptedAssertion);
         } catch (DecryptionException e) {
-            throw new RuntimeException(e);
+            throw new EidasClientException("Error decrypting assertion", e);
         }
     }
 
     private void verifyAssertionSignature(Assertion assertion) {
         if (!assertion.isSigned()) {
-            throw new RuntimeException("The SAML Assertion was not signed");
+            throw new EidasClientException("The SAML Assertion was not signed");
         }
         try {
             SAMLSignatureProfileValidator profileValidator = new SAMLSignatureProfileValidator();
@@ -159,33 +156,28 @@ public class AuthResponseService {
 
             LOGGER.info("SAML Assertion signature verified");
         } catch (SignatureException|ResolverException e) {
-            throw new IllegalStateException("Signature verification failed!", e);
+            throw new EidasClientException("Signature verification failed!", e);
         }
-
     }
 
-    private void logAuthenticationMethod(Assertion assertion) {
-        LOGGER.info("Authentication method: " + assertion.getAuthnStatements().get(0)
-                .getAuthnContext().getAuthnContextClassRef().getAuthnContextClassRef());
-    }
-
-    private void logAuthenticationInstant(Assertion assertion) {
-        LOGGER.info("Authentication instant: " + assertion.getAuthnStatements().get(0).getAuthnInstant());
-    }
-
-    private void logAssertionAttributes(Assertion assertion) {
-        for (Attribute attribute : assertion.getAttributeStatements().get(0).getAttributes()) {
-            LOGGER.info("Attribute name: " + attribute.getName());
-            for (XMLObject attributeValue : attribute.getAttributeValues()) {
-                LOGGER.info("Attribute value: " + attributeValue.toString());
+    private void validateAssertion(Assertion assertion) {
+        for (final AuthnStatement statement : assertion.getAuthnStatements()) {
+            DateTime now = new DateTime();
+            DateTime authenticationValidUntil = statement.getAuthnInstant().plusSeconds(eidasClientProperties.getMaximumAuthenticationLifetime()).plusSeconds(eidasClientProperties.getAcceptedResponseSkew());
+            if (now.isBefore(statement.getAuthnInstant()) || now.isAfter(authenticationValidUntil)) {
+                throw new EidasClientException("Authentication issue instant is too old or in the future");
             }
         }
+        // Currently we only validate the validity of authentication lifetime
+        // TODO: validate assertion issuer, conditions, etc?
     }
 
     private EncryptedAssertion getEncryptedAssertion(Response samlResponse) {
         List<EncryptedAssertion> response = samlResponse.getEncryptedAssertions();
         if (response == null || response.isEmpty()) {
             throw new EidasClientException("Saml Response does not contain any encrypted assertions");
+        } else if (response.size() > 1) {
+            throw new EidasClientException("Saml Response contains more than 1 encrypted assertion");
         }
         return response.get(0);
     }
