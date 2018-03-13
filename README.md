@@ -180,15 +180,8 @@ Tabel 3.3 - Saadetava AuthnRequesti ja SAML vastuse seadistus
 | `eidas.client.maximumAuthenticationLifetime` | Ei | Autentimispäringu eluiga sekundites. Vaikimisi 3600. |
 | `eidas.client.responseMessageLifeTime` | Ei | SAML vastuse eluiga sekundites. vaikimisi 1. |
 | `eidas.client.requestSignatureAlgorithm` | Ei | Autentimispäringu allkirja algoritm. Vaikimisi `http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha512` |
-
-Tabel 3.4 - Demo veebirakenduse seadistus
-
-| Parameeter        | Kohustuslik | Kirjeldus, näide |
-| :---------------- | :---------- | :----------------|
-| `eidas.client.samlAssertionConsumerUrl` | Ei | URL. Relatiivne URL, millel veebirakendus töötleb autentimisvastust. Vaikimisi `/returnUrl`. |
-| `eidas.client.availableCountries` | Ei | Lubatud riigikoodid, mis kuvatakse avalehel kasutajale. |
+| `eidas.client.availableCountries` | Ei | Lubatud riigikoodid. |
 | `eidas.client.defaultLoa` | Ei | EIDAS tagatistase juhul kui kasutaja tagatistaseme ise määramata. Lubatud väärtused: 'LOW', 'SUBSTANTIAL', 'HIGH'. Vaikimisi 'SUBSTANTIAL'. |
-
 
 
 // Täpsustamist vajavad seadistamise detailid (sh konnektorteenuse registreerimine, võtmete import, krüptoalgoritmide, otspunktide, https-i eripärade ja logimise seadistus). -- Programmeerimisega paralleelselt. //

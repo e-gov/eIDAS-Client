@@ -40,14 +40,6 @@ public class AuthenticationController {
         binder.registerCustomEditor(String.class, new StringTrimmerEditor(true));
     }
 
-    @RequestMapping(value = {"/login", "/"}, method = GET)
-    public String authenticate(Model model) {
-        List<AssuranceLevel> levelsOfAssurance = Arrays.asList(AssuranceLevel.values());
-        model.addAttribute("countries", properties.getAvailableCountries());
-        model.addAttribute("loas", levelsOfAssurance);
-        return "login";
-    }
-
     @RequestMapping(value = "/login", method = POST)
     public void authenticate(HttpServletResponse response,
             @RequestParam("country") String country,

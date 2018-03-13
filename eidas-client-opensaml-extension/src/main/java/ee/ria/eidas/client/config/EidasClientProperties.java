@@ -16,7 +16,6 @@ public class EidasClientProperties {
 
     private static final int DEFAULT_MAXIMUM_AUTHENTICTION_LIFETIME = 3600;
     private static final String DEFAULT_IDP_METADATA_SIGN_CERT_KEY = "metadata";
-    private static final String DEFAULT_SAML_ASSERTION_CONSUMER_URL = "/returnUrl";
     private static final int DEFAULT_ACCEPTED_RESPONSE_SKEW = 1;
     private static final int DEFAULT_RESPONSE_MESSAGE_LIFETIME = 2;
 
@@ -85,9 +84,6 @@ public class EidasClientProperties {
 
     @NotNull
     private int responseMessageLifeTime = DEFAULT_RESPONSE_MESSAGE_LIFETIME;
-
-    @NotNull
-    private String samlAssertionConsumerUrl = DEFAULT_SAML_ASSERTION_CONSUMER_URL;
 
     public String getMetadataSigningKeyId() {
         return metadataSigningKeyId;
@@ -199,14 +195,6 @@ public class EidasClientProperties {
 
     public void setKeystorePass(String keystorePass) {
         this.keystorePass = keystorePass;
-    }
-
-    public String getSamlAssertionConsumerUrl() {
-        return samlAssertionConsumerUrl;
-    }
-
-    public void setSamlAssertionConsumerUrl(String samlAssertionConsumerUrl) {
-        this.samlAssertionConsumerUrl = samlAssertionConsumerUrl;
     }
 
     public String getProviderName() {
