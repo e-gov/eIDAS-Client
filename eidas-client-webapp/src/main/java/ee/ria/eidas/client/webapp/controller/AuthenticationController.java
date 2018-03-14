@@ -40,7 +40,7 @@ public class AuthenticationController {
         binder.registerCustomEditor(String.class, new StringTrimmerEditor(true));
     }
 
-    @RequestMapping(value = "/login", method = POST)
+    @RequestMapping(value = "/login", method = GET)
     public void authenticate(HttpServletResponse response,
             @RequestParam("country") String country,
             @RequestParam(value = "loa", required=false) AssuranceLevel loa,
