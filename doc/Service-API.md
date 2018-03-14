@@ -23,8 +23,8 @@ Parameetrid:
 
 | Parameetri nimi        | Kohustuslik           | Selgitus  |
 | ------------- |:-------------:| :-----|
-| **Country** |	Jah | Parameeter määrab ära tuvastatava kodaniku riigi. Väärtus peab vastama [ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2) standardis toodule. |
-| **LoA** |	Ei | Parameeter, määrab nõutava eIDAS isikutuvastuse taseme. Lubatud väärtused: `low`, `substantial`, `high`. <br>Kui parameeter on määramata, siis vaikimisi loetakse väärtuseks `substantial`. |
+| **Country** |	Jah | Parameeter määrab ära tuvastatava kodaniku riigi ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2) kood). |
+| **LoA** |	Ei | Parameeter, määrab nõutava eIDAS isikutuvastuse taseme. Üks järgnevatest väärtustest: `low`, `substantial`, `high`. Kui parameeter on määramata, siis vaikimisi loetakse väärtuseks `substantial`. |
 | **RelayState** |	Ei | Parameeter, mis saadetakse edasi konnektorteenusele muutmata kujul. Väärtus peab vastama regulaaravaldisele `[a-zA-Z0-9-_]{0,80}`. |
 
 Näide:
@@ -43,12 +43,12 @@ curl 'https://localhost:8889/login?country=CA&LoA=low&RelayState=kse2vna8221lyau
 
 ### Vastus
 
-Eduka vastuse korral tagastatakse HTTP staatuskood 200 koos sihtriiki suunamiseks vajaliku SAML päringu ja HTML ümbersuunamisvormiga. Vea korral moodustatakse vastus vastavalt [**veakäsitlus**](Service-API.md#veakasitlus) peatükis toodule.
+**Eduka vastuse** korral tagastatakse HTTP staatuskood 200 koos sihtriiki suunamiseks vajaliku SAML päringu ja HTML ümbersuunamisvormiga.
 
 | Atribuudi nimi        | Kohustuslik           | Selgitus  |
 | ------------- |:-------------:| :-----|
 | **country** |	Jah | Parameeter määrab ära tuvastatava kodaniku riigi. Väärtus peab vastama [ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2) standardis toodule. |
-| **SAMLRequest** |	Ei | [Konnektorteenuse spetsifikatsioonile](https://e-gov.github.io/eIDAS-Connector/Spetsifikatsioon#6-autentimisp%C3%A4ring) vastav SAML `AuthnRequest` päring.  |
+| **SAMLRequest** |	Jah | [Konnektorteenuse spetsifikatsioonile](https://e-gov.github.io/eIDAS-Connector/Spetsifikatsioon#6-autentimisp%C3%A4ring) vastav SAML `AuthnRequest` päring.  |
 | **RelayState** |	Ei | Parameeter, mis saadetakse edasi konnektorteenusele muutmata kujul. Väärtus peab vastama regulaaravaldisele `[a-zA-Z0-9-_]{0,80}`. |
 
 Näide:
@@ -74,8 +74,19 @@ Näide:
         </form>
     </body>
 </html>
-
 ```
+
+**Vea korral** moodustatakse vastus vastavalt [**veakäsitlus**](Service-API.md#veakasitlus) peatükis toodule. Võimalikud veaolukorrad on toodud järgnevas tabelis:
+
+| HTTP staatuskood  | Vea lühikirjeldus | Viga selgitav tekst  |
+| :-------------: |:-------------| :-----|
+| 400 | Bad request | Required String parameter 'country' is not present |
+| 400 | Invalid parameter | Invalid country! Valid countries:[...] |
+| 400 | Invalid parameter | Invalid LoA! One of [...] expected. |
+| 400 | Invalid parameter | Invalid RelayState! Must match the following regexp: [...] |
+| 405 | Method Not Allowed | Request method [...] not supported |
+| 500 | Internal Server Error | Something went wrong internally. Please consult server logs for further details. |
+
 
 
 ------------------------------------------------
@@ -106,7 +117,7 @@ curl -X POST \
 
 ### Vastus
 
-Edukalt töödeldud vastuse korral tagastatakse HTTP staatuskood 200 ning JSON objekt isikuandmetega. Vea korral moodustatakse vastus vastavalt [**veakäsitlus**](Service-API.md#veakasitlus) peatükis toodud kirjeldusele.
+**Eduka autentimise** korral tagastatakse **HTTP 200** koos isikuandmetega (vt Tabel 1).
 
 Atribuudi nimi | Kohustuslik | Selgitus | Tüüp
 ------------ | ------------- | ------------- | -------------
@@ -117,7 +128,7 @@ Atribuudi nimi | Kohustuslik | Selgitus | Tüüp
 **attributes.PersonIdentifier** | Jah | Isikut identifitseeriv unikaalne kood. <br><br>Esitatakse formaadis XX+ “/“ + YY + “/“ + ZZZZZZZZZZZ, kus XX on identifitseeritud isiku riigi kood (ISO 3166-1 alpha-2), YY on riigi kood (ISO 3166-1 alpha-2), kus soovitakse isikut autentida ning ZZZZZZZZZZZ isikut identifitseeriv kood. | **String**
 **attributes.DateOfBirth** | Jah | Sünniaeg formaadis: YYYY + “-“ + MM + “-“ + DD (kus YYYY on aasta, MM on kuu ning DD päev) | **String**
 **attributesNonLatin** | Ei | Sisaldab atribuutide autenditud isiku andmeid mitteladinakeelsel kujul. Atribuudid esitatakse võti-väärtus paaridena, kus võti on `FriendlyName` ja väärtus `AttributeValue` elemendi mitteladinakeelne sisu vastavalt eIDAS SAML Attribute Profile dokumendile (vt [Viited](https://e-gov.github.io/eIDAS-Connector/Viited)). |  **Objekt**
-
+Tabel 1.
 
 Näide:
 ```json
@@ -136,6 +147,32 @@ Näide:
 }
 ```
 
+**Ebaeduka autentimise** korral tagastatakse **HTTP 401** ning [**veakirjeldus**](Service-API.md#veakasitlus) vastavalt peatükis toodule. Võimalikud autentimise ebaõnnestumise olukorrad on toodud järgnevas tabelis:
+
+| HTTP staatuskood  | Vea lühikirjeldus | Viga selgitav tekst  |
+| :-------------: |:-------------| :-----|
+| 401 | Unauthorized | Authentication failed |
+| 401 | Unauthorized | The LoA of the Identity Provider is not sufficient. |
+| 401 | Unauthorized | No user consent received. User denied access. |
+
+**Muude vigade** korral moodustatakse vastus vastavalt [**veakäsitlus**](Service-API.md#veakasitlus) peatükis toodule. Võimalikud veaolukorrad on toodud järgnevas tabelis:
+
+| HTTP staatuskood  | Vea lühikirjeldus | Viga selgitav tekst  |
+| :-------------: |:-------------| :-----|
+| 400 | Bad request | Required String parameter 'SAMLResponse' is not present |
+| 400 | Invalid parameter | Invalid SAMLResponse! Not a valid Base64 encoding |
+| 400 | Invalid parameter | Invalid RelayState! Must match the following regexp: [...] |
+| 400 | Bad SAML message | Invalid SAML response! Schema validation failed! |
+| 400 | Bad SAML message | Response not signed. |
+| 400 | Bad SAML message | Invalid response signature. |
+| 400 | Bad SAML message | Single assertion is expected. |
+| 400 | Bad SAML message | Invalid receiver endpoint check. |
+| 400 | Bad SAML message | Inbound SAML message issue instant not present in message context. |
+| 400 | Bad SAML message | Message was rejected due to issue instant expiration. |
+| 400 | Bad SAML message | Message was rejected since it does not correspond to the outgoing request. |
+| 400 | Bad SAML message | Message replay detected. |
+| 405 | Method Not Allowed | Request method [...] not supported |
+| 500 | Internal Server Error | Something went wrong internally. Please consult server logs for further details. |
 
 ------------------------------------------------
 
@@ -155,8 +192,7 @@ curl 'https://localhost:8889/metadata'
 
 ### Vastus
 
-Eduka vastuse korral tagastatakse HTTP staatuskood 200 ning XML metadata. Vea korral moodustatakse vastus vastavalt [**veakäsitlus**](Service-API.md#veakasitlus) peatükis toodule
-
+**Eduka vastuse** korral tagastatakse HTTP staatuskood 200 ning XML metadata.
 
 Näide:
 ```xml
@@ -217,6 +253,13 @@ urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified
 	</md:SPSSODescriptor>
 </md:EntityDescriptor>
 ```
+
+**Vea korral** moodustatakse vastus vastavalt [**veakäsitlus**](Service-API.md#veakasitlus) peatükis toodule. Võimalikud veaolukorrad on toodud järgnevas tabelis:
+
+| HTTP staatuskood  | Vea lühikirjeldus | Viga selgitav tekst  |
+| :-------------: |:-------------| :-----|
+| 405 | Method Not Allowed | Request method [...] not supported |
+| 500 | Internal Server Error | Something went wrong internally. Please consult server logs for further details. |
 
 --------------------------------------------------
 

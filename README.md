@@ -33,7 +33,7 @@ eIDAS-klient veebiteenuse paigaldamiseks ja käivitamiseks vajalikud tegevused l
 2. Ehita eIDAS-klient projekt
 >`./mvnw clean install`
 
-3. Genereeri näidisvõtmed ja nende viitav konfiguratsioonifail (või loo ise, vt [**Seadistamine**](/doc/Configuration.md))
+3. Genereeri näidisvõtmed ja seotud konfiguratsioonifail (või loo ise, vt [**Seadistamine**](/doc/Configuration.md))
 >`eidas-client-webapp/src/test/resources/scripts/generateTestConfiguration.sh`
 
 4. Käivita veebiteenus
