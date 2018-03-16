@@ -26,6 +26,7 @@ Parameetrid:
 | **Country** |	Jah | Parameeter määrab ära tuvastatava kodaniku riigi ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2) kood). |
 | **LoA** |	Ei | Parameeter, määrab nõutava eIDAS isikutuvastuse taseme. Üks järgnevatest väärtustest: `low`, `substantial`, `high`. Kui parameeter on määramata, siis vaikimisi loetakse väärtuseks `substantial`. |
 | **RelayState** |	Ei | Parameeter, mis saadetakse edasi konnektorteenusele muutmata kujul. Väärtus peab vastama regulaaravaldisele `[a-zA-Z0-9-_]{0,80}`. |
+| **AdditionalAttributes** | Ei | Parameeter, sisaldab nimekirja täiendavatest eIDAS atribuutidest, mida autentispäringus sihtriigi eIDAS identiteediteenuselt küsitakse. Väärtused nimekirjas eraldatakse tühikuga. Kasutatakse SAML atribuutide lühinimetusi (nn *FriendlyName* [eIDAS Atribuutide profiilis](https://ec.europa.eu/cefdigital/wiki/download/attachments/46992719/eIDAS%20SAML%20Attribute%20Profile%20v1.1_2.pdf?version=1&modificationDate=1497252920100&api=v2)). Lubatud väärtused: <ul><li>BirthName</li><li>PlaceOfBirth</li><li>CurrentAddress</li><li>Gender</li><li>LegalPersonIdentifier</li><li>LegalName</li><li>LegalAddress</li><li>LegalPersonAddress</li><li>VATRegistrationNumber</li><li>TaxReference</li><li>LEI</li><li>EORI</li><li>SEED</li><li>SIC</li><li>D-2012-17-EUIdentifier</li></ul>|
 
 Näide:
 ```bash
@@ -84,6 +85,7 @@ Näide:
 | 400 | Invalid parameter | Invalid country! Valid countries:[...] |
 | 400 | Invalid parameter | Invalid LoA! One of [...] expected. |
 | 400 | Invalid parameter | Invalid RelayState! Must match the following regexp: [...] |
+| 400 | Invalid parameter | Invalid AdditionalParameters! Unrecognized attibute(s) provided: [...] |
 | 405 | Method Not Allowed | Request method [...] not supported |
 | 500 | Internal Server Error | Something went wrong internally. Please consult server logs for further details. |
 
@@ -122,11 +124,13 @@ curl -X POST \
 Atribuudi nimi | Kohustuslik | Selgitus | Tüüp
 ------------ | ------------- | ------------- | -------------
 **levelOfAssurance** | Jah  | eIDAS autentimistase. Võimalikud väärtused: `http://eidas.europa.eu/LoA/low`, `http://eidas.europa.eu/LoA/substantial`, `http://eidas.europa.eu/LoA/high` | **String**
-**attributes** | Jah | Sisaldab atribuute autenditud isiku andmetega. Atribuudid esitatakse võti-väärtus paaridena, kus võti on `FriendlyName` ja väärtus `AttributeValue` elemendi ladinakeelne sisu vastavalt eIDAS SAML Attribute Profile dokumendile (vt [Viited](https://e-gov.github.io/eIDAS-Connector/Viited)). <br><br>Alati esitatakse minimaalselt neli atribuuti: `FirstName`, `FamilyName`, `PersonIdentifier` ja `DateOfBirth`. | **Objekt**
+**attributes** | Jah | Sisaldab atribuute autenditud isiku andmetega. Atribuudid esitatakse võti-väärtus paaridena, kus võti on `FriendlyName` ja väärtus `AttributeValue` elemendi ladinakeelne sisu vastavalt eIDAS SAML Attribute Profile dokumendile (vt [Viited](https://e-gov.github.io/eIDAS-Connector/Viited)). <p>**Kohustuslikud atribuudid** - sisaldavad andmeid, midagi liimesriigid peavad tagastama.</p><p> 1. Füüsilise isiku kohta tagastatakse alati vaikimisi neli atribuuti: `FirstName`, `FamilyName`, `PersonIdentifier` ja `DateOfBirth`.</p><p>2. Juriidilise isiku kohta tagastatakse alati `LegalPersonIdentifier`, `LegalName` väärtused **ainult juhul** kui päringus selleks soovi avaldatakse.</p><p>**Mittekohustulikud lisaatribuudid** - Lisaks on võimalik küsida eIDAS lisaatribuute, mis tagastatakse ainult juhul kui sihtriik neid toetab ja päringus selleks soovi avaldatakse:<ul><li>Füüsilise isiku kohta: `BirthName`, `PlaceOfBirth`, `CurrentAddress`, `Gender`</li><li>Juriidilise isiku kohta: `LegalAddress`, `LegalPersonAddress`, `VATRegistrationNumber`, `TaxReference`, `LEI`, `EORI`, `SEED`, `SIC`, `D-2012-17-EUIdentifier`</li></ul><p>**Isiku esindaja andmed** - Täiendavalt on võimalik, et sihtriik saadab lisaandmeid isiku esindaja kohta (küsida ei saa): `RepresentativeBirthName`, `RepresentativeCurrentAddress`, `RepresentativeFamilyName`, `RepresentativeFirstName`, `RepresentativeDateOfBirth`, `RepresentativeGender`, `RepresentativePersonIdentifier`, `RepresentativePlaceOfBirth`, `RepresentativeD-2012-17-EUIdentifier`, `RepresentativeEORI`, `RepresentativeLEI`,`RepresentativeLegalAddress`, `RepresentativeLegalName`, `RepresentativeLegalAddress`, `RepresentativeLegalPersonIdentifier`, `RepresentativeSEED`, `RepresentativeSIC`,`RepresentativeTaxReference`, `RepresentativeVATRegistration`</p> | **Objekt**
 **attributes.FirstName** | Jah | Isiku eesnimi. | **String**
 **attributes.FamilyName** | Jah | Isiku perenimi. | **String**
 **attributes.PersonIdentifier** | Jah | Isikut identifitseeriv unikaalne kood. <br><br>Esitatakse formaadis XX+ “/“ + YY + “/“ + ZZZZZZZZZZZ, kus XX on identifitseeritud isiku riigi kood (ISO 3166-1 alpha-2), YY on riigi kood (ISO 3166-1 alpha-2), kus soovitakse isikut autentida ning ZZZZZZZZZZZ isikut identifitseeriv kood. | **String**
 **attributes.DateOfBirth** | Jah | Sünniaeg formaadis: YYYY + “-“ + MM + “-“ + DD (kus YYYY on aasta, MM on kuu ning DD päev) | **String**
+**attributes.LegalPersonIdentifier** | Ei | Juriidilise isiku kood. Tagastatakse ainult juhul kui kasutaja selleks soovi avaldab. | **String**
+**attributes.LegalName** | Ei | Juriidilise isiku nimi. Tagastatakse ainult juhul kui kasutaja selleks soovi avaldab. | **String**
 **attributesNonLatin** | Ei | Sisaldab atribuutide autenditud isiku andmeid mitteladinakeelsel kujul. Atribuudid esitatakse võti-väärtus paaridena, kus võti on `FriendlyName` ja väärtus `AttributeValue` elemendi mitteladinakeelne sisu vastavalt eIDAS SAML Attribute Profile dokumendile (vt [Viited](https://e-gov.github.io/eIDAS-Connector/Viited)). |  **Objekt**
 Tabel 1.
 
@@ -152,7 +156,6 @@ Näide:
 | HTTP staatuskood  | Vea lühikirjeldus | Viga selgitav tekst  |
 | :-------------: |:-------------| :-----|
 | 401 | Unauthorized | Authentication failed |
-| 401 | Unauthorized | The LoA of the Identity Provider is not sufficient. |
 | 401 | Unauthorized | No user consent received. User denied access. |
 
 **Muude vigade** korral moodustatakse vastus vastavalt [**veakäsitlus**](Service-API.md#veakasitlus) peatükis toodule. Võimalikud veaolukorrad on toodud järgnevas tabelis:
@@ -167,9 +170,10 @@ Näide:
 | 400 | Bad SAML message | Invalid response signature. |
 | 400 | Bad SAML message | Single assertion is expected. |
 | 400 | Bad SAML message | Invalid receiver endpoint check. |
+| 400 | Bad SAML message | Invalid LoA. The LoA of the Identity Provider is not sufficient. |
 | 400 | Bad SAML message | Inbound SAML message issue instant not present in message context. |
 | 400 | Bad SAML message | Message was rejected due to issue instant expiration. |
-| 400 | Bad SAML message | Message was rejected since it does not correspond to the outgoing request. |
+| 400 | Bad SAML message | Message was rejected! No matching valid request found! |
 | 400 | Bad SAML message | Message replay detected. |
 | 405 | Method Not Allowed | Request method [...] not supported |
 | 500 | Internal Server Error | Something went wrong internally. Please consult server logs for further details. |
