@@ -149,7 +149,7 @@ public class EidasClientConfiguration {
 
     @Bean
     public IDPMetadataResolver idpMetadataResolver(@Qualifier("idpMetadataSignatureTrustEngine") ExplicitKeySignatureTrustEngine metadataSignatureTrustEngine) {
-        return new IDPMetadataResolver(eidasClientProperties.getIdpMetadataUrl(), metadataSignatureTrustEngine, eidasClientProperties.isIdpMetaDataHostValidationEnabled());
+        return new IDPMetadataResolver(eidasClientProperties.getIdpMetadataUrl(), metadataSignatureTrustEngine);
     }
 
     @Bean
@@ -164,7 +164,7 @@ public class EidasClientConfiguration {
     public SingleSignOnService singleSignOnService(IDPMetadataResolver idpMetadataResolver) {
         try {
             AbstractReloadingMetadataResolver metadataResolver = idpMetadataResolver.resolve();
-            CriteriaSet criteriaSet = new CriteriaSet(new EntityIdCriterion(idpMetadataResolver.getEntityId()));
+            CriteriaSet criteriaSet = new CriteriaSet(new EntityIdCriterion(eidasClientProperties.getIdpMetadataUrl()));
             EntityDescriptor entityDescriptor = metadataResolver.resolveSingle(criteriaSet);
             if (entityDescriptor == null) {
                 throw new EidasClientException("Could not find a valid EntityDescriptor in your IDP metadata! ");

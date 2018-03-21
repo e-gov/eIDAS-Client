@@ -28,16 +28,16 @@ public class IDPMetadataResolverTest {
     private ExplicitKeySignatureTrustEngine idpMetadataSignatureTrustEngine;
 
     @Test
-    public void resolveValidIdpMetadata() throws Exception {
-        IDPMetadataResolver idpMetadataResolver = new IDPMetadataResolver("classpath:idp-metadata.xml", idpMetadataSignatureTrustEngine, false);
+    public void resolveSuccessfullyFromClasspath() throws Exception {
+        IDPMetadataResolver idpMetadataResolver = new IDPMetadataResolver("classpath:idp-metadata.xml", idpMetadataSignatureTrustEngine);
         MetadataResolver metadataResolver = idpMetadataResolver.resolve();
         Assert.assertNotNull(metadataResolver);
         Assert.assertTrue(metadataResolver.isRequireValidMetadata());
-        Assert.assertEquals("http://localhost:8080/EidasNode/ConnectorResponderMetadata", metadataResolver.resolveSingle(new CriteriaSet(new EntityIdCriterion("http://localhost:8080/EidasNode/ConnectorResponderMetadata"))).getEntityID());
+        Assert.assertEquals("classpath:idp-metadata.xml", metadataResolver.resolveSingle(new CriteriaSet(new EntityIdCriterion("classpath:idp-metadata.xml"))).getEntityID());
     }
 
     @Test
-    public void resolveNonexistingMetadata() throws Exception {
+    public void resolveFailsWhenUrlNotSet() throws Exception {
         expectedEx.expect(EidasClientException.class);
         expectedEx.expectMessage("Idp metadata resource not set! Please check your configuration.");
 
@@ -45,27 +45,49 @@ public class IDPMetadataResolverTest {
     }
 
     @Test
-    public void resolveIdpMetadataWithInvalidSignature() {
+    public void resolveFailsWhenClasspathMetadataResourceNotFound() throws Exception {
+        expectedEx.expect(EidasClientException.class);
+        expectedEx.expectMessage("Error resolving IDP Metadata");
+
+        assertResolveFails("classpath:nonexisting.xml");
+    }
+
+    @Test
+    public void resolveFailsWhenUrlMetadataResourceNotFound() throws Exception {
+        expectedEx.expect(EidasClientException.class);
+        expectedEx.expectMessage("Error initializing IDP Metadata provider.");
+
+        assertResolveFails("http://0.0.0.0/metadata");
+    }
+
+    @Test
+    public void resolveFailsWhenIdpMetadataWithInvalidSignature() {
         expectedEx.expect(RuntimeException.class);
-        expectedEx.expectMessage("No valid EntityDescriptors found!");
+        expectedEx.expectMessage("No valid EntityDescriptor with entityID = 'classpath:idp-metadata-invalid_signature.xml' was found!");
 
         assertResolveFails("classpath:idp-metadata-invalid_signature.xml");
     }
 
     @Test
-    public void resolveIdpMetadataHasExpired() {
+    public void resolveFailsWhenIdpMetadataHasExpired() {
         expectedEx.expect(RuntimeException.class);
-        expectedEx.expectMessage("No valid EntityDescriptors found!");
+        expectedEx.expectMessage("No valid EntityDescriptor with entityID = 'classpath:idp-metadata-expired.xml' was found!");
 
         assertResolveFails("classpath:idp-metadata-expired.xml");
     }
 
+    @Test
+    public void resolveFailsWhenXmlContainingDoctypesAreReturned() {
+        expectedEx.expect(RuntimeException.class);
+        expectedEx.expectMessage("Error initializing IDP Metadata provider.");
+
+        assertResolveFails("classpath:idp-metadata-xxe.xml");
+    }
+
     private void assertResolveFails(String url) {
-        IDPMetadataResolver idpMetadataResolver = new IDPMetadataResolver(url, idpMetadataSignatureTrustEngine, false);
+        IDPMetadataResolver idpMetadataResolver = new IDPMetadataResolver(url, idpMetadataSignatureTrustEngine);
         MetadataResolver metadataResolver = idpMetadataResolver.resolve();
         Assert.fail("Test should not reach this!");
     }
-
-    // TODO expired certificate
 }
 

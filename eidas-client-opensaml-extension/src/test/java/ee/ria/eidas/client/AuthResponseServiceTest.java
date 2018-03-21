@@ -3,9 +3,9 @@ package ee.ria.eidas.client;
 import ee.ria.eidas.client.authnrequest.AssuranceLevel;
 import ee.ria.eidas.client.config.EidasClientConfiguration;
 import ee.ria.eidas.client.config.EidasClientProperties;
+import ee.ria.eidas.client.exception.EidasClientException;
 import ee.ria.eidas.client.exception.EidasAuthenticationFailedException;
 import ee.ria.eidas.client.exception.InvalidEidasParamException;
-import ee.ria.eidas.client.exception.EidasClientException;
 import ee.ria.eidas.client.fixtures.ResponseBuilder;
 import ee.ria.eidas.client.response.AuthenticationResult;
 import ee.ria.eidas.client.session.RequestSession;
@@ -21,13 +21,12 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.opensaml.core.criterion.EntityIdCriterion;
-import org.opensaml.saml.saml2.core.Response;
+import org.opensaml.saml.saml2.core.*;
 import org.opensaml.security.credential.Credential;
 import org.opensaml.security.credential.impl.KeyStoreCredentialResolver;
 import org.opensaml.xmlsec.signature.support.impl.ExplicitKeySignatureTrustEngine;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
@@ -54,7 +53,7 @@ public class AuthResponseServiceTest {
     public ExpectedException expectedEx = ExpectedException.none();
 
     @Autowired
-    RequestSessionService requestSessionService;
+    private RequestSessionService requestSessionService;
 
     @Autowired
     private EidasClientProperties properties;
@@ -72,7 +71,7 @@ public class AuthResponseServiceTest {
     @Qualifier("eidasNodeSigningCredential")
     private Credential eidasNodeSigningCredential;
 
-    AuthResponseService authResponseService;
+    private AuthResponseService authResponseService;
 
     private MockHttpServletRequest httpRequest;
 
@@ -84,12 +83,6 @@ public class AuthResponseServiceTest {
 
         @Autowired
         KeyStore samlKeystore;
-
-        @Bean
-        @ConditionalOnProperty(name="test.property", havingValue="A")
-        public ExplicitKeySignatureTrustEngine idpMetadataSignatureTrustEngine(KeyStore keyStore) {
-            throw new RuntimeException("Something went horribly wrong..");
-        }
 
         @Bean
         public Credential eidasNodeSigningCredential() throws ResolverException {

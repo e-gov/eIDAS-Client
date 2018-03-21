@@ -20,7 +20,7 @@ import java.util.stream.Stream;
 @ControllerAdvice
 public class ControllerExceptionHandler {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(ControllerExceptionHandler.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ControllerExceptionHandler.class);
 
     @ExceptionHandler
     @ResponseBody

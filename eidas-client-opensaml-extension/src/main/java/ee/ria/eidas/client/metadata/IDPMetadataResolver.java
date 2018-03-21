@@ -10,6 +10,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.opensaml.saml.metadata.resolver.filter.impl.SignatureValidationFilter;
 import org.opensaml.saml.metadata.resolver.impl.AbstractReloadingMetadataResolver;
+import org.opensaml.saml.metadata.resolver.impl.HTTPMetadataResolver;
 import org.opensaml.saml.metadata.resolver.impl.ResourceBackedMetadataResolver;
 import org.opensaml.saml.saml2.metadata.EntityDescriptor;
 import org.opensaml.xmlsec.signature.support.impl.ExplicitKeySignatureTrustEngine;
@@ -19,6 +20,8 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.ResourceLoader;
 
 import java.io.IOException;
+import java.util.Objects;
+import java.util.stream.StreamSupport;
 
 public class IDPMetadataResolver {
 
@@ -27,26 +30,20 @@ public class IDPMetadataResolver {
     private String url;
     private AbstractReloadingMetadataResolver idpMetadataProvider;
     private ExplicitKeySignatureTrustEngine metadataSignatureTrustEngine;
-    private String entityId;
-    private boolean hostUrlValidationEnabled;
 
-    public IDPMetadataResolver(String url, ExplicitKeySignatureTrustEngine metadataSignatureTrustEngine, boolean hostUrlValidationEnabled) {
+    public IDPMetadataResolver(String url, ExplicitKeySignatureTrustEngine metadataSignatureTrustEngine) {
         this.url = url;
         this.metadataSignatureTrustEngine = metadataSignatureTrustEngine;
-        this.hostUrlValidationEnabled = hostUrlValidationEnabled;
     }
 
     public AbstractReloadingMetadataResolver resolve() {
         if (idpMetadataProvider == null) {
             this.idpMetadataProvider = initNewResolver();
-            this.entityId = getFirstEntityId();
-            logger.debug("Using IDP with entityId: " + this.entityId);
+            if (!isEntityIdPresent(url)) {
+                throw new EidasClientException("No valid EntityDescriptor with entityID = '" + url + "' was found!");
+            }
         }
         return idpMetadataProvider;
-    }
-
-    public String getEntityId() {
-        return entityId;
     }
 
     private AbstractReloadingMetadataResolver initNewResolver() {
@@ -62,20 +59,15 @@ public class IDPMetadataResolver {
             idpMetadataResolver.setMetadataFilter(new SignatureValidationFilter(metadataSignatureTrustEngine));
             idpMetadataResolver.setMinRefreshDelay(60000);
             idpMetadataResolver.initialize();
-            if (idpMetadataResolver instanceof EidasHTTPMetaDataResolver) {
-                ((EidasHTTPMetaDataResolver) idpMetadataResolver).validateHostURL();
-            }
             return idpMetadataResolver;
         } catch (ComponentInitializationException e) {
-            throw new EidasClientException("Error initializing IDP Metadata provider", e);
+            throw new EidasClientException("Error initializing IDP Metadata provider.", e);
         }
     }
 
-    private String getFirstEntityId() {
-        for (EntityDescriptor entityDescriptor : idpMetadataProvider) {
-            return entityDescriptor.getEntityID();
-        }
-        throw new EidasClientException("No valid EntityDescriptors found!");
+    private boolean isEntityIdPresent(String idpMetadataUrl) {
+        Iterable<EntityDescriptor> iterable = () -> idpMetadataProvider.iterator();
+        return StreamSupport.stream(iterable.spliterator(), false).anyMatch(x -> Objects.equals(x.getEntityID(), idpMetadataUrl));
     }
 
     private AbstractReloadingMetadataResolver getMetadataResolver(String url) {
@@ -85,9 +77,9 @@ public class IDPMetadataResolver {
                 return new ResourceBackedMetadataResolver(ResourceHelper.of(resource));
             } else {
                 CloseableHttpClient httpclient = HttpClients.createDefault();
-                return new EidasHTTPMetaDataResolver(httpclient, url, hostUrlValidationEnabled);
+                return new HTTPMetadataResolver(httpclient, url);
             }
-        } catch (ResolverException | IOException e) {
+        } catch (IOException|ResolverException e) {
             throw new EidasClientException("Error resolving IDP Metadata", e);
         }
     }
