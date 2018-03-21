@@ -10,7 +10,6 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.opensaml.saml.metadata.resolver.filter.impl.SignatureValidationFilter;
 import org.opensaml.saml.metadata.resolver.impl.AbstractReloadingMetadataResolver;
-import org.opensaml.saml.metadata.resolver.impl.HTTPMetadataResolver;
 import org.opensaml.saml.metadata.resolver.impl.ResourceBackedMetadataResolver;
 import org.opensaml.saml.saml2.metadata.EntityDescriptor;
 import org.opensaml.xmlsec.signature.support.impl.ExplicitKeySignatureTrustEngine;
@@ -29,10 +28,12 @@ public class IDPMetadataResolver {
     private AbstractReloadingMetadataResolver idpMetadataProvider;
     private ExplicitKeySignatureTrustEngine metadataSignatureTrustEngine;
     private String entityId;
+    private boolean hostUrlValidationEnabled;
 
-    public IDPMetadataResolver(String url, ExplicitKeySignatureTrustEngine metadataSignatureTrustEngine) {
+    public IDPMetadataResolver(String url, ExplicitKeySignatureTrustEngine metadataSignatureTrustEngine, boolean hostUrlValidationEnabled) {
         this.url = url;
         this.metadataSignatureTrustEngine = metadataSignatureTrustEngine;
+        this.hostUrlValidationEnabled = hostUrlValidationEnabled;
     }
 
     public AbstractReloadingMetadataResolver resolve() {
@@ -61,6 +62,9 @@ public class IDPMetadataResolver {
             idpMetadataResolver.setMetadataFilter(new SignatureValidationFilter(metadataSignatureTrustEngine));
             idpMetadataResolver.setMinRefreshDelay(60000);
             idpMetadataResolver.initialize();
+            if (idpMetadataResolver instanceof EidasHTTPMetaDataResolver) {
+                ((EidasHTTPMetaDataResolver) idpMetadataResolver).validateHostURL();
+            }
             return idpMetadataResolver;
         } catch (ComponentInitializationException e) {
             throw new EidasClientException("Error initializing IDP Metadata provider", e);
@@ -81,10 +85,11 @@ public class IDPMetadataResolver {
                 return new ResourceBackedMetadataResolver(ResourceHelper.of(resource));
             } else {
                 CloseableHttpClient httpclient = HttpClients.createDefault();
-                return new HTTPMetadataResolver(httpclient, url);
+                return new EidasHTTPMetaDataResolver(httpclient, url, hostUrlValidationEnabled);
             }
         } catch (ResolverException | IOException e) {
             throw new EidasClientException("Error resolving IDP Metadata", e);
         }
     }
+
 }

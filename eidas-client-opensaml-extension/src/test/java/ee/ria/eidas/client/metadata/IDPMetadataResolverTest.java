@@ -12,7 +12,6 @@ import org.opensaml.core.criterion.EntityIdCriterion;
 import org.opensaml.saml.metadata.resolver.MetadataResolver;
 import org.opensaml.xmlsec.signature.support.impl.ExplicitKeySignatureTrustEngine;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -26,18 +25,15 @@ public class IDPMetadataResolverTest {
     public ExpectedException expectedEx = ExpectedException.none();
 
     @Autowired
-    private ExplicitKeySignatureTrustEngine metadataSignatureTrustEngine;
-
-    @Autowired
-    private ResourceLoader resourceLoader;
+    private ExplicitKeySignatureTrustEngine idpMetadataSignatureTrustEngine;
 
     @Test
     public void resolveValidIdpMetadata() throws Exception {
-        IDPMetadataResolver idpMetadataResolver = new IDPMetadataResolver("classpath:idp-metadata.xml", metadataSignatureTrustEngine);
+        IDPMetadataResolver idpMetadataResolver = new IDPMetadataResolver("classpath:idp-metadata.xml", idpMetadataSignatureTrustEngine, false);
         MetadataResolver metadataResolver = idpMetadataResolver.resolve();
         Assert.assertNotNull(metadataResolver);
         Assert.assertTrue(metadataResolver.isRequireValidMetadata());
-        Assert.assertEquals("http://localhost:8080/EidasNode/ConnectorResponderMetadata", metadataResolver.resolve(new CriteriaSet(new EntityIdCriterion("http://localhost:8080/EidasNode/ConnectorResponderMetadata"))).iterator().next().getEntityID());
+        Assert.assertEquals("http://localhost:8080/EidasNode/ConnectorResponderMetadata", metadataResolver.resolveSingle(new CriteriaSet(new EntityIdCriterion("http://localhost:8080/EidasNode/ConnectorResponderMetadata"))).getEntityID());
     }
 
     @Test
@@ -65,7 +61,7 @@ public class IDPMetadataResolverTest {
     }
 
     private void assertResolveFails(String url) {
-        IDPMetadataResolver idpMetadataResolver = new IDPMetadataResolver(url, metadataSignatureTrustEngine);
+        IDPMetadataResolver idpMetadataResolver = new IDPMetadataResolver(url, idpMetadataSignatureTrustEngine, false);
         MetadataResolver metadataResolver = idpMetadataResolver.resolve();
         Assert.fail("Test should not reach this!");
     }

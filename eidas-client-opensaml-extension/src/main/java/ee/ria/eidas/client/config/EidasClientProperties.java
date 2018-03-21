@@ -55,6 +55,8 @@ public class EidasClientProperties {
     @NotNull
     private String idpMetadataUrl;
 
+    private boolean idpMetaDataHostValidationEnabled = true;
+
     @NotNull
     private String spEntityId;
 
@@ -259,5 +261,13 @@ public class EidasClientProperties {
 
     public void setResponseMessageLifeTime(Integer messageLifeTime) {
         this.responseMessageLifeTime = messageLifeTime;
+    }
+
+    public boolean isIdpMetaDataHostValidationEnabled() {
+        return idpMetaDataHostValidationEnabled;
+    }
+
+    public void setIdpMetaDataHostValidationEnabled(boolean idpMetaDataHostValidationEnabled) {
+        this.idpMetaDataHostValidationEnabled = idpMetaDataHostValidationEnabled;
     }
 }

@@ -69,14 +69,6 @@ public class EidasClientConfiguration {
     }
 
     @Bean
-    public Credential idpMetadataSigningCredential(KeyStore keyStore) {
-        return getCredential(
-                keyStore,
-                eidasClientProperties.getMetadataSigningKeyId(),
-                eidasClientProperties.getMetadataSigningKeyPass());
-    }
-
-    @Bean
     public Credential authnReqSigningCredential(KeyStore keyStore) {
         return getCredential(
                 keyStore,
@@ -126,7 +118,7 @@ public class EidasClientConfiguration {
     }
 
     @Bean
-    public ExplicitKeySignatureTrustEngine metadataSignatureTrustEngine(KeyStore keyStore) {
+    public ExplicitKeySignatureTrustEngine idpMetadataSignatureTrustEngine(KeyStore keyStore) {
         try {
             X509Certificate cert = (X509Certificate) keyStore.getCertificate(eidasClientProperties.getIdpMetadataSigningCertificateKeyId());
             if (cert == null) {
@@ -149,8 +141,8 @@ public class EidasClientConfiguration {
     }
 
     @Bean
-    public IDPMetadataResolver idpMetadataResolver(@Qualifier("metadataSignatureTrustEngine") ExplicitKeySignatureTrustEngine metadataSignatureTrustEngine) {
-        return new IDPMetadataResolver(eidasClientProperties.getIdpMetadataUrl(), metadataSignatureTrustEngine);
+    public IDPMetadataResolver idpMetadataResolver(@Qualifier("idpMetadataSignatureTrustEngine") ExplicitKeySignatureTrustEngine metadataSignatureTrustEngine) {
+        return new IDPMetadataResolver(eidasClientProperties.getIdpMetadataUrl(), metadataSignatureTrustEngine, eidasClientProperties.isIdpMetaDataHostValidationEnabled());
     }
 
     @Bean
