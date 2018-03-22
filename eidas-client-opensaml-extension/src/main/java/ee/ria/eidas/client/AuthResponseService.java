@@ -2,6 +2,7 @@ package ee.ria.eidas.client;
 
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.config.OpenSAMLConfiguration;
+import ee.ria.eidas.client.exception.EidasAuthenticationFailedException;
 import ee.ria.eidas.client.exception.EidasClientException;
 import ee.ria.eidas.client.response.AuthenticationResult;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
@@ -13,6 +14,7 @@ import net.shibboleth.utilities.java.support.resolver.ResolverException;
 import net.shibboleth.utilities.java.support.xml.XMLParserException;
 import org.joda.time.DateTime;
 import org.opensaml.core.criterion.EntityIdCriterion;
+import org.opensaml.core.xml.XMLObject;
 import org.opensaml.core.xml.io.UnmarshallingException;
 import org.opensaml.core.xml.util.XMLObjectSupport;
 import org.opensaml.messaging.context.MessageContext;
@@ -77,10 +79,7 @@ public class AuthResponseService {
             throw new EidasClientException("Failed to read SAMLResponse. " + e.getMessage(), e);
         }
         validateDestinationAndLifetime(samlResponse, req);
-
-        if (!StatusCode.SUCCESS.equals(samlResponse.getStatus().getStatusCode().getValue())) {
-            return new AuthenticationResult(samlResponse);
-        }
+        validateStatusCode(samlResponse);
 
         EncryptedAssertion encryptedAssertion = getEncryptedAssertion(samlResponse);
         Assertion assertion = decryptAssertion(encryptedAssertion);
@@ -88,7 +87,26 @@ public class AuthResponseService {
         validateAssertion(assertion);
         LOGGER.debug("Decrypted Assertion: ", OpenSAMLUtils.getXmlString(assertion));
 
-        return new AuthenticationResult(samlResponse, assertion);
+        return new AuthenticationResult(assertion);
+    }
+
+    private void validateStatusCode(Response samlResponse) {
+        StatusCode statusCode = samlResponse.getStatus().getStatusCode();
+        StatusCode substatusCode = statusCode.getStatusCode();
+        StatusMessage statusMessage = samlResponse.getStatus().getStatusMessage();
+        if (StatusCode.SUCCESS.equals(statusCode.getValue())) {
+            return;
+        }  else if (StatusCode.REQUESTER.equals(statusCode.getValue())
+                && (substatusCode != null && StatusCode.REQUEST_DENIED.equals(substatusCode.getValue()))) {
+            throw new EidasAuthenticationFailedException("No user consent received. User denied access.");
+        }  else if (StatusCode.RESPONDER.equals(statusCode.getValue())
+                && (substatusCode != null && StatusCode.AUTHN_FAILED.equals(substatusCode.getValue()))) {
+            throw new EidasAuthenticationFailedException("Authentication failed.");
+        } else {
+            throw new EidasClientException("Eidas node responded with an error! statusCode = " + samlResponse.getStatus().getStatusCode().getValue()
+                    + (substatusCode != null ? ", substatusCode = " + substatusCode.getValue() : "")
+                    +  ", statusMessage = " + statusMessage.getMessage());
+        }
     }
 
     private Response getSamlResponse(String samlResponse) throws XMLParserException, UnmarshallingException {

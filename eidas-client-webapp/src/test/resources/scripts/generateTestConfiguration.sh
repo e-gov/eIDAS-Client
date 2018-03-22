@@ -4,7 +4,7 @@ testConfDestination="eidas-client-webapp/target/generated-test-conf"
 
 confFileName="application.properties"
 keystoreFileName="samlKeystore.jks"
-defaultHostname="http://localhost:8080"
+defaultHostname="http://localhost:8889"
 
 if [ -z "$1" ]
 then
