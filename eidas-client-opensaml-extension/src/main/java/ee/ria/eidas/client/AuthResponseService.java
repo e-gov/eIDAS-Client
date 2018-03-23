@@ -85,7 +85,7 @@ public class AuthResponseService {
         Assertion assertion = decryptAssertion(encryptedAssertion);
         verifyAssertionSignature(assertion);
         validateAssertion(assertion);
-        LOGGER.debug("Decrypted Assertion: ", OpenSAMLUtils.getXmlString(assertion));
+        LOGGER.debug("Decrypted Assertion: {}", OpenSAMLUtils.getXmlString(assertion));
 
         return new AuthenticationResult(assertion);
     }

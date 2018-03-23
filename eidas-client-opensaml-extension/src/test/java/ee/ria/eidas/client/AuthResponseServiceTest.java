@@ -165,8 +165,10 @@ public class AuthResponseServiceTest {
 
     private void assertAuthenticationResult(AuthenticationResult result) {
         assertEquals(AssuranceLevel.LOW.getUri(), result.getLevelOfAssurance());
-        assertEquals("javier", result.getAttributes().get("FirstName"));
-        assertEquals("Garcia", result.getAttributes().get("FamilyName"));
+        assertEquals("Alexander", result.getAttributes().get("FirstName"));
+        assertEquals("Onassis", result.getAttributes().get("FamilyName"));
+        assertEquals("Αλέξανδρος", result.getAttributesNonLatin().get("FirstName"));
+        assertEquals("Ωνάσης", result.getAttributesNonLatin().get("FamilyName"));
         assertEquals("CA/CA/12345", result.getAttributes().get("PersonIdentifier"));
         assertEquals("1965-01-01", result.getAttributes().get("DateOfBirth"));
     }

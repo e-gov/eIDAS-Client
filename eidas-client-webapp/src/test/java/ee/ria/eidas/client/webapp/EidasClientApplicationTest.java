@@ -199,8 +199,10 @@ public class EidasClientApplicationTest {
             .statusCode(200)
             .body("levelOfAssurance", equalTo("http://eidas.europa.eu/LoA/low"))
             .body("attributes.PersonIdentifier", equalTo("CA/CA/12345"))
-            .body("attributes.FamilyName", equalTo("Garcia"))
-            .body("attributes.FirstName", equalTo("javier"));
+            .body("attributes.FamilyName", equalTo("Onassis"))
+            .body("attributes.FirstName", equalTo("Alexander"))
+            .body("attributesNonLatin.FamilyName", equalTo("Ωνάσης"))
+            .body("attributesNonLatin.FirstName", equalTo("Αλέξανδρος"));
     }
 
     @Test

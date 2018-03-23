@@ -220,25 +220,39 @@ public class ResponseBuilder {
 
     private AttributeStatement buildAttributeStatement() {
         AttributeStatement attributeStatement = new AttributeStatementBuilder().buildObject();
-        attributeStatement.getAttributes().add(buildAttribute("FirstName", "http://eidas.europa.eu/attributes/naturalperson/CurrentGivenName", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri", "eidas-natural:CurrentGivenNameType", "javier"));
-        attributeStatement.getAttributes().add(buildAttribute("FamilyName", "http://eidas.europa.eu/attributes/naturalperson/CurrentFamilyName", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri", "eidas-natural:CurrentFamilyNameType", "Garcia"));
+        attributeStatement.getAttributes().add(buildAttribute("FirstName", "http://eidas.europa.eu/attributes/naturalperson/CurrentGivenName", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri", "eidas-natural:CurrentGivenNameType", "Alexander", "Αλέξανδρος"));
+        attributeStatement.getAttributes().add(buildAttribute("FamilyName", "http://eidas.europa.eu/attributes/naturalperson/CurrentFamilyName", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri", "eidas-natural:CurrentFamilyNameType", "Onassis", "Ωνάσης"));
         attributeStatement.getAttributes().add(buildAttribute("PersonIdentifier", "http://eidas.europa.eu/attributes/naturalperson/PersonIdentifier", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri", "eidas-natural:PersonIdentifierType", "CA/CA/12345"));
         attributeStatement.getAttributes().add(buildAttribute("DateOfBirth", "http://eidas.europa.eu/attributes/naturalperson/DateOfBirth", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri", "eidas-natural:DateOfBirthType", "1965-01-01"));
         return attributeStatement;
     }
 
     private Attribute buildAttribute(String friendlyName, String name, String nameFormat, String xsiType, String value) {
+        return buildAttribute(friendlyName, name, nameFormat, xsiType, value, null);
+    }
+
+    private Attribute buildAttribute(String friendlyName, String name, String nameFormat, String xsiType, String value, String nonLatinValue) {
         Attribute attribute = new AttributeBuilder().buildObject();
         attribute.setFriendlyName(friendlyName);
         attribute.setName(name);
         attribute.setNameFormat(nameFormat);
         attribute.getAttributeValues().add(buildAttributeValue(xsiType, value));
+        if (nonLatinValue != null)
+            attribute.getAttributeValues().add(buildNonLatinAttributeValue(xsiType, nonLatinValue));
         return attribute;
     }
 
     private XSAny buildAttributeValue(String xsiType, String value) {
         XSAny attributevalue = new XSAnyBuilder().buildObject(AttributeValue.DEFAULT_ELEMENT_NAME);
         attributevalue.getUnknownAttributes().put(new QName("http://www.w3.org/2001/XMLSchema-instance", "type", "xsi"), xsiType);
+        attributevalue.setTextContent(value);
+        return attributevalue;
+    }
+
+    private XSAny buildNonLatinAttributeValue(String xsiType, String value) {
+        XSAny attributevalue = new XSAnyBuilder().buildObject(AttributeValue.DEFAULT_ELEMENT_NAME);
+        attributevalue.getUnknownAttributes().put(new QName("http://www.w3.org/2001/XMLSchema-instance", "type", "xsi"), xsiType);
+        attributevalue.getUnknownAttributes().put(new QName("http://eidas.europa.eu/attributes/naturalperson", "LatinScript", "eidas-natural"),"false");
         attributevalue.setTextContent(value);
         return attributevalue;
     }
