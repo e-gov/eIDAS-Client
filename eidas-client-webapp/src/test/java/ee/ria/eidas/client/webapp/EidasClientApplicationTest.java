@@ -6,6 +6,8 @@ import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.jayway.restassured.RestAssured;
 import com.jayway.restassured.config.XmlConfig;
 import com.jayway.restassured.response.ResponseBodyExtractionOptions;
+import ee.ria.eidas.client.RequestSession;
+import ee.ria.eidas.client.authnrequest.RequestSessionService;
 import ee.ria.eidas.client.fixtures.ResponseBuilder;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
 import ee.ria.eidas.client.utils.ClasspathResourceResolver;
@@ -13,6 +15,7 @@ import ee.ria.eidas.client.utils.XmlUtils;
 import net.shibboleth.utilities.java.support.resolver.CriteriaSet;
 import net.shibboleth.utilities.java.support.resolver.Criterion;
 import net.shibboleth.utilities.java.support.resolver.ResolverException;
+import org.joda.time.DateTime;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -26,6 +29,7 @@ import org.opensaml.security.credential.impl.KeyStoreCredentialResolver;
 import org.opensaml.xmlsec.signature.support.SignatureValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.embedded.LocalServerPort;
+import org.springframework.boot.test.autoconfigure.web.client.AutoConfigureWebClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.SpyBean;
@@ -67,6 +71,9 @@ public class EidasClientApplicationTest {
 
     @Autowired
     Credential eidasNodeSigningCredential;
+
+    @Autowired
+    RequestSessionService requestSessionService;
 
     @TestConfiguration
     public static class TestConfWithEidasNodeSigningKey {
@@ -187,6 +194,8 @@ public class EidasClientApplicationTest {
 
     @Test
     public void returnUrl_shouldSucceed_whenValidSAMLResponse() {
+        
+        requestSessionService.saveRequestSession("_4ededd23fb88e6964df71b8bdb1c706f", new RequestSession(new DateTime()));
 
         given()
             .port(port)
