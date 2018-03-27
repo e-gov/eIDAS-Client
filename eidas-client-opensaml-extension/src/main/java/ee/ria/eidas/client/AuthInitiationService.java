@@ -3,6 +3,7 @@ package ee.ria.eidas.client;
 import ee.ria.eidas.client.authnrequest.AssuranceLevel;
 import ee.ria.eidas.client.authnrequest.AuthnRequestBuilder;
 import ee.ria.eidas.client.authnrequest.EidasHTTPPostEncoder;
+import ee.ria.eidas.client.authnrequest.RequestSessionService;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.exception.EidasClientException;
 import ee.ria.eidas.client.exception.InvalidEidasParamException;
@@ -31,13 +32,16 @@ public class AuthInitiationService {
 
     private static String RELAYSTATE_VALIDATION_REGEXP = "^[a-zA-Z0-9-_]{0,80}$";
 
+    private RequestSessionService requestSessionService;
+
     private Credential authnReqSigningCredential;
 
     private EidasClientProperties eidasClientProperties;
 
     private SingleSignOnService singleSignOnService;
 
-    public AuthInitiationService(Credential authnReqSigningCredential, EidasClientProperties eidasClientProperties, SingleSignOnService singleSignOnService) {
+    public AuthInitiationService(RequestSessionService requestSessionService, Credential authnReqSigningCredential, EidasClientProperties eidasClientProperties, SingleSignOnService singleSignOnService) {
+        this.requestSessionService = requestSessionService;
         this.authnReqSigningCredential = authnReqSigningCredential;
         this.eidasClientProperties = eidasClientProperties;
         this.singleSignOnService = singleSignOnService;
@@ -53,7 +57,13 @@ public class AuthInitiationService {
     private void redirectUserForAuthentication(HttpServletResponse httpServletResponse, String country, AssuranceLevel loa, String relayState) {
         AuthnRequestBuilder authnRequestBuilder = new AuthnRequestBuilder(authnReqSigningCredential, eidasClientProperties, singleSignOnService);
         AuthnRequest authnRequest = authnRequestBuilder.buildAuthnRequest(loa);
+        saveRequestAsSession(authnRequest);
         redirectUserWithRequest(httpServletResponse, authnRequest, country, relayState);
+    }
+
+    private void saveRequestAsSession(AuthnRequest authnRequest) {
+        RequestSession requestSession = new RequestSession(authnRequest.getIssueInstant());
+        requestSessionService.saveRequestSession(authnRequest.getID(), requestSession);
     }
 
     private void redirectUserWithRequest(HttpServletResponse httpServletResponse, AuthnRequest authnRequest, String country, String relayState) {

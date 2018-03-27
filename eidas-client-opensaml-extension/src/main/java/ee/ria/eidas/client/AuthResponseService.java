@@ -1,5 +1,6 @@
 package ee.ria.eidas.client;
 
+import ee.ria.eidas.client.authnrequest.RequestSessionService;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.config.OpenSAMLConfiguration;
 import ee.ria.eidas.client.exception.EidasAuthenticationFailedException;
@@ -55,13 +56,16 @@ public class AuthResponseService {
 
     private static Logger LOGGER = LoggerFactory.getLogger(AuthResponseService.class);
 
+    private RequestSessionService requestSessionService;
+
     private EidasClientProperties eidasClientProperties;
 
     private ExplicitKeySignatureTrustEngine explicitKeySignatureTrustEngine;
 
     private Credential spAssertionDecryptionCredential;
 
-    public AuthResponseService(EidasClientProperties eidasClientProperties, ExplicitKeySignatureTrustEngine explicitKeySignatureTrustEngine, Credential spAssertionDecryptionCredential) {
+    public AuthResponseService(RequestSessionService requestSessionService, EidasClientProperties eidasClientProperties, ExplicitKeySignatureTrustEngine explicitKeySignatureTrustEngine, Credential spAssertionDecryptionCredential) {
+        this.requestSessionService = requestSessionService;
         this.eidasClientProperties = eidasClientProperties;
         this.explicitKeySignatureTrustEngine = explicitKeySignatureTrustEngine;
         this.spAssertionDecryptionCredential = spAssertionDecryptionCredential;
@@ -152,6 +156,15 @@ public class AuthResponseService {
 
     }
 
+    private void validateAssertion(Assertion assertion) {
+        String requestID = assertion.getSubject().getSubjectConfirmations().get(0).getSubjectConfirmationData().getInResponseTo();
+        RequestSession requestSession = requestSessionService.getRequestSession(requestID);
+        if (requestSession == null) {
+            throw new EidasClientException("No corresponding SAML request session found to the given response!");
+        }
+        requestSessionService.removeRequestSession(requestID);
+    }
+
     private Assertion decryptAssertion(EncryptedAssertion encryptedAssertion) {
         StaticKeyInfoCredentialResolver keyInfoCredentialResolver = new StaticKeyInfoCredentialResolver(spAssertionDecryptionCredential);
 
@@ -185,18 +198,6 @@ public class AuthResponseService {
         } catch (SignatureException | ResolverException e) {
             throw new EidasClientException("Signature verification failed!", e);
         }
-    }
-
-    private void validateAssertion(Assertion assertion) {
-        for (final AuthnStatement statement : assertion.getAuthnStatements()) {
-            DateTime now = new DateTime();
-            DateTime authenticationValidUntil = statement.getAuthnInstant().plusSeconds(eidasClientProperties.getMaximumAuthenticationLifetime()).plusSeconds(eidasClientProperties.getAcceptedClockSkew());
-            if (now.isBefore(statement.getAuthnInstant()) || now.isAfter(authenticationValidUntil)) {
-                throw new EidasClientException("Authentication issue instant is too old or in the future");
-            }
-        }
-        // Currently we only validate the validity of authentication lifetime
-        // TODO: validate assertion issuer, conditions, etc?
     }
 
     private EncryptedAssertion getEncryptedAssertion(Response samlResponse) {
