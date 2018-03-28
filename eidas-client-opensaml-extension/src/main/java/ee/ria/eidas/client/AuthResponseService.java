@@ -4,6 +4,7 @@ import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.config.OpenSAMLConfiguration;
 import ee.ria.eidas.client.exception.EidasAuthenticationFailedException;
 import ee.ria.eidas.client.exception.EidasClientException;
+import ee.ria.eidas.client.exception.InvalidEidasParamException;
 import ee.ria.eidas.client.response.AuthenticationResult;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
 import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
@@ -21,12 +22,15 @@ import org.opensaml.messaging.context.MessageContext;
 import org.opensaml.messaging.handler.MessageHandler;
 import org.opensaml.messaging.handler.MessageHandlerException;
 import org.opensaml.messaging.handler.impl.BasicMessageHandlerChain;
+import org.opensaml.messaging.handler.impl.SchemaValidateXMLMessage;
 import org.opensaml.saml.common.binding.security.impl.MessageLifetimeSecurityHandler;
 import org.opensaml.saml.common.binding.security.impl.ReceivedEndpointSecurityHandler;
 import org.opensaml.saml.common.messaging.context.SAMLMessageInfoContext;
 import org.opensaml.saml.common.xml.SAMLConstants;
+import org.opensaml.saml.common.xml.SAMLSchemaBuilder;
 import org.opensaml.saml.criterion.EntityRoleCriterion;
 import org.opensaml.saml.criterion.ProtocolCriterion;
+import org.opensaml.saml.metadata.resolver.filter.impl.SchemaValidationFilter;
 import org.opensaml.saml.saml2.core.*;
 import org.opensaml.saml.saml2.encryption.Decrypter;
 import org.opensaml.saml.saml2.metadata.IDPSSODescriptor;
@@ -45,6 +49,7 @@ import org.slf4j.LoggerFactory;
 
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
+import javax.xml.validation.Schema;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -61,10 +66,13 @@ public class AuthResponseService {
 
     private Credential spAssertionDecryptionCredential;
 
-    public AuthResponseService(EidasClientProperties eidasClientProperties, ExplicitKeySignatureTrustEngine explicitKeySignatureTrustEngine, Credential spAssertionDecryptionCredential) {
+    private Schema samlSchema;
+
+    public AuthResponseService(EidasClientProperties eidasClientProperties, ExplicitKeySignatureTrustEngine explicitKeySignatureTrustEngine, Credential spAssertionDecryptionCredential, Schema samlSchema) {
         this.eidasClientProperties = eidasClientProperties;
         this.explicitKeySignatureTrustEngine = explicitKeySignatureTrustEngine;
         this.spAssertionDecryptionCredential = spAssertionDecryptionCredential;
+        this.samlSchema = samlSchema;
     }
 
     public AuthenticationResult getAuthenticationResult(HttpServletRequest req) {
@@ -121,6 +129,8 @@ public class AuthResponseService {
         SAMLMessageInfoContext messageInfoContext = context.getSubcontext(SAMLMessageInfoContext.class, true);
         messageInfoContext.setMessageIssueInstant(samlResponse.getIssueInstant());
 
+        SchemaValidateXMLMessage schemaValidationFilter = new SchemaValidateXMLMessage(samlSchema);
+
         MessageLifetimeSecurityHandler lifetimeSecurityHandler = new MessageLifetimeSecurityHandler();
         lifetimeSecurityHandler.setClockSkew(eidasClientProperties.getAcceptedClockSkew() * 1000);
         lifetimeSecurityHandler.setMessageLifetime(eidasClientProperties.getResponseMessageLifeTime() * 1000);
@@ -129,6 +139,8 @@ public class AuthResponseService {
         ReceivedEndpointSecurityHandler receivedEndpointSecurityHandler = new ReceivedEndpointSecurityHandler();
         receivedEndpointSecurityHandler.setHttpServletRequest(request);
         List handlers = new ArrayList<MessageHandler>();
+
+        handlers.add(schemaValidationFilter);
         handlers.add(lifetimeSecurityHandler);
         handlers.add(receivedEndpointSecurityHandler);
         receivedEndpointSecurityHandler.setURIComparator(new URIComparator() {
@@ -147,7 +159,7 @@ public class AuthResponseService {
         } catch (ComponentInitializationException e) {
             throw new EidasClientException("Error initializing handler chain", e);
         } catch (MessageHandlerException e) {
-            throw new EidasClientException("Error handling message", e);
+            throw new InvalidEidasParamException("Error handling message: " + e.getMessage(), e);
         }
 
     }
@@ -167,7 +179,7 @@ public class AuthResponseService {
 
     private void verifyAssertionSignature(Assertion assertion) {
         if (!assertion.isSigned()) {
-            throw new EidasClientException("The SAML Assertion was not signed");
+            throw new InvalidEidasParamException("The SAML Assertion was not signed");
         }
         try {
             SAMLSignatureProfileValidator profileValidator = new SAMLSignatureProfileValidator();

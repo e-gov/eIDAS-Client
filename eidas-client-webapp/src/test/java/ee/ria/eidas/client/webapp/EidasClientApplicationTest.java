@@ -8,7 +8,6 @@ import com.jayway.restassured.config.XmlConfig;
 import com.jayway.restassured.response.ResponseBodyExtractionOptions;
 import ee.ria.eidas.client.fixtures.ResponseBuilder;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
-import ee.ria.eidas.client.utils.ClasspathResourceResolver;
 import ee.ria.eidas.client.utils.XmlUtils;
 import net.shibboleth.utilities.java.support.resolver.CriteriaSet;
 import net.shibboleth.utilities.java.support.resolver.Criterion;
@@ -44,7 +43,7 @@ import java.util.Map;
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.jayway.restassured.RestAssured.given;
-import static com.jayway.restassured.matcher.RestAssuredMatchers.matchesXsdInClasspath;
+import static com.jayway.restassured.matcher.RestAssuredMatchers.matchesXsd;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.core.IsEqual.equalTo;
@@ -101,14 +100,14 @@ public class EidasClientApplicationTest {
     }
 
     @Test
-    public void metadataMatchesSchema() {
+    public void metadataMatchesSchema() throws Exception {
         given()
             .port(port).config(RestAssured.config().xmlConfig(XmlConfig.xmlConfig().disableLoadingOfExternalDtd()))
         .when()
             .get("/metadata")
         .then()
             .statusCode(200)
-            .body(matchesXsdInClasspath(ClasspathResourceResolver.SCHEMA_DIR_ON_CLASSPATH + "saml-schema-metadata-2.0.xsd").using(new ClasspathResourceResolver()));
+            .body(matchesXsd(getClass().getClassLoader().getResource("schema/saml-schema-metadata-2.0.xsd").openStream()));
     }
 
     @Test
@@ -223,6 +222,22 @@ public class EidasClientApplicationTest {
             .body("error", equalTo("Unauthorized"))
             .body("message", equalTo("Authentication failed."));
     }
+
+    @Test
+    public void returnUrl_shouldFail_whenInvalidSchema() {
+
+        given()
+            .port(port)
+            .contentType("application/x-www-form-urlencoded")
+            .formParam("SAMLResponse", Base64.getEncoder().encodeToString("<saml2p:Response xmlns:saml2p=\"urn:oasis:names:tc:SAML:2.0:protocol\" xmlns:ds=\"http://www.w3.org/2000/09/xmldsig#\" xmlns:eidas=\"http://eidas.europa.eu/attributes/naturalperson\" xmlns:saml2=\"urn:oasis:names:tc:SAML:2.0:assertion\" Consent=\"urn:oasis:names:tc:SAML:2.0:consent:obtained\" Destination=\"https://eidastest.eesti.ee/SP/ReturnPage\" ID=\"_3mEzdFJfrtUjn2m2AiVlzcPWQMzUbKbSeBy361IbOJ5bgQsy.luTRPBp5amP1KG\" InResponseTo=\"_dfe8paUm3yG_u4-fdnCtUoM.mQjQnD874VyioAEB71q8waJkIQLBjOP5HdfGLwP\" IssueInstant=\"2018-03-22T12:03:26.306Z\" Version=\"2.0\"></saml2p:Response>".getBytes(StandardCharsets.UTF_8)))
+        .when()
+            .post("/returnUrl")
+        .then()
+            .statusCode(400)
+            .body("error", equalTo("Bad Request"))
+            .body("message", equalTo("Error handling message: Message is not schema-valid."));
+    }
+
 
     @Test
     public void returnUrl_shouldFail_whenNoUserConsentGiven() {

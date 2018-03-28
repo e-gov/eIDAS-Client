@@ -11,6 +11,7 @@ import net.shibboleth.utilities.java.support.resolver.Criterion;
 import net.shibboleth.utilities.java.support.resolver.ResolverException;
 import org.opensaml.core.criterion.EntityIdCriterion;
 import org.opensaml.saml.common.xml.SAMLConstants;
+import org.opensaml.saml.common.xml.SAMLSchemaBuilder;
 import org.opensaml.saml.metadata.resolver.impl.AbstractReloadingMetadataResolver;
 import org.opensaml.saml.metadata.resolver.impl.PredicateRoleDescriptorResolver;
 import org.opensaml.saml.saml2.metadata.EntityDescriptor;
@@ -34,6 +35,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
+import org.xml.sax.SAXException;
+
+import javax.xml.validation.Schema;
 
 import java.io.ByteArrayInputStream;
 import java.security.KeyStore;
@@ -58,6 +62,15 @@ public class EidasClientConfiguration {
     @Bean
     public SPMetadataGenerator metadataGenerator(@Qualifier("metadataSigningCredential") Credential metadataSigningCredential, @Qualifier("authnReqSigningCredential") Credential authnReqSigningCredential, @Qualifier("responseAssertionDecryptionCredential") Credential responseAssertionDecryptionCredential) {
         return new SPMetadataGenerator(eidasClientProperties, metadataSigningCredential, authnReqSigningCredential, responseAssertionDecryptionCredential);
+    }
+
+    @Bean
+    public Schema samlSchema() {
+        try {
+            return new SAMLSchemaBuilder(SAMLSchemaBuilder.SAML1Version.SAML_11).getSAMLSchema();
+        } catch (SAXException e) {
+            throw new EidasClientException("Failed to read SAML schemas!", e);
+        }
     }
 
     @Bean
@@ -173,8 +186,8 @@ public class EidasClientConfiguration {
     @Bean
     public AuthResponseService authResponseService(
             @Qualifier("responseSignatureTrustEngine") ExplicitKeySignatureTrustEngine explicitKeySignatureTrustEngine,
-            @Qualifier("responseAssertionDecryptionCredential") Credential responseAssertionDecryptionCredential) {
-        return new AuthResponseService(eidasClientProperties, explicitKeySignatureTrustEngine, responseAssertionDecryptionCredential);
+            @Qualifier("responseAssertionDecryptionCredential") Credential responseAssertionDecryptionCredential, Schema samlSchema) {
+        return new AuthResponseService(eidasClientProperties, explicitKeySignatureTrustEngine, responseAssertionDecryptionCredential, samlSchema);
     }
 
     private Credential getCredential(KeyStore keystore, String keyPairId, String privateKeyPass) {

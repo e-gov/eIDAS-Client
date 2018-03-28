@@ -5,6 +5,7 @@ import ee.ria.eidas.client.config.EidasClientConfiguration;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.exception.EidasClientException;
 import ee.ria.eidas.client.exception.EidasAuthenticationFailedException;
+import ee.ria.eidas.client.exception.InvalidEidasParamException;
 import ee.ria.eidas.client.fixtures.ResponseBuilder;
 import ee.ria.eidas.client.response.AuthenticationResult;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
@@ -17,6 +18,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.opensaml.core.criterion.EntityIdCriterion;
+import org.opensaml.saml.common.xml.SAMLSchemaBuilder;
 import org.opensaml.saml.saml2.core.*;
 import org.opensaml.security.credential.Credential;
 import org.opensaml.security.credential.impl.KeyStoreCredentialResolver;
@@ -32,6 +34,8 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import javax.xml.validation.Schema;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
 import java.util.Base64;
 import java.util.HashMap;
@@ -56,6 +60,9 @@ public class AuthResponseServiceTest {
 
     @Autowired
     private Credential responseAssertionDecryptionCredential;
+
+    @Autowired
+    private Schema samlSchema;
 
     @Autowired
     @Qualifier("eidasNodeSigningCredential")
@@ -96,7 +103,7 @@ public class AuthResponseServiceTest {
 
     @Before
     public void setUp() throws Exception {
-        authResponseService = new AuthResponseService(properties, responseSignatureTrustEngine, responseAssertionDecryptionCredential);
+        authResponseService = new AuthResponseService(properties, responseSignatureTrustEngine, responseAssertionDecryptionCredential, samlSchema);
         mockResponseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
         httpRequest = buildMockHttpServletRequest(mockResponseBuilder.buildResponse());
     }
@@ -130,6 +137,18 @@ public class AuthResponseServiceTest {
         Response response = mockResponseBuilder.buildResponse();
         response.setStatus(mockResponseBuilder.buildRequesterRequestDeniedStatus());
         httpRequest = buildMockHttpServletRequest(response);
+
+        AuthenticationResult result = authResponseService.getAuthenticationResult(httpRequest);
+        fail("Should not reach this!");
+    }
+
+    @Test
+    public void whenResponseDoesNotMatchSchema() throws Exception {
+
+        expectedEx.expect(InvalidEidasParamException.class);
+        expectedEx.expectMessage("Error handling message: Message is not schema-valid.");
+
+        httpRequest = buildMockHttpServletRequest("<saml2p:Response Destination=\"http://localhost:8889/returnUrl\" ID=\"_cce32a4e19aafb6d8c5d4ab4cc60a27a\" InResponseTo=\"sqajsja\" IssueInstant=\"2018-03-26T14:56:41.033Z\" Version=\"2.0\" xmlns:saml2p=\"urn:oasis:names:tc:SAML:2.0:protocol\"></saml2p:Response>");
 
         AuthenticationResult result = authResponseService.getAuthenticationResult(httpRequest);
         fail("Should not reach this!");
@@ -171,6 +190,15 @@ public class AuthResponseServiceTest {
         assertEquals("Ωνάσης", result.getAttributesNonLatin().get("FamilyName"));
         assertEquals("CA/CA/12345", result.getAttributes().get("PersonIdentifier"));
         assertEquals("1965-01-01", result.getAttributes().get("DateOfBirth"));
+    }
+
+    private MockHttpServletRequest buildMockHttpServletRequest(String response) throws Exception {
+        MockHttpServletRequest httpRequest = new MockHttpServletRequest();
+        httpRequest.setParameter("SAMLResponse", Base64.getEncoder().encodeToString(response.getBytes()));
+        httpRequest.setServerName("localhost");
+        httpRequest.setServerPort(8889);
+        httpRequest.setRequestURI("/returnUrl");
+        return httpRequest;
     }
 
     private MockHttpServletRequest buildMockHttpServletRequest(Response response) throws Exception {
