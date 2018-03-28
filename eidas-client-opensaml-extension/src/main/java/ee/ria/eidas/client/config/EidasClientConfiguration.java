@@ -2,6 +2,8 @@ package ee.ria.eidas.client.config;
 
 import ee.ria.eidas.client.AuthInitiationService;
 import ee.ria.eidas.client.AuthResponseService;
+import ee.ria.eidas.client.RequestSessionServiceImpl;
+import ee.ria.eidas.client.authnrequest.RequestSessionService;
 import ee.ria.eidas.client.exception.EidasClientException;
 import ee.ria.eidas.client.metadata.IDPMetadataResolver;
 import ee.ria.eidas.client.metadata.SPMetadataGenerator;
@@ -35,10 +37,10 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
+import org.springframework.scheduling.annotation.EnableScheduling;
 import org.xml.sax.SAXException;
 
 import javax.xml.validation.Schema;
-
 import java.io.ByteArrayInputStream;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -51,6 +53,7 @@ import java.util.*;
 @EnableConfigurationProperties({
         EidasClientProperties.class
 })
+@EnableScheduling
 public class EidasClientConfiguration {
 
     @Autowired
@@ -60,8 +63,15 @@ public class EidasClientConfiguration {
     private ResourceLoader resourceLoader;
 
     @Bean
-    public SPMetadataGenerator metadataGenerator(@Qualifier("metadataSigningCredential") Credential metadataSigningCredential, @Qualifier("authnReqSigningCredential") Credential authnReqSigningCredential, @Qualifier("responseAssertionDecryptionCredential") Credential responseAssertionDecryptionCredential) {
-        return new SPMetadataGenerator(eidasClientProperties, metadataSigningCredential, authnReqSigningCredential, responseAssertionDecryptionCredential);
+    public KeyStore samlKeystore() {
+        try {
+            KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
+            Resource resource = resourceLoader.getResource(eidasClientProperties.getKeystore());
+            keystore.load(resource.getInputStream(), eidasClientProperties.getKeystorePass().toCharArray());
+            return keystore;
+        } catch (Exception e) {
+            throw new EidasClientException("Something went wrong reading the keystore", e);
+        }
     }
 
     @Bean
@@ -98,15 +108,56 @@ public class EidasClientConfiguration {
     }
 
     @Bean
-    public KeyStore samlKeystore() {
+    public SPMetadataGenerator metadataGenerator(@Qualifier("metadataSigningCredential") Credential metadataSigningCredential, @Qualifier("authnReqSigningCredential") Credential authnReqSigningCredential, @Qualifier("responseAssertionDecryptionCredential") Credential responseAssertionDecryptionCredential) {
+        return new SPMetadataGenerator(eidasClientProperties, metadataSigningCredential, authnReqSigningCredential, responseAssertionDecryptionCredential);
+    }
+
+    @Bean
+    public ExplicitKeySignatureTrustEngine idpMetadataSignatureTrustEngine(KeyStore keyStore) {
         try {
-            KeyStore keystore = KeyStore.getInstance(KeyStore.getDefaultType());
-            Resource resource = resourceLoader.getResource(eidasClientProperties.getKeystore());
-            keystore.load(resource.getInputStream(), eidasClientProperties.getKeystorePass().toCharArray());
-            return keystore;
-        } catch (Exception e) {
-            throw new EidasClientException("Something went wrong reading the keystore", e);
+            X509Certificate cert = (X509Certificate) keyStore.getCertificate(eidasClientProperties.getIdpMetadataSigningCertificateKeyId());
+            if (cert == null) {
+                throw new EidasClientException("It seems you are missing a certificate with alias '" + eidasClientProperties.getIdpMetadataSigningCertificateKeyId() + "' in your " + eidasClientProperties.getKeystore() + " keystore. We need it in order to verify IDP metadata's signature.");
+            }
+            X509Credential switchCred = CredentialSupport.getSimpleCredential(cert, null);
+            StaticCredentialResolver switchCredResolver = new StaticCredentialResolver(switchCred);
+            return new ExplicitKeySignatureTrustEngine(switchCredResolver, DefaultSecurityConfigurationBootstrap.buildBasicInlineKeyInfoCredentialResolver());
+        } catch (KeyStoreException e) {
+            throw new EidasClientException("Error initializing. Cannot get IDP metadata trusted certificate", e);
         }
+    }
+
+    @Bean
+    public ExplicitKeySignatureTrustEngine idpMetadataSignatureTrustEngine(IDPMetadataResolver idpMetadataResolver) {
+        MetadataCredentialResolver metadataCredentialResolver = new MetadataCredentialResolver();
+        PredicateRoleDescriptorResolver roleResolver = new PredicateRoleDescriptorResolver(idpMetadataResolver.resolve());
+
+        KeyInfoCredentialResolver keyResolver = DefaultSecurityConfigurationBootstrap.buildBasicInlineKeyInfoCredentialResolver();
+
+        metadataCredentialResolver.setKeyInfoCredentialResolver(keyResolver);
+        metadataCredentialResolver.setRoleDescriptorResolver(roleResolver);
+
+        try {
+            metadataCredentialResolver.initialize();
+            roleResolver.initialize();
+        } catch (final ComponentInitializationException e) {
+            throw new EidasClientException("Error initializing metadataCredentialResolver", e);
+        }
+
+        return new ExplicitKeySignatureTrustEngine(metadataCredentialResolver, keyResolver);
+    }
+
+    @Bean
+    public IDPMetadataResolver idpMetadataResolver(@Qualifier("idpMetadataSignatureTrustEngine") ExplicitKeySignatureTrustEngine metadataSignatureTrustEngine) {
+        return new IDPMetadataResolver(eidasClientProperties.getIdpMetadataUrl(), metadataSignatureTrustEngine, eidasClientProperties.isIdpMetaDataHostValidationEnabled());
+    }
+
+    @Bean
+    public ExplicitKeySignatureTrustEngine responseSignatureTrustEngine(IDPMetadataResolver idpMetadataResolver) {
+        X509Certificate cert = getResponseSigningCertificate(idpMetadataResolver);
+        X509Credential switchCred = CredentialSupport.getSimpleCredential(cert, null);
+        StaticCredentialResolver switchCredResolver = new StaticCredentialResolver(switchCred);
+        return new ExplicitKeySignatureTrustEngine(switchCredResolver, DefaultSecurityConfigurationBootstrap.buildBasicInlineKeyInfoCredentialResolver());
     }
 
     @Bean
@@ -131,63 +182,21 @@ public class EidasClientConfiguration {
     }
 
     @Bean
-    public ExplicitKeySignatureTrustEngine idpMetadataSignatureTrustEngine(KeyStore keyStore) {
-        try {
-            X509Certificate cert = (X509Certificate) keyStore.getCertificate(eidasClientProperties.getIdpMetadataSigningCertificateKeyId());
-            if (cert == null) {
-                throw new EidasClientException("It seems you are missing a certificate with alias '" + eidasClientProperties.getIdpMetadataSigningCertificateKeyId() + "' in your " + eidasClientProperties.getKeystore() + " keystore. We need it in order to verify IDP metadata's signature.");
-            }
-            X509Credential switchCred = CredentialSupport.getSimpleCredential(cert, null);
-            StaticCredentialResolver switchCredResolver = new StaticCredentialResolver(switchCred);
-            return new ExplicitKeySignatureTrustEngine(switchCredResolver, DefaultSecurityConfigurationBootstrap.buildBasicInlineKeyInfoCredentialResolver());
-        } catch (KeyStoreException e) {
-            throw new EidasClientException("Error initializing. Cannot get IDP metadata trusted certificate", e);
-        }
+    public RequestSessionService requestSessionService() {
+        return new RequestSessionServiceImpl(eidasClientProperties);
     }
 
     @Bean
-    public ExplicitKeySignatureTrustEngine responseSignatureTrustEngine(IDPMetadataResolver idpMetadataResolver) {
-        X509Certificate cert = getResponseSigningCertificate(idpMetadataResolver);
-        X509Credential switchCred = CredentialSupport.getSimpleCredential(cert, null);
-        StaticCredentialResolver switchCredResolver = new StaticCredentialResolver(switchCred);
-        return new ExplicitKeySignatureTrustEngine(switchCredResolver, DefaultSecurityConfigurationBootstrap.buildBasicInlineKeyInfoCredentialResolver());
-    }
-
-    @Bean
-    public IDPMetadataResolver idpMetadataResolver(@Qualifier("idpMetadataSignatureTrustEngine") ExplicitKeySignatureTrustEngine metadataSignatureTrustEngine) {
-        return new IDPMetadataResolver(eidasClientProperties.getIdpMetadataUrl(), metadataSignatureTrustEngine, eidasClientProperties.isIdpMetaDataHostValidationEnabled());
-    }
-
-    @Bean
-    public ExplicitKeySignatureTrustEngine idpMetadataSignatureTrustEngine(IDPMetadataResolver idpMetadataResolver) {
-        MetadataCredentialResolver metadataCredentialResolver = new MetadataCredentialResolver();
-        PredicateRoleDescriptorResolver roleResolver = new PredicateRoleDescriptorResolver(idpMetadataResolver.resolve());
-
-        KeyInfoCredentialResolver keyResolver = DefaultSecurityConfigurationBootstrap.buildBasicInlineKeyInfoCredentialResolver();
-
-        metadataCredentialResolver.setKeyInfoCredentialResolver(keyResolver);
-        metadataCredentialResolver.setRoleDescriptorResolver(roleResolver);
-
-        try {
-            metadataCredentialResolver.initialize();
-            roleResolver.initialize();
-        } catch (final ComponentInitializationException e) {
-            throw new EidasClientException("Error initializing metadataCredentialResolver", e);
-        }
-
-        return new ExplicitKeySignatureTrustEngine(metadataCredentialResolver, keyResolver);
-    }
-
-    @Bean
-    public AuthInitiationService authInitiationService(@Qualifier("authnReqSigningCredential") Credential signingCredential, SingleSignOnService singleSignOnService) {
-        return new AuthInitiationService(signingCredential, eidasClientProperties, singleSignOnService);
+    public AuthInitiationService authInitiationService(RequestSessionService requestSessionService, @Qualifier("authnReqSigningCredential") Credential signingCredential, SingleSignOnService singleSignOnService) {
+        return new AuthInitiationService(requestSessionService, signingCredential, eidasClientProperties, singleSignOnService);
     }
 
     @Bean
     public AuthResponseService authResponseService(
+            RequestSessionService requestSessionService,
             @Qualifier("responseSignatureTrustEngine") ExplicitKeySignatureTrustEngine explicitKeySignatureTrustEngine,
             @Qualifier("responseAssertionDecryptionCredential") Credential responseAssertionDecryptionCredential, Schema samlSchema) {
-        return new AuthResponseService(eidasClientProperties, explicitKeySignatureTrustEngine, responseAssertionDecryptionCredential, samlSchema);
+        return new AuthResponseService(requestSessionService, eidasClientProperties, explicitKeySignatureTrustEngine, responseAssertionDecryptionCredential, samlSchema);
     }
 
     private Credential getCredential(KeyStore keystore, String keyPairId, String privateKeyPass) {

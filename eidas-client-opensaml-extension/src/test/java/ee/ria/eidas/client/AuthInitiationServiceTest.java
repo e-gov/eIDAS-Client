@@ -1,6 +1,7 @@
 package ee.ria.eidas.client;
 
 import ee.ria.eidas.client.authnrequest.AssuranceLevel;
+import ee.ria.eidas.client.authnrequest.RequestSessionService;
 import ee.ria.eidas.client.config.EidasClientConfiguration;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.exception.EidasClientException;
@@ -26,6 +27,9 @@ import static org.junit.Assert.assertTrue;
 public class AuthInitiationServiceTest {
 
     @Autowired
+    private RequestSessionService requestSessionService;
+
+    @Autowired
     private EidasClientProperties properties;
 
     @Autowired
@@ -38,7 +42,7 @@ public class AuthInitiationServiceTest {
 
     @Before
     public void setUp() {
-        authenticationService = new AuthInitiationService(authnReqSigningCredential, properties, singleSignOnService);
+        authenticationService = new AuthInitiationService(requestSessionService, authnReqSigningCredential, properties, singleSignOnService);
     }
 
     @Test

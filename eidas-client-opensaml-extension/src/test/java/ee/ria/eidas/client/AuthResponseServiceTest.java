@@ -1,6 +1,7 @@
 package ee.ria.eidas.client;
 
 import ee.ria.eidas.client.authnrequest.AssuranceLevel;
+import ee.ria.eidas.client.authnrequest.RequestSessionService;
 import ee.ria.eidas.client.config.EidasClientConfiguration;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.exception.EidasClientException;
@@ -12,6 +13,7 @@ import ee.ria.eidas.client.util.OpenSAMLUtils;
 import net.shibboleth.utilities.java.support.resolver.CriteriaSet;
 import net.shibboleth.utilities.java.support.resolver.Criterion;
 import net.shibboleth.utilities.java.support.resolver.ResolverException;
+import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -51,6 +53,9 @@ public class AuthResponseServiceTest {
 
     @Rule
     public ExpectedException expectedEx = ExpectedException.none();
+
+    @Autowired
+    RequestSessionService requestSessionService;
 
     @Autowired
     private EidasClientProperties properties;
@@ -103,9 +108,10 @@ public class AuthResponseServiceTest {
 
     @Before
     public void setUp() throws Exception {
-        authResponseService = new AuthResponseService(properties, responseSignatureTrustEngine, responseAssertionDecryptionCredential, samlSchema);
+        authResponseService = new AuthResponseService(requestSessionService, properties, responseSignatureTrustEngine, responseAssertionDecryptionCredential, samlSchema);
         mockResponseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
         httpRequest = buildMockHttpServletRequest(mockResponseBuilder.buildResponse());
+        requestSessionService.saveRequestSession("_4ededd23fb88e6964df71b8bdb1c706f", new RequestSession(new DateTime()));
     }
 
     @Test

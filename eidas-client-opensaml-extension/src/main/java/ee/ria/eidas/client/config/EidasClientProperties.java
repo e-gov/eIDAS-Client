@@ -14,10 +14,10 @@ import java.util.List;
 @ConfigurationProperties(prefix = "eidas.client")
 public class EidasClientProperties {
 
-    private static final int DEFAULT_MAXIMUM_AUTHENTICTION_LIFETIME = 3600;
+    private static final int DEFAULT_MAXIMUM_AUTHENTICTION_LIFETIME = 900;
     private static final String DEFAULT_IDP_METADATA_SIGN_CERT_KEY = "metadata";
-    private static final int DEFAULT_ACCEPTED_RESPONSE_SKEW = 1;
-    private static final int DEFAULT_RESPONSE_MESSAGE_LIFETIME = 2;
+    private static final int DEFAULT_ACCEPTED_RESPONSE_SKEW = 50000;
+    private static final int DEFAULT_RESPONSE_MESSAGE_LIFETIME = 50000;
 
     @NotNull
     private String keystore;
