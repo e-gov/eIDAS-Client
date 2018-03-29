@@ -1,6 +1,4 @@
-package ee.ria.eidas.client.authnrequest;
-
-import ee.ria.eidas.client.RequestSession;
+package ee.ria.eidas.client.session;
 
 public interface RequestSessionService {
 

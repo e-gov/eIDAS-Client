@@ -1,4 +1,4 @@
-package ee.ria.eidas.client;
+package ee.ria.eidas.client.session;
 
 import org.joda.time.DateTime;
 

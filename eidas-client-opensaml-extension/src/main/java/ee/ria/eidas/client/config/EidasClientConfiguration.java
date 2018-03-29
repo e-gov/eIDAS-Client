@@ -2,11 +2,11 @@ package ee.ria.eidas.client.config;
 
 import ee.ria.eidas.client.AuthInitiationService;
 import ee.ria.eidas.client.AuthResponseService;
-import ee.ria.eidas.client.RequestSessionServiceImpl;
-import ee.ria.eidas.client.authnrequest.RequestSessionService;
 import ee.ria.eidas.client.exception.EidasClientException;
 import ee.ria.eidas.client.metadata.IDPMetadataResolver;
 import ee.ria.eidas.client.metadata.SPMetadataGenerator;
+import ee.ria.eidas.client.session.RequestSessionService;
+import ee.ria.eidas.client.session.RequestSessionServiceImpl;
 import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
 import net.shibboleth.utilities.java.support.resolver.CriteriaSet;
 import net.shibboleth.utilities.java.support.resolver.Criterion;

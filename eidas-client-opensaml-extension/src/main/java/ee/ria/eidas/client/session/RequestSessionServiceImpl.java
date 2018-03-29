@@ -1,7 +1,7 @@
-package ee.ria.eidas.client;
+package ee.ria.eidas.client.session;
 
-import ee.ria.eidas.client.authnrequest.RequestSessionService;
 import ee.ria.eidas.client.config.EidasClientProperties;
+import ee.ria.eidas.client.exception.EidasClientException;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -30,6 +30,9 @@ public class RequestSessionServiceImpl implements RequestSessionService {
 
     @Override
     public void saveRequestSession(String requestID, RequestSession requestSession) {
+        if (requestSessionMap.containsKey(requestID)) {
+            throw new EidasClientException("A request with an ID: " + requestID + " already exists!");
+        }
         requestSessionMap.put(requestID, requestSession);
     }
 

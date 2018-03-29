@@ -1,14 +1,15 @@
 package ee.ria.eidas.client;
 
 import ee.ria.eidas.client.authnrequest.AssuranceLevel;
-import ee.ria.eidas.client.authnrequest.RequestSessionService;
 import ee.ria.eidas.client.config.EidasClientConfiguration;
 import ee.ria.eidas.client.config.EidasClientProperties;
-import ee.ria.eidas.client.exception.EidasClientException;
 import ee.ria.eidas.client.exception.EidasAuthenticationFailedException;
 import ee.ria.eidas.client.exception.InvalidEidasParamException;
+import ee.ria.eidas.client.exception.EidasClientException;
 import ee.ria.eidas.client.fixtures.ResponseBuilder;
 import ee.ria.eidas.client.response.AuthenticationResult;
+import ee.ria.eidas.client.session.RequestSession;
+import ee.ria.eidas.client.session.RequestSessionService;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
 import net.shibboleth.utilities.java.support.resolver.CriteriaSet;
 import net.shibboleth.utilities.java.support.resolver.Criterion;
@@ -20,8 +21,7 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.opensaml.core.criterion.EntityIdCriterion;
-import org.opensaml.saml.common.xml.SAMLSchemaBuilder;
-import org.opensaml.saml.saml2.core.*;
+import org.opensaml.saml.saml2.core.Response;
 import org.opensaml.security.credential.Credential;
 import org.opensaml.security.credential.impl.KeyStoreCredentialResolver;
 import org.opensaml.xmlsec.signature.support.impl.ExplicitKeySignatureTrustEngine;
@@ -37,7 +37,6 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import javax.xml.validation.Schema;
-import java.nio.charset.StandardCharsets;
 import java.security.KeyStore;
 import java.util.Base64;
 import java.util.HashMap;
@@ -111,6 +110,8 @@ public class AuthResponseServiceTest {
         authResponseService = new AuthResponseService(requestSessionService, properties, responseSignatureTrustEngine, responseAssertionDecryptionCredential, samlSchema);
         mockResponseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
         httpRequest = buildMockHttpServletRequest(mockResponseBuilder.buildResponse());
+
+        requestSessionService.removeRequestSession("_4ededd23fb88e6964df71b8bdb1c706f");
         requestSessionService.saveRequestSession("_4ededd23fb88e6964df71b8bdb1c706f", new RequestSession(new DateTime()));
     }
 

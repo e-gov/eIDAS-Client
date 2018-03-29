@@ -1,10 +1,10 @@
 package ee.ria.eidas.client;
 
 import ee.ria.eidas.client.authnrequest.AssuranceLevel;
-import ee.ria.eidas.client.authnrequest.RequestSessionService;
 import ee.ria.eidas.client.config.EidasClientConfiguration;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.exception.EidasClientException;
+import ee.ria.eidas.client.session.RequestSessionService;
 import net.shibboleth.utilities.java.support.codec.HTMLEncoder;
 import org.junit.Before;
 import org.junit.Test;

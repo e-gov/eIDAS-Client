@@ -1,12 +1,13 @@
 package ee.ria.eidas.client;
 
-import ee.ria.eidas.client.authnrequest.RequestSessionService;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.config.OpenSAMLConfiguration;
 import ee.ria.eidas.client.exception.EidasAuthenticationFailedException;
 import ee.ria.eidas.client.exception.EidasClientException;
 import ee.ria.eidas.client.exception.InvalidEidasParamException;
 import ee.ria.eidas.client.response.AuthenticationResult;
+import ee.ria.eidas.client.session.RequestSession;
+import ee.ria.eidas.client.session.RequestSessionService;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
 import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
 import net.shibboleth.utilities.java.support.net.URIComparator;
@@ -14,9 +15,7 @@ import net.shibboleth.utilities.java.support.net.URIException;
 import net.shibboleth.utilities.java.support.resolver.CriteriaSet;
 import net.shibboleth.utilities.java.support.resolver.ResolverException;
 import net.shibboleth.utilities.java.support.xml.XMLParserException;
-import org.joda.time.DateTime;
 import org.opensaml.core.criterion.EntityIdCriterion;
-import org.opensaml.core.xml.XMLObject;
 import org.opensaml.core.xml.io.UnmarshallingException;
 import org.opensaml.core.xml.util.XMLObjectSupport;
 import org.opensaml.messaging.context.MessageContext;
@@ -168,7 +167,7 @@ public class AuthResponseService {
 
     }
 
-    private void validateAssertion(Assertion assertion) {
+    private synchronized void validateAssertion(Assertion assertion) {
         String requestID = assertion.getSubject().getSubjectConfirmations().get(0).getSubjectConfirmationData().getInResponseTo();
         RequestSession requestSession = requestSessionService.getRequestSession(requestID);
         if (requestSession == null) {
