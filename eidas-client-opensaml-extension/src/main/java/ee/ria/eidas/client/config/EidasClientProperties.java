@@ -16,8 +16,8 @@ public class EidasClientProperties {
 
     private static final int DEFAULT_MAXIMUM_AUTHENTICTION_LIFETIME = 900;
     private static final String DEFAULT_IDP_METADATA_SIGN_CERT_KEY = "metadata";
-    private static final int DEFAULT_ACCEPTED_RESPONSE_SKEW = 50000;
-    private static final int DEFAULT_RESPONSE_MESSAGE_LIFETIME = 50000;
+    private static final int DEFAULT_ACCEPTED_RESPONSE_SKEW = 2;
+    private static final int DEFAULT_RESPONSE_MESSAGE_LIFETIME = 900;
 
     @NotNull
     private String keystore;

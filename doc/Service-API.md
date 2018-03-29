@@ -86,10 +86,10 @@ Näide:
 | HTTP staatuskood  | Vea lühikirjeldus | Viga selgitav tekst  |
 | :-------------: |:-------------| :-----|
 | 400 | Bad request | Required String parameter 'country' is not present |
-| 400 | Invalid parameter | Invalid country! Valid countries:[...] |
-| 400 | Invalid parameter | Invalid LoA! One of [...] expected. |
-| 400 | Invalid parameter | Invalid RelayState! Must match the following regexp: [...] |
-| 400 | Invalid parameter | Invalid AdditionalParameters! Unrecognized attibute(s) provided: [...] |
+| 400 | Bad request  | Invalid country! Valid countries:[...] |
+| 400 | Bad request  | Invalid LoA! One of [...] expected. |
+| 400 | Bad request  | Invalid RelayState! Must match the following regexp: [...] |
+| 400 | Bad request  | Invalid AdditionalParameters! Unrecognized attibute(s) provided: [...] |
 | 405 | Method Not Allowed | Request method [...] not supported |
 | 500 | Internal Server Error | Something went wrong internally. Please consult server logs for further details. |
 
@@ -167,18 +167,18 @@ Näide:
 | HTTP staatuskood  | Vea lühikirjeldus | Viga selgitav tekst  |
 | :-------------: |:-------------| :-----|
 | 400 | Bad request | Required String parameter 'SAMLResponse' is not present |
-| 400 | Invalid parameter | Invalid SAMLResponse! Not a valid Base64 encoding |
-| 400 | Invalid parameter | Invalid RelayState! Must match the following regexp: [...] |
-| 400 | Bad SAML message | Invalid SAML response! Schema validation failed! |
-| 400 | Bad SAML message | Response not signed. |
-| 400 | Bad SAML message | Invalid response signature. |
-| 400 | Bad SAML message | Single assertion is expected. |
-| 400 | Bad SAML message | Invalid receiver endpoint check. |
-| 400 | Bad SAML message | Invalid LoA. The LoA of the Identity Provider is not sufficient. |
-| 400 | Bad SAML message | Inbound SAML message issue instant not present in message context. |
-| 400 | Bad SAML message | Message was rejected due to issue instant expiration. |
-| 400 | Bad SAML message | Message was rejected! No matching valid request found! |
-| 400 | Bad SAML message | Message replay detected. |
+| 400 | Bad request  | Invalid SAMLResponse! Not a valid Base64 encoding |
+| 400 | Bad request  | Invalid RelayState! Must match the following regexp: [...] |
+| 400 | Bad request  | Invalid SAML response! Schema validation failed! |
+| 400 | Bad request  | Response not signed. |
+| 400 | Bad request  | Invalid response signature. |
+| 400 | Bad request  | Single assertion is expected. |
+| 400 | Bad request  | Invalid receiver endpoint check. |
+| 400 | Bad request  | Invalid LoA. The LoA of the Identity Provider is not sufficient. |
+| 400 | Bad request  | Inbound SAML message issue instant not present in message context. |
+| 400 | Bad request  | Message was rejected due to issue instant expiration. |
+| 400 | Bad request  | Message was rejected! No matching valid request found! |
+| 400 | Bad request  | Message replay detected. |
 | 405 | Method Not Allowed | Request method [...] not supported |
 | 500 | Internal Server Error | Something went wrong internally. Please consult server logs for further details. |
 
