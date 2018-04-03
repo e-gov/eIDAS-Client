@@ -99,30 +99,39 @@ public class AuthResponseServiceTest {
     }
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         authResponseService = new AuthResponseService(requestSessionService, properties, responseSignatureTrustEngine, responseAssertionDecryptionCredential, samlSchema);
         mockResponseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
-        httpRequest = buildMockHttpServletRequest(mockResponseBuilder.buildResponse());
 
         requestSessionService.removeRequestSession("_4ededd23fb88e6964df71b8bdb1c706f");
         requestSessionService.saveRequestSession("_4ededd23fb88e6964df71b8bdb1c706f", new RequestSession(new DateTime()));
     }
 
     @Test
-    public void whenResponseStatusSuccessAndValidatedSuccessfully_AuthenticationResultIsReturned() {
+    public void whenResponseStatusSuccessAndValidatedSuccessfully_AuthenticationResultIsReturned() throws Exception {
+        httpRequest = buildMockHttpServletRequest("SAMLResponse", mockResponseBuilder.buildResponse());
         AuthenticationResult result = authResponseService.getAuthenticationResult(httpRequest);
         assertAuthenticationResult(result);
     }
 
     @Test
-    public void whenResponseStatusAuthenticationFailed_UnauthorizedIsReturned() throws Exception {
+    public void whenResponseDoesNotContainSAMLResponse_InvalidParamIsReturned() throws Exception {
+        expectedEx.expect(InvalidEidasParamException.class);
+        expectedEx.expectMessage("Failed to read SAMLResponse. null");
 
+        httpRequest = buildMockHttpServletRequest("someParam", mockResponseBuilder.buildResponse());
+        authResponseService.getAuthenticationResult(httpRequest);
+        fail("Should not reach this!");
+    }
+
+    @Test
+    public void whenResponseStatusAuthenticationFailed_UnauthorizedIsReturned() throws Exception {
         expectedEx.expect(EidasAuthenticationFailedException.class);
         expectedEx.expectMessage("Authentication failed.");
 
         Response response = mockResponseBuilder.buildResponse();
         response.setStatus(mockResponseBuilder.buildAuthnFailedStatus());
-        httpRequest = buildMockHttpServletRequest(response);
+        httpRequest = buildMockHttpServletRequest("SAMLResponse", response);
 
         AuthenticationResult result = authResponseService.getAuthenticationResult(httpRequest);
         fail("Should not reach this!");
@@ -130,13 +139,12 @@ public class AuthResponseServiceTest {
 
     @Test
     public void whenResponseStatusRequesterRequestDenied_UnauthorizedIsReturned() throws Exception {
-
         expectedEx.expect(EidasAuthenticationFailedException.class);
         expectedEx.expectMessage("No user consent received. User denied access.");
 
         Response response = mockResponseBuilder.buildResponse();
         response.setStatus(mockResponseBuilder.buildRequesterRequestDeniedStatus());
-        httpRequest = buildMockHttpServletRequest(response);
+        httpRequest = buildMockHttpServletRequest("SAMLResponse", response);
 
         AuthenticationResult result = authResponseService.getAuthenticationResult(httpRequest);
         fail("Should not reach this!");
@@ -144,7 +152,6 @@ public class AuthResponseServiceTest {
 
     @Test
     public void whenResponseDoesNotMatchSchema() throws Exception {
-
         expectedEx.expect(InvalidEidasParamException.class);
         expectedEx.expectMessage("Error handling message: Message is not schema-valid.");
 
@@ -156,13 +163,12 @@ public class AuthResponseServiceTest {
 
     @Test
     public void whenResponseStatusInvalidLoa_InternalErrorIsReturned() throws Exception {
-
         expectedEx.expect(EidasClientException.class);
         expectedEx.expectMessage("Eidas node responded with an error! statusCode = urn:oasis:names:tc:SAML:2.0:status:Responder, statusMessage = 202019 - Incorrect Level of Assurance in IdP response");
 
         Response response = mockResponseBuilder.buildResponse();
         response.setStatus(mockResponseBuilder.buildInvalidLoaStatus());
-        httpRequest = buildMockHttpServletRequest(response);
+        httpRequest = buildMockHttpServletRequest("SAMLResponse", response);
 
         AuthenticationResult result = authResponseService.getAuthenticationResult(httpRequest);
         fail("Should not reach this!");
@@ -170,13 +176,12 @@ public class AuthResponseServiceTest {
 
     @Test
     public void whenResponseStatusMissingMandatoryAttribute_InternalErrorIsReturned() throws Exception {
-
         expectedEx.expect(EidasClientException.class);
         expectedEx.expectMessage("Eidas node responded with an error! statusCode = urn:oasis:names:tc:SAML:2.0:status:Responder, statusMessage = 202010 - Mandatory Attribute not found.");
 
         Response response = mockResponseBuilder.buildResponse();
         response.setStatus(mockResponseBuilder.buildMissingMandatoryAttributeStatus());
-        httpRequest = buildMockHttpServletRequest(response);
+        httpRequest = buildMockHttpServletRequest("SAMLResponse" ,response);
 
         AuthenticationResult result = authResponseService.getAuthenticationResult(httpRequest);
         fail("Should not reach this!");
@@ -201,9 +206,9 @@ public class AuthResponseServiceTest {
         return httpRequest;
     }
 
-    private MockHttpServletRequest buildMockHttpServletRequest(Response response) throws Exception {
+    private MockHttpServletRequest buildMockHttpServletRequest(String paramName, Response response) throws Exception {
         MockHttpServletRequest httpRequest = new MockHttpServletRequest();
-        httpRequest.setParameter("SAMLResponse", Base64.getEncoder().encodeToString(OpenSAMLUtils.getXmlString(response).getBytes()));
+        httpRequest.setParameter(paramName, Base64.getEncoder().encodeToString(OpenSAMLUtils.getXmlString(response).getBytes()));
         httpRequest.setServerName("localhost");
         httpRequest.setServerPort(8889);
         httpRequest.setRequestURI("/returnUrl");

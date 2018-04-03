@@ -192,7 +192,6 @@ public class EidasClientApplicationTest {
 
     @Test
     public void returnUrl_shouldSucceed_whenValidSAMLResponse() {
-
         requestSessionService.saveRequestSession("_4ededd23fb88e6964df71b8bdb1c706f", new RequestSession(new DateTime()));
 
         given()
@@ -214,7 +213,6 @@ public class EidasClientApplicationTest {
 
     @Test
     public void returnUrl_shouldFail_whenAuthenticationFails() {
-
         ResponseBuilder responseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
         Response response = responseBuilder.buildResponse();
         response.setStatus(responseBuilder.buildAuthnFailedStatus());
@@ -233,7 +231,6 @@ public class EidasClientApplicationTest {
 
     @Test
     public void returnUrl_shouldFail_whenInvalidSchema() {
-
         given()
             .port(port)
             .contentType("application/x-www-form-urlencoded")
@@ -249,7 +246,6 @@ public class EidasClientApplicationTest {
 
     @Test
     public void returnUrl_shouldFail_whenNoUserConsentGiven() {
-
         ResponseBuilder responseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
         Response response = responseBuilder.buildResponse();
         response.setStatus(responseBuilder.buildRequesterRequestDeniedStatus());
@@ -268,7 +264,6 @@ public class EidasClientApplicationTest {
 
     @Test
     public void returnUrl_shouldFail_whenInternaError() {
-
         Mockito.when(responseAssertionDecryptionCredential.getPrivateKey()).thenThrow(new RuntimeException("Ooops! An internal error occurred!"));
 
         given()
@@ -282,6 +277,23 @@ public class EidasClientApplicationTest {
             .statusCode(500)
             .body("error", equalTo("Internal Server Error"))
             .body("message", equalTo("Something went wrong internally. Please consult server logs for further details."));
+    }
+
+    @Test
+    public void returnUrl_shouldFail_whenSAMLResponseParamMissing() {
+        requestSessionService.saveRequestSession("_4ededd23fb88e6964df71b8bdb1c706f", new RequestSession(new DateTime()));
+
+        given()
+            .port(port)
+            .contentType("application/x-www-form-urlencoded")
+            .formParam("relayState", "some-state")
+            .formParam("notSAMLResponse", Base64.getEncoder().encodeToString(OpenSAMLUtils.getXmlString(new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential).buildResponse()).getBytes(StandardCharsets.UTF_8)))
+        .when()
+            .post("/returnUrl")
+        .then()
+            .statusCode(400)
+            .body("error", equalTo("Bad Request"))
+            .body("message", equalTo("Failed to read SAMLResponse. null"));
     }
 
     @Test

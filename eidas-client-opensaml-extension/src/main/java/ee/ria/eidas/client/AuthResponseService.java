@@ -87,7 +87,7 @@ public class AuthResponseService {
             samlResponse = getSamlResponse(decodedSAMLstr);
             LOGGER.info(OpenSAMLUtils.getXmlString(samlResponse));
         } catch (Exception e) {
-            throw new EidasClientException("Failed to read SAMLResponse. " + e.getMessage(), e);
+            throw new InvalidEidasParamException("Failed to read SAMLResponse. " + e.getMessage(), e);
         }
         validateDestinationAndLifetime(samlResponse, req);
         validateStatusCode(samlResponse);
