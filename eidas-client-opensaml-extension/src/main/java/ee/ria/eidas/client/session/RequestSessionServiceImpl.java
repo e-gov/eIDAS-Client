@@ -19,8 +19,11 @@ public class RequestSessionServiceImpl implements RequestSessionService {
 
     private int maxAuthenticationLifetime;
 
+    private int accepterClockSkew;
+
     public RequestSessionServiceImpl(EidasClientProperties properties) {
         this.maxAuthenticationLifetime = properties.getMaximumAuthenticationLifetime();
+        this.accepterClockSkew = properties.getAcceptedClockSkew();
     }
 
     @Override
@@ -47,7 +50,7 @@ public class RequestSessionServiceImpl implements RequestSessionService {
         requestSessionMap.entrySet().removeIf(
                 requestSession -> {
                     DateTime now = new DateTime(requestSession.getValue().getIssueInstant().getZone());
-                    boolean expired = now.isAfter(requestSession.getValue().getIssueInstant().plusSeconds(maxAuthenticationLifetime));
+                    boolean expired = now.isAfter(requestSession.getValue().getIssueInstant().plusSeconds(maxAuthenticationLifetime).plusSeconds(accepterClockSkew));
                     if (expired) {
                         LOGGER.info("Removing expired request session with ID: " + requestSession.getKey());
                     }

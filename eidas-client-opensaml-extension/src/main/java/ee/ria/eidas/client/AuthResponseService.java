@@ -1,10 +1,12 @@
 package ee.ria.eidas.client;
 
+import ee.ria.eidas.client.assertion.AssertionValidator;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.config.OpenSAMLConfiguration;
 import ee.ria.eidas.client.exception.EidasAuthenticationFailedException;
 import ee.ria.eidas.client.exception.EidasClientException;
 import ee.ria.eidas.client.exception.InvalidEidasParamException;
+import ee.ria.eidas.client.exception.SAMLAssertionException;
 import ee.ria.eidas.client.response.AuthenticationResult;
 import ee.ria.eidas.client.session.RequestSession;
 import ee.ria.eidas.client.session.RequestSessionService;
@@ -15,6 +17,7 @@ import net.shibboleth.utilities.java.support.net.URIException;
 import net.shibboleth.utilities.java.support.resolver.CriteriaSet;
 import net.shibboleth.utilities.java.support.resolver.ResolverException;
 import net.shibboleth.utilities.java.support.xml.XMLParserException;
+import org.joda.time.DateTime;
 import org.opensaml.core.criterion.EntityIdCriterion;
 import org.opensaml.core.xml.io.UnmarshallingException;
 import org.opensaml.core.xml.util.XMLObjectSupport;
@@ -27,10 +30,9 @@ import org.opensaml.saml.common.binding.security.impl.MessageLifetimeSecurityHan
 import org.opensaml.saml.common.binding.security.impl.ReceivedEndpointSecurityHandler;
 import org.opensaml.saml.common.messaging.context.SAMLMessageInfoContext;
 import org.opensaml.saml.common.xml.SAMLConstants;
-import org.opensaml.saml.common.xml.SAMLSchemaBuilder;
 import org.opensaml.saml.criterion.EntityRoleCriterion;
 import org.opensaml.saml.criterion.ProtocolCriterion;
-import org.opensaml.saml.metadata.resolver.filter.impl.SchemaValidationFilter;
+import org.opensaml.saml.saml2.assertion.SAML20AssertionValidator;
 import org.opensaml.saml.saml2.core.*;
 import org.opensaml.saml.saml2.encryption.Decrypter;
 import org.opensaml.saml.saml2.metadata.IDPSSODescriptor;
@@ -53,6 +55,7 @@ import javax.xml.validation.Schema;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 
@@ -128,7 +131,6 @@ public class AuthResponseService {
     private void validateDestinationAndLifetime(Response samlResponse, HttpServletRequest request) {
         MessageContext context = new MessageContext<Response>();
         context.setMessage(samlResponse);
-
         SAMLMessageInfoContext messageInfoContext = context.getSubcontext(SAMLMessageInfoContext.class, true);
         messageInfoContext.setMessageIssueInstant(samlResponse.getIssueInstant());
 
@@ -167,13 +169,9 @@ public class AuthResponseService {
 
     }
 
-    private synchronized void validateAssertion(Assertion assertion) {
-        String requestID = assertion.getSubject().getSubjectConfirmations().get(0).getSubjectConfirmationData().getInResponseTo();
-        RequestSession requestSession = requestSessionService.getRequestSession(requestID);
-        if (requestSession == null) {
-            throw new EidasClientException("No corresponding SAML request session found to the given response!");
-        }
-        requestSessionService.removeRequestSession(requestID);
+    private void validateAssertion(Assertion assertion) {
+        AssertionValidator assertionValidator = new AssertionValidator(eidasClientProperties, requestSessionService);
+        assertionValidator.validate(assertion);
     }
 
     private Assertion decryptAssertion(EncryptedAssertion encryptedAssertion) {

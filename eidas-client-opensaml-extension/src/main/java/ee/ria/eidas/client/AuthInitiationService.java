@@ -58,12 +58,12 @@ public class AuthInitiationService {
     private void redirectUserForAuthentication(HttpServletResponse httpServletResponse, String country, AssuranceLevel loa, String relayState) {
         AuthnRequestBuilder authnRequestBuilder = new AuthnRequestBuilder(authnReqSigningCredential, eidasClientProperties, singleSignOnService);
         AuthnRequest authnRequest = authnRequestBuilder.buildAuthnRequest(loa);
-        saveRequestAsSession(authnRequest);
+        saveRequestAsSession(authnRequest, loa);
         redirectUserWithRequest(httpServletResponse, authnRequest, country, relayState);
     }
 
-    private void saveRequestAsSession(AuthnRequest authnRequest) {
-        RequestSession requestSession = new RequestSession(authnRequest.getIssueInstant());
+    private void saveRequestAsSession(AuthnRequest authnRequest, AssuranceLevel loa) {
+        RequestSession requestSession = new RequestSession(authnRequest.getIssueInstant(), loa);
         requestSessionService.saveRequestSession(authnRequest.getID(), requestSession);
     }
 

@@ -1,5 +1,6 @@
 package ee.ria.eidas.client.webapp.controller;
 
+import ee.ria.eidas.client.exception.SAMLAssertionException;
 import ee.ria.eidas.client.exception.EidasAuthenticationFailedException;
 import ee.ria.eidas.client.exception.InvalidEidasParamException;
 import org.slf4j.Logger;
@@ -26,6 +27,14 @@ public class ControllerExceptionHandler {
     @ResponseBody
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Map handle(InvalidEidasParamException exception) {
+        LOGGER.error("Bad request!", exception);
+        return getMap(HttpStatus.BAD_REQUEST, exception.getMessage());
+    }
+
+    @ExceptionHandler
+    @ResponseBody
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public Map handle(SAMLAssertionException exception) {
         LOGGER.error("Bad request!", exception);
         return getMap(HttpStatus.BAD_REQUEST, exception.getMessage());
     }

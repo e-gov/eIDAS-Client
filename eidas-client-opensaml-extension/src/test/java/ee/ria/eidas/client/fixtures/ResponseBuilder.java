@@ -33,7 +33,7 @@ public class ResponseBuilder {
         this.signingCredential = signingCredential;
     }
 
-    public Response buildResponse() {
+    public Response buildResponse(String issuer) {
         try {
             Signature signature = (Signature) XMLObjectProviderRegistrySupport.getBuilderFactory()
                     .getBuilder(Signature.DEFAULT_ELEMENT_NAME).buildObject(Signature.DEFAULT_ELEMENT_NAME);
@@ -56,7 +56,7 @@ public class ResponseBuilder {
             authnResponse.setID(OpenSAMLUtils.generateSecureRandomId());
             authnResponse.setSignature(signature);
             authnResponse.setStatus(buildSuccessStatus());
-            authnResponse.getEncryptedAssertions().add(buildAssertion(now));
+            authnResponse.getEncryptedAssertions().add(buildAssertion(now, issuer));
 
             XMLObjectProviderRegistrySupport.getMarshallerFactory().getMarshaller(authnResponse).marshall(authnResponse);
             Signer.signObject(signature);
@@ -111,7 +111,7 @@ public class ResponseBuilder {
         return status;
     }
 
-    private EncryptedAssertion buildAssertion(DateTime issueInstant) throws Exception {
+    private EncryptedAssertion buildAssertion(DateTime issueInstant, String issuer) throws Exception {
 
         Signature signature = (Signature) XMLObjectProviderRegistrySupport.getBuilderFactory()
                 .getBuilder(Signature.DEFAULT_ELEMENT_NAME).buildObject(Signature.DEFAULT_ELEMENT_NAME);
@@ -128,7 +128,7 @@ public class ResponseBuilder {
         assertion.setIssueInstant(issueInstant);
         assertion.setID(OpenSAMLUtils.generateSecureRandomId());
         assertion.setVersion(SAMLVersion.VERSION_20);
-        assertion.setIssuer(buildIssuer());
+        assertion.setIssuer(buildIssuer(issuer));
         assertion.setSubject(buildSubject(issueInstant));
         assertion.setConditions(buildConditions(issueInstant));
         assertion.getAuthnStatements().add(buildAuthnStatement(issueInstant));
@@ -156,10 +156,10 @@ public class ResponseBuilder {
         return encryptedAssertion;
     }
 
-    private Issuer buildIssuer() {
+    private Issuer buildIssuer(String issuerValue) {
         Issuer issuer = new IssuerBuilder().buildObject();
         issuer.setFormat("urn:oasis:names:tc:SAML:2.0:nameid-format:entity");
-        issuer.setValue("http://localhost:8080/EidasNode/ConnectorResponderMetadata");
+        issuer.setValue(issuerValue);
         return issuer;
     }
 
@@ -179,7 +179,7 @@ public class ResponseBuilder {
         subjectConfirmationData.setAddress("172.24.0.1");
         subjectConfirmationData.setInResponseTo("_4ededd23fb88e6964df71b8bdb1c706f");
         subjectConfirmationData.setNotOnOrAfter(issueIstant.plusMinutes(5));
-        subjectConfirmationData.setRecipient("http://192.168.82.40:8889/returnUrl");
+        subjectConfirmationData.setRecipient("http://localhost:8889/returnUrl");
 
         subjectConfirmation.setSubjectConfirmationData(subjectConfirmationData);
         subject.getSubjectConfirmations().add(subjectConfirmation);
@@ -194,7 +194,7 @@ public class ResponseBuilder {
         AudienceRestriction audienceRestriction = new AudienceRestrictionBuilder().buildObject();
 
         Audience audience = new AudienceBuilder().buildObject();
-        audience.setAudienceURI("http://192.168.82.40:8889/metadata");
+        audience.setAudienceURI("http://localhost:8889/metadata");
 
         audienceRestriction.getAudiences().add(audience);
         conditions.getAudienceRestrictions().add(audienceRestriction);

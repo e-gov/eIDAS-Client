@@ -6,6 +6,7 @@ import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.jayway.restassured.RestAssured;
 import com.jayway.restassured.config.XmlConfig;
 import com.jayway.restassured.response.ResponseBodyExtractionOptions;
+import ee.ria.eidas.client.authnrequest.AssuranceLevel;
 import ee.ria.eidas.client.fixtures.ResponseBuilder;
 import ee.ria.eidas.client.session.RequestSession;
 import ee.ria.eidas.client.session.RequestSessionService;
@@ -192,13 +193,13 @@ public class EidasClientApplicationTest {
 
     @Test
     public void returnUrl_shouldSucceed_whenValidSAMLResponse() {
-        requestSessionService.saveRequestSession("_4ededd23fb88e6964df71b8bdb1c706f", new RequestSession(new DateTime()));
+        requestSessionService.saveRequestSession("_4ededd23fb88e6964df71b8bdb1c706f", new RequestSession(new DateTime(), AssuranceLevel.LOW));
 
         given()
             .port(port)
             .contentType("application/x-www-form-urlencoded")
             .formParam("relayState", "some-state")
-            .formParam("SAMLResponse", Base64.getEncoder().encodeToString(OpenSAMLUtils.getXmlString(new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential).buildResponse()).getBytes(StandardCharsets.UTF_8)))
+            .formParam("SAMLResponse", Base64.getEncoder().encodeToString(OpenSAMLUtils.getXmlString(new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential).buildResponse("http://localhost:7771/EidasNode/ConnectorResponderMetadata")).getBytes(StandardCharsets.UTF_8)))
         .when()
             .post("/returnUrl")
         .then()
@@ -214,7 +215,7 @@ public class EidasClientApplicationTest {
     @Test
     public void returnUrl_shouldFail_whenAuthenticationFails() {
         ResponseBuilder responseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
-        Response response = responseBuilder.buildResponse();
+        Response response = responseBuilder.buildResponse("http://localhost:7771/EidasNode/ConnectorResponderMetadata");
         response.setStatus(responseBuilder.buildAuthnFailedStatus());
 
         given()
@@ -247,7 +248,7 @@ public class EidasClientApplicationTest {
     @Test
     public void returnUrl_shouldFail_whenNoUserConsentGiven() {
         ResponseBuilder responseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
-        Response response = responseBuilder.buildResponse();
+        Response response = responseBuilder.buildResponse("http://localhost:8080/EidasNode/ConnectorResponderMetadata");
         response.setStatus(responseBuilder.buildRequesterRequestDeniedStatus());
 
         given()
@@ -270,7 +271,7 @@ public class EidasClientApplicationTest {
             .port(port)
             .contentType("application/x-www-form-urlencoded")
             .formParam("relayState", "some-state")
-            .formParam("SAMLResponse", Base64.getEncoder().encodeToString(OpenSAMLUtils.getXmlString(new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential).buildResponse()).getBytes(StandardCharsets.UTF_8)))
+            .formParam("SAMLResponse", Base64.getEncoder().encodeToString(OpenSAMLUtils.getXmlString(new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential).buildResponse("http://localhost:7771/EidasNode/ConnectorResponderMetadata")).getBytes(StandardCharsets.UTF_8)))
         .when()
             .post("/returnUrl")
         .then()
@@ -281,13 +282,13 @@ public class EidasClientApplicationTest {
 
     @Test
     public void returnUrl_shouldFail_whenSAMLResponseParamMissing() {
-        requestSessionService.saveRequestSession("_4ededd23fb88e6964df71b8bdb1c706f", new RequestSession(new DateTime()));
+        requestSessionService.saveRequestSession("_4ededd23fb88e6964df71b8bdb1c706f", new RequestSession(new DateTime(), AssuranceLevel.LOW));
 
         given()
             .port(port)
             .contentType("application/x-www-form-urlencoded")
             .formParam("relayState", "some-state")
-            .formParam("notSAMLResponse", Base64.getEncoder().encodeToString(OpenSAMLUtils.getXmlString(new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential).buildResponse()).getBytes(StandardCharsets.UTF_8)))
+            .formParam("notSAMLResponse", Base64.getEncoder().encodeToString(OpenSAMLUtils.getXmlString(new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential).buildResponse("http://localhost:7771/EidasNode/ConnectorResponderMetadata")).getBytes(StandardCharsets.UTF_8)))
         .when()
             .post("/returnUrl")
         .then()
