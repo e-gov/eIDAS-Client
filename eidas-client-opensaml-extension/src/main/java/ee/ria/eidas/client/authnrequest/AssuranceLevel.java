@@ -22,4 +22,10 @@ public enum AssuranceLevel {
     public int getLevel() {
         return level;
     }
+
+    public static AssuranceLevel toEnum(String uri) {
+        for(AssuranceLevel v : values())
+            if(v.getUri().equalsIgnoreCase(uri)) return v;
+        throw new IllegalArgumentException("Cannot convert uri to enum value! Expected one of: " + values());
+    }
 }

@@ -58,12 +58,13 @@ public class AuthInitiationService {
     private void redirectUserForAuthentication(HttpServletResponse httpServletResponse, String country, AssuranceLevel loa, String relayState) {
         AuthnRequestBuilder authnRequestBuilder = new AuthnRequestBuilder(authnReqSigningCredential, eidasClientProperties, singleSignOnService);
         AuthnRequest authnRequest = authnRequestBuilder.buildAuthnRequest(loa);
-        saveRequestAsSession(authnRequest, loa);
+        saveRequestAsSession(authnRequest);
         redirectUserWithRequest(httpServletResponse, authnRequest, country, relayState);
     }
 
-    private void saveRequestAsSession(AuthnRequest authnRequest, AssuranceLevel loa) {
-        RequestSession requestSession = new RequestSession(authnRequest.getIssueInstant(), loa);
+    private void saveRequestAsSession(AuthnRequest authnRequest) {
+        String loa = authnRequest.getRequestedAuthnContext().getAuthnContextClassRefs().get(0).getAuthnContextClassRef();
+        RequestSession requestSession = new RequestSession(authnRequest.getIssueInstant(), AssuranceLevel.toEnum(loa));
         requestSessionService.saveRequestSession(authnRequest.getID(), requestSession);
     }
 
@@ -79,7 +80,7 @@ public class AuthInitiationService {
 
         SignatureSigningParameters signatureSigningParameters = new SignatureSigningParameters();
         signatureSigningParameters.setSigningCredential(authnReqSigningCredential);
-        signatureSigningParameters.setSignatureAlgorithm(SignatureConstants.ALGO_ID_SIGNATURE_RSA_SHA256);
+        signatureSigningParameters.setSignatureAlgorithm(eidasClientProperties.getRequestSignatureAlgorithm());
 
 
         context.getSubcontext(SecurityParametersContext.class, true).setSignatureSigningParameters(signatureSigningParameters);
