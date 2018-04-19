@@ -110,7 +110,6 @@ Näide:
 | Parameeter      | Kohustuslik           | Selgitus  |
 | ------------- |:-------------:| :-----|
 | **SAMLResponse** | Jah | Ülepiirilisest autentimiskanalist tulev SAML vastus (Base64 kodeeritud). |
-| **RelayState** | Ei | Päringuga saadetud `RelayState` parameetri väärtus. Väärtus peab vastama regulaaravaldisele `[a-zA-Z0-9-_]{0,80}`. |
 
 Näide:
 
@@ -118,7 +117,7 @@ Näide:
 curl -X POST \
   https://localhost:8889/returnUrl \
   -H 'content-type: application/x-www-form-urlencoded' \
-  -d 'SAMLResponse=..........................&RelayState=ef27bd52-25e7-11e8-b467-0ed5f89f718b'
+  -d 'SAMLResponse=..........................'
 ```
 
 ### Vastus
@@ -128,14 +127,14 @@ curl -X POST \
 Atribuudi nimi | Kohustuslik | Selgitus | Tüüp
 ------------ | ------------- | ------------- | -------------
 **levelOfAssurance** | Jah  | eIDAS autentimistase. Võimalikud väärtused: `http://eidas.europa.eu/LoA/low`, `http://eidas.europa.eu/LoA/substantial`, `http://eidas.europa.eu/LoA/high` | **String**
-**attributes** | Jah | Sisaldab atribuute autenditud isiku andmetega. Atribuudid esitatakse võti-väärtus paaridena, kus võti on `FriendlyName` ja väärtus `AttributeValue` elemendi ladina tähestikus sisu vastavalt eIDAS SAML Attribute Profile dokumendile (vt [Viited](https://e-gov.github.io/eIDAS-Connector/Viited)). <p>**Kohustuslikud atribuudid** - sisaldavad andmeid, mida liikmesriigid on kohustatud tagastama.</p><p> 1. Füüsilise isiku kohta tagastatakse alati vaikimisi neli atribuuti: `FirstName`, `FamilyName`, `PersonIdentifier` ja `DateOfBirth`.</p><p>2. Juriidilise isiku kohta tagastatakse alati `LegalPersonIdentifier`, `LegalName` väärtused **ainult juhul** kui päringus selleks soovi avaldatakse.</p><p>**Mittekohustulikud lisaatribuudid** - Lisaks on võimalik küsida eIDAS lisaatribuute, mis tagastatakse ainult juhul kui sihtriik neid toetab ja päringus selleks soovi avaldatakse:<ul><li>Füüsilise isiku kohta: `BirthName`, `PlaceOfBirth`, `CurrentAddress`, `Gender`</li><li>Juriidilise isiku kohta: `LegalAddress`, `LegalPersonAddress`, `VATRegistrationNumber`, `TaxReference`, `LEI`, `EORI`, `SEED`, `SIC`, `D-2012-17-EUIdentifier`</li></ul><p>**Isiku esindaja andmed** - Täiendavalt on võimalik, et sihtriik saadab lisaandmeid isiku esindaja kohta (küsida ei saa): `RepresentativeBirthName`, `RepresentativeCurrentAddress`, `RepresentativeFamilyName`, `RepresentativeFirstName`, `RepresentativeDateOfBirth`, `RepresentativeGender`, `RepresentativePersonIdentifier`, `RepresentativePlaceOfBirth`, `RepresentativeD-2012-17-EUIdentifier`, `RepresentativeEORI`, `RepresentativeLEI`,`RepresentativeLegalAddress`, `RepresentativeLegalName`, `RepresentativeLegalAddress`, `RepresentativeLegalPersonIdentifier`, `RepresentativeSEED`, `RepresentativeSIC`,`RepresentativeTaxReference`, `RepresentativeVATRegistration`</p> | **Objekt**
+**attributes** | Jah | Sisaldab atribuute autenditud isiku andmetega. Atribuudid esitatakse võti-väärtus paaridena, kus võti on `FriendlyName` ja väärtus `AttributeValue` elemendi ladina tähestikus sisu vastavalt eIDAS SAML Attribute Profile dokumendile (vt [Viited](https://e-gov.github.io/eIDAS-Connector/Viited)). <p>**Kohustuslikud atribuudid** - sisaldavad andmeid, mida liikmesriigid on kohustatud tagastama.</p><p> 1. Füüsilise isiku kohta tagastatakse alati vaikimisi neli atribuuti: `FirstName`, `FamilyName`, `PersonIdentifier` ja `DateOfBirth`.</p><p>2. Juriidilise isiku kohta tagastatakse alati `LegalPersonIdentifier`, `LegalName` väärtused **ainult juhul** kui päringus selleks soovi avaldatakse.</p><p>**Mittekohustulikud lisaatribuudid** - Lisaks on võimalik küsida eIDAS lisaatribuute, mis tagastatakse ainult juhul kui sihtriik neid toetab ja päringus selleks soovi avaldatakse:<ul><li>Füüsilise isiku kohta: `BirthName`, `PlaceOfBirth`, `CurrentAddress`, `Gender`</li><li>Juriidilise isiku kohta: `LegalAddress`, `VATRegistrationNumber`, `TaxReference`, `LEI`, `EORI`, `SEED`, `SIC`, `D-2012-17-EUIdentifier`</li></ul><p>**Isiku esindaja andmed** - Täiendavalt on võimalik, et sihtriik saadab lisaandmeid isiku esindaja kohta (küsida ei saa): `RepresentativeBirthName`, `RepresentativeCurrentAddress`, `RepresentativeFamilyName`, `RepresentativeFirstName`, `RepresentativeDateOfBirth`, `RepresentativeGender`, `RepresentativePersonIdentifier`, `RepresentativePlaceOfBirth`, `RepresentativeD-2012-17-EUIdentifier`, `RepresentativeEORI`, `RepresentativeLEI`,`RepresentativeLegalAddress`, `RepresentativeLegalName`, `RepresentativeLegalAddress`, `RepresentativeLegalPersonIdentifier`, `RepresentativeSEED`, `RepresentativeSIC`,`RepresentativeTaxReference`, `RepresentativeVATRegistration`</p> | **Objekt**
 **attributes.FirstName** | Jah | Isiku eesnimi. | **String**
 **attributes.FamilyName** | Jah | Isiku perenimi. | **String**
 **attributes.PersonIdentifier** | Jah | Isikut identifitseeriv unikaalne kood. <br><br>Esitatakse formaadis XX+ “/“ + YY + “/“ + ZZZZZZZZZZZ, kus XX on identifitseeritud isiku riigi kood (ISO 3166-1 alpha-2), YY on riigi kood (ISO 3166-1 alpha-2), kus soovitakse isikut autentida ning ZZZZZZZZZZZ isikut identifitseeriv kood. | **String**
 **attributes.DateOfBirth** | Jah | Sünniaeg formaadis: YYYY + “-“ + MM + “-“ + DD (kus YYYY on aasta, MM on kuu ning DD päev) | **String**
 **attributes.LegalPersonIdentifier** | Ei | Juriidilise isiku kood. Tagastatakse ainult juhul kui kasutaja selleks soovi avaldab. | **String**
 **attributes.LegalName** | Ei | Juriidilise isiku nimi. Tagastatakse ainult juhul kui kasutaja selleks soovi avaldab. | **String**
-**attributesNonLatin** | Ei | Sisaldab atribuutide autenditud isiku andmeid mitteladinakeelsel kujul. Atribuudid esitatakse võti-väärtus paaridena, kus võti on `FriendlyName` ja väärtus `AttributeValue` elemendi mitteladinakeelne sisu vastavalt eIDAS SAML Attribute Profile dokumendile (vt [Viited](https://e-gov.github.io/eIDAS-Connector/Viited)). |  **Objekt**
+**attributesTransliterated** | Ei | Sisaldab atribuutide väärtuseid translitereeritud kujul. Atribuudid esitatakse võti-väärtus paaridena, kus võti on `FriendlyName` ja väärtus `AttributeValue` elemendi translitereeritud sisu vastavalt eIDAS SAML Attribute Profile dokumendile (vt [Viited](https://e-gov.github.io/eIDAS-Connector/Viited)). |  **Objekt**
 Tabel 1.
 
 Näide:
@@ -145,12 +144,12 @@ Näide:
    "attributes":{
       "DateOfBirth":"1965-01-01",
       "PersonIdentifier":"CA/CA/12345",
-      "FamilyName":"Onassis",
-      "FirstName":"Alexander"
-   },
-   "attributesNonLatin":{
       "FamilyName":"Ωνάσης",
       "FirstName":"Αλέξανδρος"
+   },
+   "attributesTransliterated":{
+      "FamilyName":"Onassis",
+      "FirstName":"Alexander"
    }
 }
 ```

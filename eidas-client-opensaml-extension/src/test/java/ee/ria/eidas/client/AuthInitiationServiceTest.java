@@ -48,7 +48,7 @@ public class AuthInitiationServiceTest {
     @Test
     public void returnsHttpPostBindingResponse() throws Exception {
         MockHttpServletResponse httpResponse = new MockHttpServletResponse();
-        authenticationService.authenticate(httpResponse, "EE", AssuranceLevel.LOW, "test");
+        authenticationService.authenticate(httpResponse, "EE", AssuranceLevel.LOW, "test", null);
 
         assertEquals(HttpStatus.OK.value(), httpResponse.getStatus());
         String htmlForm = "<form action=\"" + HTMLEncoder.encodeForHTMLAttribute(singleSignOnService.getLocation()) + "\" method=\"post\">";
@@ -61,13 +61,13 @@ public class AuthInitiationServiceTest {
     @Test(expected = EidasClientException.class)
     public void invalidRelayState_throwsException() {
         MockHttpServletResponse httpResponse = new MockHttpServletResponse();
-        authenticationService.authenticate(httpResponse, "EE", AssuranceLevel.LOW, "ä");
+        authenticationService.authenticate(httpResponse, "EE", AssuranceLevel.LOW, "ä", null);
     }
 
     @Test(expected = EidasClientException.class)
     public void invalidCountry_throwsException() {
         MockHttpServletResponse httpResponse = new MockHttpServletResponse();
-        authenticationService.authenticate(httpResponse, "NEVERLAND", AssuranceLevel.LOW, "test");
+        authenticationService.authenticate(httpResponse, "NEVERLAND", AssuranceLevel.LOW, "test", null);
     }
 
 }

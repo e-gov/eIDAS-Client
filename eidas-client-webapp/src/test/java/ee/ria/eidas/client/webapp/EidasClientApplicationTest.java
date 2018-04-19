@@ -136,9 +136,10 @@ public class EidasClientApplicationTest {
     public void httpPostBinding_shouldPass_whenAllParamsPresent() {
         given()
             .port(port)
-            .queryParam("country", "EE")
-            .queryParam("loa", "LOW")
-            .queryParam("relayState", "test")
+            .queryParam("Country", "EE")
+            .queryParam("LoA", "LOW")
+            .queryParam("RelayState", "test")
+            .queryParam("AdditionalAttributes", "BirthName PlaceOfBirth CurrentAddress Gender LegalPersonIdentifier LegalName LegalAddress VATRegistrationNumber TaxReference LEI EORI SEED SIC D-2012-17-EUIdentifier")
         .when()
             .get("/login")
         .then()
@@ -150,10 +151,44 @@ public class EidasClientApplicationTest {
     }
 
     @Test
+    public void httpPostBinding_shouldFail_whenAdditionalParamsContainsSingleValidAttribute() {
+        given()
+            .port(port)
+            .queryParam("Country", "EE")
+            .queryParam("LoA", "LOW")
+            .queryParam("RelayState", "test")
+            .queryParam("AdditionalAttributes", "LegalPersonIdentifier")
+        .when()
+            .get("/login")
+        .then()
+            .statusCode(200)
+            .body("html.body.form.@action", equalTo("http://localhost:8080/EidasNode/ServiceProvider"))
+            .body("html.body.form.div.input[0].@value", equalTo("test"))
+            .body("html.body.form.div.input[1].@value", not(empty()))
+            .body("html.body.form.div.input[2].@value", equalTo("EE"));
+    }
+
+    @Test
+    public void httpPostBinding_shouldFail_whenAdditionalParamsContainsInvalidAttribute() {
+        given()
+            .port(port)
+            .queryParam("Country", "EE")
+            .queryParam("LoA", "LOW")
+            .queryParam("RelayState", "test")
+            .queryParam("AdditionalAttributes", "LegalPersonIdentifier XXXX LegalName")
+        .when()
+            .get("/login")
+        .then()
+            .statusCode(400)
+            .body("error", equalTo("Bad Request"))
+            .body("message", equalTo("Found one or more invalid AdditionalAttributes value(s). Allowed values are: [BirthName, PlaceOfBirth, CurrentAddress, Gender, LegalPersonIdentifier, LegalName, LegalAddress, VATRegistrationNumber, TaxReference, LEI, EORI, SEED, SIC, D-2012-17-EUIdentifier]"));
+    }
+
+    @Test
     public void httpPostBinding_shouldPass_whenOnlyCountryParamPresent() {
         given()
             .port(port)
-            .queryParam("country", "EE")
+            .queryParam("Country", "EE")
         .when()
             .get("/login")
         .then()
@@ -167,8 +202,8 @@ public class EidasClientApplicationTest {
     public void httpPostBinding_shouldFail_whenCountryRequestParamInvalid() {
         given()
             .port(port)
-            .queryParam("country", "NEVERLAND")
-            .queryParam("relayState", "test")
+            .queryParam("Country", "NEVERLAND")
+            .queryParam("RelayState", "test")
         .when()
             .get("/login")
         .then()
@@ -181,8 +216,8 @@ public class EidasClientApplicationTest {
     public void httpPostBinding_shouldFail_whenRelayStateRequestParamInvalid() {
         given()
             .port(port)
-            .queryParam("country", "EE")
-            .queryParam("relayState", "ä")
+            .queryParam("Country", "EE")
+            .queryParam("RelayState", "ä")
         .when()
             .get("/login")
         .then()
@@ -198,7 +233,7 @@ public class EidasClientApplicationTest {
         given()
             .port(port)
             .contentType("application/x-www-form-urlencoded")
-            .formParam("relayState", "some-state")
+            .formParam("RelayState", "some-state")
             .formParam("SAMLResponse", Base64.getEncoder().encodeToString(OpenSAMLUtils.getXmlString(new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential).buildResponse("http://localhost:7771/EidasNode/ConnectorResponderMetadata")).getBytes(StandardCharsets.UTF_8)))
         .when()
             .post("/returnUrl")
@@ -206,10 +241,10 @@ public class EidasClientApplicationTest {
             .statusCode(200)
             .body("levelOfAssurance", equalTo("http://eidas.europa.eu/LoA/low"))
             .body("attributes.PersonIdentifier", equalTo("CA/CA/12345"))
-            .body("attributes.FamilyName", equalTo("Onassis"))
-            .body("attributes.FirstName", equalTo("Alexander"))
-            .body("attributesNonLatin.FamilyName", equalTo("Ωνάσης"))
-            .body("attributesNonLatin.FirstName", equalTo("Αλέξανδρος"));
+            .body("attributes.FamilyName", equalTo("Ωνάσης"))
+            .body("attributes.FirstName", equalTo("Αλέξανδρος"))
+            .body("attributesTransliterated.FamilyName", equalTo("Onassis"))
+            .body("attributesTransliterated.FirstName", equalTo("Alexander"));
     }
 
     @Test

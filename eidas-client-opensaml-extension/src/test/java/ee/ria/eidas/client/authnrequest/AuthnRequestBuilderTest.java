@@ -56,7 +56,7 @@ public class AuthnRequestBuilderTest {
 
     @Test
     public void buildAuthnRequest() {
-        AuthnRequest authnRequest = requestBuilder.buildAuthnRequest(AssuranceLevel.SUBSTANTIAL);
+        AuthnRequest authnRequest = requestBuilder.buildAuthnRequest(AssuranceLevel.SUBSTANTIAL, null);
 
         assertAuthnRequest(authnRequest);
 

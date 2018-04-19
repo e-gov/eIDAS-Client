@@ -18,6 +18,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.xml.namespace.QName;
+import java.util.List;
 
 public class AuthnRequestBuilder {
 
@@ -35,7 +36,7 @@ public class AuthnRequestBuilder {
         this.singleSignOnService = singleSignOnService;
     }
 
-    public AuthnRequest buildAuthnRequest(AssuranceLevel loa) {
+    public AuthnRequest buildAuthnRequest(AssuranceLevel loa, List<EidasAttribute> additionalAttributes) {
         try {
             AuthnRequest authnRequest = OpenSAMLUtils.buildSAMLObject(AuthnRequest.class);
             authnRequest.setIssueInstant(new DateTime());
@@ -49,7 +50,7 @@ public class AuthnRequestBuilder {
             authnRequest.setIssuer(buildIssuer());
             authnRequest.setNameIDPolicy(buildNameIdPolicy());
             authnRequest.setRequestedAuthnContext(buildRequestedAuthnContext(loa));
-            authnRequest.setExtensions(buildExtensions());
+            authnRequest.setExtensions(buildExtensions(additionalAttributes));
 
             addSignature(authnRequest);
 
@@ -92,7 +93,7 @@ public class AuthnRequestBuilder {
         return requestedAuthnContext;
     }
 
-    private Extensions buildExtensions() {
+    private Extensions buildExtensions(List<EidasAttribute> additionalAttributes) {
         Extensions extensions = OpenSAMLUtils.buildSAMLObject(Extensions.class);
 
         XSAny spType = new XSAnyBuilder().buildObject("http://eidas.europa.eu/saml-extensions", "SPType", "eidas");
@@ -100,21 +101,39 @@ public class AuthnRequestBuilder {
         extensions.getUnknownXMLObjects().add(spType);
 
         XSAny requestedAttributes = new XSAnyBuilder().buildObject("http://eidas.europa.eu/saml-extensions", "RequestedAttributes", "eidas");
-        requestedAttributes.getUnknownXMLObjects().add(buildRequestedAttribute("FirstName", "http://eidas.europa.eu/attributes/naturalperson/CurrentGivenName", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri"));
-        requestedAttributes.getUnknownXMLObjects().add(buildRequestedAttribute("FamilyName", "http://eidas.europa.eu/attributes/naturalperson/CurrentFamilyName", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri"));
-        requestedAttributes.getUnknownXMLObjects().add(buildRequestedAttribute("PersonIdentifier", "http://eidas.europa.eu/attributes/naturalperson/PersonIdentifier", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri"));
-        requestedAttributes.getUnknownXMLObjects().add(buildRequestedAttribute("DateOfBirth", "http://eidas.europa.eu/attributes/naturalperson/DateOfBirth", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri"));
+        addMandatoryAttribute(requestedAttributes, EidasAttribute.CURRENT_GIVEN_NAME);
+        addMandatoryAttribute(requestedAttributes, EidasAttribute.CURRENT_FAMILY_NAME);
+        addMandatoryAttribute(requestedAttributes, EidasAttribute.PERSON_IDENTIFIER);
+        addMandatoryAttribute(requestedAttributes, EidasAttribute.DATE_OF_BIRTH);
+        addAdditionalParameters(additionalAttributes, requestedAttributes);
         extensions.getUnknownXMLObjects().add(requestedAttributes);
 
         return extensions;
     }
 
-    private XSAny buildRequestedAttribute(String friendlyName, String name, String nameFormat) {
+    private void addAdditionalParameters(List<EidasAttribute> additionalAttributes, XSAny requestedAttributes) {
+        if (additionalAttributes == null)
+            return;
+
+        for (EidasAttribute attribute : additionalAttributes) {
+            addAdditionalAttribute(requestedAttributes, attribute);
+        }
+    }
+
+    private void addMandatoryAttribute(XSAny requestedAttributes, EidasAttribute attribute) {
+        requestedAttributes.getUnknownXMLObjects().add(buildRequestedAttribute(attribute.getFriendlyName(), attribute.getName(), "urn:oasis:names:tc:SAML:2.0:attrname-format:uri", true));
+    }
+
+    private void addAdditionalAttribute(XSAny requestedAttributes, EidasAttribute attribute) {
+        requestedAttributes.getUnknownXMLObjects().add(buildRequestedAttribute(attribute.getFriendlyName(), attribute.getName(), "urn:oasis:names:tc:SAML:2.0:attrname-format:uri", attribute.isRequired()));
+    }
+
+    private XSAny buildRequestedAttribute(String friendlyName, String name, String nameFormat, boolean isRequired) {
         XSAny requestedAttribute = new XSAnyBuilder().buildObject("http://eidas.europa.eu/saml-extensions", "RequestedAttribute", "eidas");
         requestedAttribute.getUnknownAttributes().put(new QName("FriendlyName"), friendlyName);
         requestedAttribute.getUnknownAttributes().put(new QName("Name"), name);
         requestedAttribute.getUnknownAttributes().put(new QName("NameFormat"), nameFormat);
-        requestedAttribute.getUnknownAttributes().put(new QName("isRequired"), "true");
+        requestedAttribute.getUnknownAttributes().put(new QName("isRequired"), isRequired ? "true" : "false");
         return requestedAttribute;
     }
 

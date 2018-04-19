@@ -2,6 +2,7 @@ package ee.ria.eidas.client;
 
 import ee.ria.eidas.client.authnrequest.AssuranceLevel;
 import ee.ria.eidas.client.authnrequest.AuthnRequestBuilder;
+import ee.ria.eidas.client.authnrequest.EidasAttribute;
 import ee.ria.eidas.client.authnrequest.EidasHTTPPostEncoder;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.exception.EidasClientException;
@@ -19,13 +20,15 @@ import org.opensaml.saml.saml2.metadata.SingleSignOnService;
 import org.opensaml.security.credential.Credential;
 import org.opensaml.xmlsec.SignatureSigningParameters;
 import org.opensaml.xmlsec.context.SecurityParametersContext;
-import org.opensaml.xmlsec.signature.support.SignatureConstants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.Arrays;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class AuthInitiationService {
 
@@ -48,16 +51,30 @@ public class AuthInitiationService {
         this.singleSignOnService = singleSignOnService;
     }
 
-    public void authenticate(HttpServletResponse response, String country, AssuranceLevel loa, String relayState) {
+    public void authenticate(HttpServletResponse response, String country, AssuranceLevel loa, String relayState, String additionalAttributesParam) {
         validateCountry(country);
         validateRelayState(relayState);
 
-        redirectUserForAuthentication(response, country, loa, relayState);
+        List<EidasAttribute> additionalAttributes = getAdditionalAttributes(additionalAttributesParam);
+
+        redirectUserForAuthentication(response, country, loa, relayState, additionalAttributes);
     }
 
-    private void redirectUserForAuthentication(HttpServletResponse httpServletResponse, String country, AssuranceLevel loa, String relayState) {
+    private List<EidasAttribute> getAdditionalAttributes(String additionalAttributes) {
+        if (additionalAttributes == null) {
+            return null;
+        }
+
+        try {
+            return Arrays.stream(additionalAttributes.split(" ")).map(x -> EidasAttribute.fromString(x)).collect(Collectors.toList());
+        } catch (IllegalArgumentException e) {
+            throw new InvalidEidasParamException("Found one or more invalid AdditionalAttributes value(s). Allowed values are: " + eidasClientProperties.getAllowedAdditionalAttributes().stream().map(x -> x.getFriendlyName()).collect(Collectors.toList()), e);
+        }
+    }
+
+    private void redirectUserForAuthentication(HttpServletResponse httpServletResponse, String country, AssuranceLevel loa, String relayState, List<EidasAttribute> additionalAttributes) {
         AuthnRequestBuilder authnRequestBuilder = new AuthnRequestBuilder(authnReqSigningCredential, eidasClientProperties, singleSignOnService);
-        AuthnRequest authnRequest = authnRequestBuilder.buildAuthnRequest(loa);
+        AuthnRequest authnRequest = authnRequestBuilder.buildAuthnRequest(loa, additionalAttributes);
         saveRequestAsSession(authnRequest);
         redirectUserWithRequest(httpServletResponse, authnRequest, country, relayState);
     }

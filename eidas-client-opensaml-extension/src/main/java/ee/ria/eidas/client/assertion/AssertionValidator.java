@@ -73,9 +73,10 @@ public class AssertionValidator {
 
     private void validateIssueInstant(Assertion assertion) {
         DateTime now = new DateTime(assertion.getIssueInstant().getZone());
-        if (assertion.getIssueInstant().isAfter(now.plusSeconds(acceptedClockSkew)) ||
-                assertion.getIssueInstant().isBefore(now.minusSeconds(acceptedClockSkew))) {
-            throw new SAMLAssertionException("Assertion issue instant is too old or in the future!");
+        if (assertion.getIssueInstant().isAfter(now.plusSeconds(maxAuthenticationLifetime).plusSeconds(acceptedClockSkew))) {
+            throw new SAMLAssertionException("Assertion issue instant is expired!");
+        } else if (now.plusSeconds(acceptedClockSkew).isBefore(assertion.getIssueInstant())) {
+            throw new SAMLAssertionException("Assertion issue instant is in the future!");
         }
     }
 

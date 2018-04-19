@@ -1,6 +1,7 @@
 package ee.ria.eidas.client.config;
 
 import ee.ria.eidas.client.authnrequest.AssuranceLevel;
+import ee.ria.eidas.client.authnrequest.EidasAttribute;
 import ee.ria.eidas.client.authnrequest.SPType;
 import org.opensaml.xmlsec.signature.support.SignatureConstants;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -8,6 +9,7 @@ import org.springframework.validation.annotation.Validated;
 
 import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Validated
@@ -84,6 +86,13 @@ public class EidasClientProperties {
 
     @NotNull
     private int responseMessageLifeTime = DEFAULT_RESPONSE_MESSAGE_LIFETIME;
+
+    @NotNull
+    private List<EidasAttribute> allowedAdditionalAttributes = Arrays.asList(EidasAttribute.BIRTH_NAME, EidasAttribute.PLACE_OF_BIRTH,
+            EidasAttribute.CURRENT_ADDRESS, EidasAttribute.GENDER, EidasAttribute.LEGAL_PERSON_IDENTIFIER,
+            EidasAttribute.LEGAL_NAME, EidasAttribute.LEGAL_ADDRESS, EidasAttribute.VAT_REGISTRATION_NUMBER,
+            EidasAttribute.TAX_REFERENCE, EidasAttribute.LEI,
+            EidasAttribute.EORI, EidasAttribute.SEED, EidasAttribute.SIC, EidasAttribute.D_2012_17_EUIdentifier);
 
     public String getMetadataSigningKeyId() {
         return metadataSigningKeyId;
@@ -259,5 +268,13 @@ public class EidasClientProperties {
 
     public void setResponseMessageLifeTime(Integer messageLifeTime) {
         this.responseMessageLifeTime = messageLifeTime;
+    }
+
+    public List<EidasAttribute> getAllowedAdditionalAttributes() {
+        return allowedAdditionalAttributes;
+    }
+
+    public void setAllowedAdditionalAttributes(List<EidasAttribute> allowedAdditionalAttributes) {
+        this.allowedAdditionalAttributes = allowedAdditionalAttributes;
     }
 }

@@ -17,7 +17,6 @@ import net.shibboleth.utilities.java.support.resolver.Criterion;
 import net.shibboleth.utilities.java.support.resolver.ResolverException;
 import org.joda.time.DateTime;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
@@ -224,10 +223,10 @@ public class AuthResponseServiceTest {
 
     private void assertAuthenticationResult(AuthenticationResult result) {
         assertEquals(AssuranceLevel.LOW.getUri(), result.getLevelOfAssurance());
-        assertEquals("Alexander", result.getAttributes().get("FirstName"));
-        assertEquals("Onassis", result.getAttributes().get("FamilyName"));
-        assertEquals("Αλέξανδρος", result.getAttributesNonLatin().get("FirstName"));
-        assertEquals("Ωνάσης", result.getAttributesNonLatin().get("FamilyName"));
+        assertEquals("Αλέξανδρος", result.getAttributes().get("FirstName"));
+        assertEquals("Ωνάσης", result.getAttributes().get("FamilyName"));
+        assertEquals("Alexander", result.getAttributesTransliterated().get("FirstName"));
+        assertEquals("Onassis", result.getAttributesTransliterated().get("FamilyName"));
         assertEquals("CA/CA/12345", result.getAttributes().get("PersonIdentifier"));
         assertEquals("1965-01-01", result.getAttributes().get("DateOfBirth"));
     }

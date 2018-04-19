@@ -39,10 +39,11 @@ public class AuthenticationController {
 
     @RequestMapping(value = "/login", method = GET)
     public void authenticate(HttpServletResponse response,
-            @RequestParam("country") String country,
-            @RequestParam(value = "loa", required=false) AssuranceLevel loa,
-            @RequestParam(value = "relayState", required=false) String relayState) {
-        authInitiationService.authenticate(response, country, loa, relayState);
+            @RequestParam("Country") String country,
+            @RequestParam(value = "LoA", required=false) AssuranceLevel loa,
+            @RequestParam(value = "RelayState", required=false) String relayState,
+            @RequestParam(value = "AdditionalAttributes", required=false) String additionalAttributes) {
+        authInitiationService.authenticate(response, country, loa, relayState, additionalAttributes);
     }
 
     @RequestMapping(value = "/returnUrl", method = POST)
