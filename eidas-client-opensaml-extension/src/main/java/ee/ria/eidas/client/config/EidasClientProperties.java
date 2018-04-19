@@ -64,6 +64,7 @@ public class EidasClientProperties {
     private String providerName;
 
     @NotNull
+    @ValidIsoCountryCodes
     private List<String> availableCountries;
 
     @NotNull

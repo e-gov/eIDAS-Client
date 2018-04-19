@@ -104,7 +104,7 @@ public class AuthInitiationService {
 
         EidasHTTPPostEncoder encoder = new EidasHTTPPostEncoder();
         encoder.setMessageContext(context);
-        encoder.setCountryCode(country);
+        encoder.setCountryCode(country.toUpperCase());
         encoder.setRelayState(relayState);
 
         encoder.setHttpServletResponse(httpServletResponse);
@@ -127,7 +127,7 @@ public class AuthInitiationService {
     }
 
     private void validateCountry(String country) {
-        if (!eidasClientProperties.getAvailableCountries().contains(country)) {
+        if (!eidasClientProperties.getAvailableCountries().stream().anyMatch(country::equalsIgnoreCase)) {
             throw new InvalidEidasParamException("Invalid country! Valid countries:" + eidasClientProperties.getAvailableCountries());
         }
     }

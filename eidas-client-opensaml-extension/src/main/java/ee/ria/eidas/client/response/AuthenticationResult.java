@@ -18,8 +18,6 @@ import java.util.stream.Collectors;
 @JsonInclude(Include.NON_NULL)
 public class AuthenticationResult {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(AuthenticationResult.class);
-
     private String levelOfAssurance;
 
     private Map<String, String> attributes = new HashMap<>();
