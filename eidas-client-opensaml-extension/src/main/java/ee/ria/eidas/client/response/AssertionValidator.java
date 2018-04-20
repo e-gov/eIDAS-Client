@@ -1,8 +1,8 @@
-package ee.ria.eidas.client.assertion;
+package ee.ria.eidas.client.response;
 
 import ee.ria.eidas.client.authnrequest.AssuranceLevel;
 import ee.ria.eidas.client.config.EidasClientProperties;
-import ee.ria.eidas.client.exception.SAMLAssertionException;
+import ee.ria.eidas.client.exception.InvalidRequestException;
 import ee.ria.eidas.client.session.RequestSession;
 import ee.ria.eidas.client.session.RequestSessionService;
 import org.joda.time.DateTime;
@@ -44,20 +44,20 @@ public class AssertionValidator {
         String requestID = assertion.getSubject().getSubjectConfirmations().get(0).getSubjectConfirmationData().getInResponseTo();
         RequestSession requestSession = requestSessionService.getRequestSession(requestID);
         if (requestSession == null) {
-            throw new SAMLAssertionException("No corresponding SAML request session found for the given response assertion!");
+            throw new InvalidRequestException("No corresponding SAML request session found for the given response assertion!");
         } else {
             requestSessionService.removeRequestSession(requestID);
             DateTime now = new DateTime(requestSession.getIssueInstant().getZone());
             if (now.isAfter(requestSession.getIssueInstant().plusSeconds(maxAuthenticationLifetime).plusSeconds(acceptedClockSkew))) {
-                throw new SAMLAssertionException("Request session with ID " + requestID + " has expired!");
+                throw new InvalidRequestException("Request session with ID " + requestID + " has expired!");
             }
         }
 
         if (assertion.getAuthnStatements() == null || assertion.getAuthnStatements().size() != 1 ) {
-            throw new SAMLAssertionException("Assertion must contain exactly 1 AuthnStatement!");
+            throw new InvalidRequestException("Assertion must contain exactly 1 AuthnStatement!");
         }
         if (assertion.getAuthnStatements().get(0).getAuthnContext().getAuthnContextClassRef() == null) {
-            throw new SAMLAssertionException("Authncontext must contain AuthnContextClassRef!");
+            throw new InvalidRequestException("Authncontext must contain AuthnContextClassRef!");
         }
         boolean isReturnedLoaValid = false;
         for (AssuranceLevel loa : AssuranceLevel.values()) {
@@ -67,32 +67,32 @@ public class AssertionValidator {
             }
         }
         if (!isReturnedLoaValid) {
-            throw new SAMLAssertionException("AuthnContextClassRef is not greater or equal to the request level of assurance!");
+            throw new InvalidRequestException("AuthnContextClassRef is not greater or equal to the request level of assurance!");
         }
     }
 
     private void validateIssueInstant(Assertion assertion) {
         DateTime now = new DateTime(assertion.getIssueInstant().getZone());
         if (assertion.getIssueInstant().isAfter(now.plusSeconds(maxAuthenticationLifetime).plusSeconds(acceptedClockSkew))) {
-            throw new SAMLAssertionException("Assertion issue instant is expired!");
+            throw new InvalidRequestException("Assertion issue instant is expired!");
         } else if (now.plusSeconds(acceptedClockSkew).isBefore(assertion.getIssueInstant())) {
-            throw new SAMLAssertionException("Assertion issue instant is in the future!");
+            throw new InvalidRequestException("Assertion issue instant is in the future!");
         }
     }
 
     private void validateIssuer(Issuer issuer) {
         if (issuer == null) {
-            throw new SAMLAssertionException("Assertion is missing issuer!");
+            throw new InvalidRequestException("Assertion is missing issuer!");
         } else if (issuer.getValue() == null || !issuer.getValue().equals(idpMetadataUrl)) {
-            throw new SAMLAssertionException("Assertion issuer's value is not equal to the configured IDP metadata url!");
+            throw new InvalidRequestException("Assertion issuer's value is not equal to the configured IDP metadata url!");
         } else if (issuer.getFormat() == null || !NameIDType.ENTITY.equals(issuer.getFormat())) {
-            throw new SAMLAssertionException("Assertion issuer's format must equal to: " + NameIDType.ENTITY + "!");
+            throw new InvalidRequestException("Assertion issuer's format must equal to: " + NameIDType.ENTITY + "!");
         }
     }
 
     private void validateSubject(Subject subject) {
         if (subject == null) {
-            throw new SAMLAssertionException("Assertion is missing subject!");
+            throw new InvalidRequestException("Assertion is missing subject!");
         }
         validateSubjectNameId(subject.getNameID());
         validateSubjectConfirmation(subject.getSubjectConfirmations());
@@ -100,25 +100,25 @@ public class AssertionValidator {
 
     private void validateSubjectNameId(NameID nameID) {
         if (nameID == null) {
-            throw new SAMLAssertionException("Assertion subject is missing nameID!");
+            throw new InvalidRequestException("Assertion subject is missing nameID!");
         }
         List<String> validNameIDFormats = Arrays.asList(NameIDType.UNSPECIFIED , NameIDType.TRANSIENT, NameIDType.PERSISTENT);
         if (!validNameIDFormats.contains(nameID.getFormat())) {
-            throw new SAMLAssertionException("Assertion's subject name ID format is not equal to one of the following: " + validNameIDFormats);
+            throw new InvalidRequestException("Assertion's subject name ID format is not equal to one of the following: " + validNameIDFormats);
         }
     }
 
     private void validateSubjectConfirmation(List<SubjectConfirmation> subjectConfirmations) {
         if (subjectConfirmations == null || subjectConfirmations.size() != 1) {
-            throw new SAMLAssertionException("Assertion subject must contain exactly 1 SubjectConfirmation!");
+            throw new InvalidRequestException("Assertion subject must contain exactly 1 SubjectConfirmation!");
         }
         if (!SubjectConfirmation.METHOD_BEARER.equals(subjectConfirmations.get(0).getMethod())) {
-            throw new SAMLAssertionException("Assertion SubjectConfirmation must equal to: " + SubjectConfirmation.METHOD_BEARER + "!");
+            throw new InvalidRequestException("Assertion SubjectConfirmation must equal to: " + SubjectConfirmation.METHOD_BEARER + "!");
         }
 
         SubjectConfirmationData subjectConfirmationData = subjectConfirmations.get(0).getSubjectConfirmationData();
         if (subjectConfirmationData == null) {
-            throw new SAMLAssertionException("Assertion's subject SubjectConfirmation!");
+            throw new InvalidRequestException("Assertion's subject SubjectConfirmation!");
         }
         validateNotOnOrAfter(subjectConfirmationData);
         validateRecipient(subjectConfirmationData);
@@ -127,20 +127,20 @@ public class AssertionValidator {
     private void validateNotOnOrAfter(SubjectConfirmationData subjectConfirmationData) {
         DateTime now = new DateTime(subjectConfirmationData.getNotOnOrAfter().getZone());
         if (subjectConfirmationData.getNotOnOrAfter().plusSeconds(acceptedClockSkew).isBefore(now)) {
-            throw new SAMLAssertionException("SubjectConfirmationData NotOnOrAfter is not valid!");
+            throw new InvalidRequestException("SubjectConfirmationData NotOnOrAfter is not valid!");
         }
     }
 
     private void validateRecipient(SubjectConfirmationData subjectConfirmationData) {
         if (!callbackUrl.equals(subjectConfirmationData.getRecipient())) {
-            throw new SAMLAssertionException("SubjectConfirmationData recipient does not match with configured callback URL!");
+            throw new InvalidRequestException("SubjectConfirmationData recipient does not match with configured callback URL!");
         }
     }
 
     private void validateConditions(Conditions conditions) {
         if (conditions == null || conditions.getConditions() == null
                 || conditions.getConditions().size() != 1) {
-            throw new SAMLAssertionException("Assertion must contain exactly 1 Condition!");
+            throw new InvalidRequestException("Assertion must contain exactly 1 Condition!");
         }
         validateNotOnOrAfter(conditions);
         validateNotBefore(conditions);
@@ -150,35 +150,35 @@ public class AssertionValidator {
     private void validateNotOnOrAfter(Conditions conditions) {
         DateTime now = new DateTime(conditions.getNotOnOrAfter().getZone());
         if (conditions.getNotOnOrAfter().plusSeconds(acceptedClockSkew).isBefore(now)) {
-            throw new SAMLAssertionException("SubjectConfirmationData NotOnOrAfter is not valid!");
+            throw new InvalidRequestException("SubjectConfirmationData NotOnOrAfter is not valid!");
         }
     }
 
     private void validateNotBefore(Conditions conditions) {
         DateTime now = new DateTime(conditions.getNotBefore().getZone());
         if (conditions.getNotBefore().minus(acceptedClockSkew).isAfter(now)) {
-            throw new SAMLAssertionException("Assertion condition NotBefore is not valid!");
+            throw new InvalidRequestException("Assertion condition NotBefore is not valid!");
         }
     }
 
     private void validateAudienceRestriction(Conditions conditions) {
         if (conditions.getConditions() == null
                 || conditions.getConditions().size() != 1 && conditions.getAudienceRestrictions().size() != 1) {
-            throw new SAMLAssertionException("Assertion conditions must contain exactly 1 'AudienceRestriction' condition!");
+            throw new InvalidRequestException("Assertion conditions must contain exactly 1 'AudienceRestriction' condition!");
         }
         validateAudiences(conditions.getAudienceRestrictions().get(0).getAudiences());
     }
 
     private void validateAudiences(List<Audience> audiences) {
         if (audiences == null || audiences.size() < 1 ) {
-            throw new SAMLAssertionException("Assertion condition's AudienceRestriction must contain at least 1 Audience!");
+            throw new InvalidRequestException("Assertion condition's AudienceRestriction must contain at least 1 Audience!");
         }
         for (Audience audience : audiences) {
             if (spEntityID.equals(audience.getAudienceURI())) {
                 return;
             }
         }
-        throw new SAMLAssertionException("Audience does not match with configured SP entity ID!");
+        throw new InvalidRequestException("Audience does not match with configured SP entity ID!");
     }
 
     private void validateAuthnStatements(List<AuthnStatement> authnStatements) {
@@ -188,9 +188,9 @@ public class AssertionValidator {
     private void validateAuthnInstant(DateTime authnInstant) {
         DateTime now = new DateTime(authnInstant.getZone());
         if (now.isAfter(authnInstant.plusSeconds(maxAuthenticationLifetime).plusSeconds(acceptedClockSkew))) {
-            throw new SAMLAssertionException("AuthnInstant is expired!");
+            throw new InvalidRequestException("AuthnInstant is expired!");
         } else if (now.isBefore(authnInstant.minusSeconds(acceptedClockSkew))) {
-            throw new SAMLAssertionException("AuthnInstant is in the future!");
+            throw new InvalidRequestException("AuthnInstant is in the future!");
         }
     }
 

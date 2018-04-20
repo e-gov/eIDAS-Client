@@ -6,7 +6,7 @@ import ee.ria.eidas.client.authnrequest.EidasAttribute;
 import ee.ria.eidas.client.authnrequest.EidasHTTPPostEncoder;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.exception.EidasClientException;
-import ee.ria.eidas.client.exception.InvalidEidasParamException;
+import ee.ria.eidas.client.exception.InvalidRequestException;
 import ee.ria.eidas.client.session.RequestSession;
 import ee.ria.eidas.client.session.RequestSessionService;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
@@ -68,7 +68,7 @@ public class AuthInitiationService {
         try {
             return Arrays.stream(additionalAttributes.split(" ")).map(x -> EidasAttribute.fromString(x)).collect(Collectors.toList());
         } catch (IllegalArgumentException e) {
-            throw new InvalidEidasParamException("Found one or more invalid AdditionalAttributes value(s). Allowed values are: " + eidasClientProperties.getAllowedAdditionalAttributes().stream().map(x -> x.getFriendlyName()).collect(Collectors.toList()), e);
+            throw new InvalidRequestException("Found one or more invalid AdditionalAttributes value(s). Allowed values are: " + eidasClientProperties.getAllowedAdditionalAttributes().stream().map(x -> x.getFriendlyName()).collect(Collectors.toList()), e);
         }
     }
 
@@ -128,7 +128,7 @@ public class AuthInitiationService {
 
     private void validateCountry(String country) {
         if (!eidasClientProperties.getAvailableCountries().stream().anyMatch(country::equalsIgnoreCase)) {
-            throw new InvalidEidasParamException("Invalid country! Valid countries:" + eidasClientProperties.getAvailableCountries());
+            throw new InvalidRequestException("Invalid country! Valid countries:" + eidasClientProperties.getAvailableCountries());
         }
     }
 
@@ -139,7 +139,7 @@ public class AuthInitiationService {
         Pattern pattern = Pattern.compile(RELAYSTATE_VALIDATION_REGEXP);
         Matcher matcher = pattern.matcher(relayState);
         if (!matcher.matches()) {
-            throw new InvalidEidasParamException("Invalid RelayState! Must match the following regexp: " + RELAYSTATE_VALIDATION_REGEXP);
+            throw new InvalidRequestException("Invalid RelayState! Must match the following regexp: " + RELAYSTATE_VALIDATION_REGEXP);
         }
 
     }

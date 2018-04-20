@@ -1,14 +1,12 @@
 package ee.ria.eidas.client;
 
-import ee.ria.eidas.client.assertion.AssertionValidator;
+import ee.ria.eidas.client.response.AssertionValidator;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.config.OpenSAMLConfiguration;
-import ee.ria.eidas.client.exception.EidasAuthenticationFailedException;
+import ee.ria.eidas.client.exception.AuthenticationFailedException;
 import ee.ria.eidas.client.exception.EidasClientException;
-import ee.ria.eidas.client.exception.InvalidEidasParamException;
-import ee.ria.eidas.client.exception.SAMLAssertionException;
+import ee.ria.eidas.client.exception.InvalidRequestException;
 import ee.ria.eidas.client.response.AuthenticationResult;
-import ee.ria.eidas.client.session.RequestSession;
 import ee.ria.eidas.client.session.RequestSessionService;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
 import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
@@ -17,7 +15,6 @@ import net.shibboleth.utilities.java.support.net.URIException;
 import net.shibboleth.utilities.java.support.resolver.CriteriaSet;
 import net.shibboleth.utilities.java.support.resolver.ResolverException;
 import net.shibboleth.utilities.java.support.xml.XMLParserException;
-import org.joda.time.DateTime;
 import org.opensaml.core.criterion.EntityIdCriterion;
 import org.opensaml.core.xml.io.UnmarshallingException;
 import org.opensaml.core.xml.util.XMLObjectSupport;
@@ -32,7 +29,6 @@ import org.opensaml.saml.common.messaging.context.SAMLMessageInfoContext;
 import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.criterion.EntityRoleCriterion;
 import org.opensaml.saml.criterion.ProtocolCriterion;
-import org.opensaml.saml.saml2.assertion.SAML20AssertionValidator;
 import org.opensaml.saml.saml2.core.*;
 import org.opensaml.saml.saml2.encryption.Decrypter;
 import org.opensaml.saml.saml2.metadata.IDPSSODescriptor;
@@ -55,7 +51,6 @@ import javax.xml.validation.Schema;
 import java.io.ByteArrayInputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
 
@@ -90,7 +85,7 @@ public class AuthResponseService {
             samlResponse = getSamlResponse(decodedSAMLstr);
             LOGGER.info(OpenSAMLUtils.getXmlString(samlResponse));
         } catch (Exception e) {
-            throw new InvalidEidasParamException("Failed to read SAMLResponse. " + e.getMessage(), e);
+            throw new InvalidRequestException("Failed to read SAMLResponse. " + e.getMessage(), e);
         }
         validateDestinationAndLifetime(samlResponse, req);
         validateStatusCode(samlResponse);
@@ -112,10 +107,10 @@ public class AuthResponseService {
             return;
         }  else if (StatusCode.REQUESTER.equals(statusCode.getValue())
                 && (substatusCode != null && StatusCode.REQUEST_DENIED.equals(substatusCode.getValue()))) {
-            throw new EidasAuthenticationFailedException("No user consent received. User denied access.");
+            throw new AuthenticationFailedException("No user consent received. User denied access.");
         }  else if (StatusCode.RESPONDER.equals(statusCode.getValue())
                 && (substatusCode != null && StatusCode.AUTHN_FAILED.equals(substatusCode.getValue()))) {
-            throw new EidasAuthenticationFailedException("Authentication failed.");
+            throw new AuthenticationFailedException("Authentication failed.");
         } else {
             throw new EidasClientException("Eidas node responded with an error! statusCode = " + samlResponse.getStatus().getStatusCode().getValue()
                     + (substatusCode != null ? ", substatusCode = " + substatusCode.getValue() : "")
@@ -164,7 +159,7 @@ public class AuthResponseService {
         } catch (ComponentInitializationException e) {
             throw new EidasClientException("Error initializing handler chain", e);
         } catch (MessageHandlerException e) {
-            throw new InvalidEidasParamException("Error handling message: " + e.getMessage(), e);
+            throw new InvalidRequestException("Error handling message: " + e.getMessage(), e);
         }
 
     }
@@ -189,7 +184,7 @@ public class AuthResponseService {
 
     private void verifyAssertionSignature(Assertion assertion) {
         if (!assertion.isSigned()) {
-            throw new InvalidEidasParamException("The SAML Assertion was not signed");
+            throw new InvalidRequestException("The SAML Assertion was not signed");
         }
         try {
             SAMLSignatureProfileValidator profileValidator = new SAMLSignatureProfileValidator();

@@ -4,9 +4,9 @@ import ee.ria.eidas.client.authnrequest.AssuranceLevel;
 import ee.ria.eidas.client.config.EidasClientConfiguration;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.exception.EidasClientException;
-import ee.ria.eidas.client.exception.EidasAuthenticationFailedException;
-import ee.ria.eidas.client.exception.InvalidEidasParamException;
-import ee.ria.eidas.client.exception.SAMLAssertionException;
+import ee.ria.eidas.client.exception.AuthenticationFailedException;
+import ee.ria.eidas.client.exception.InvalidRequestException;
+import ee.ria.eidas.client.exception.InvalidRequestException;
 import ee.ria.eidas.client.fixtures.ResponseBuilder;
 import ee.ria.eidas.client.response.AuthenticationResult;
 import ee.ria.eidas.client.session.RequestSession;
@@ -117,7 +117,7 @@ public class AuthResponseServiceTest {
 
     @Test
     public void whenResponseLoaLevelIsLowerThanRequested_thenExceptionIsThrow() throws Exception {
-        expectedEx.expect(SAMLAssertionException.class);
+        expectedEx.expect(InvalidRequestException.class);
         expectedEx.expectMessage("AuthnContextClassRef is not greater or equal to the request level of assurance!");
 
         requestSessionService.removeRequestSession("_4ededd23fb88e6964df71b8bdb1c706f");
@@ -129,7 +129,7 @@ public class AuthResponseServiceTest {
 
     @Test
     public void whenResponseDoesNotHaveRequestSession_thenExceptionIsThrow2() throws Exception {
-        expectedEx.expect(SAMLAssertionException.class);
+        expectedEx.expect(InvalidRequestException.class);
         expectedEx.expectMessage("Assertion issuer's value is not equal to the configured IDP metadata url!");
 
         httpRequest = buildMockHttpServletRequest("SAMLResponse", mockResponseBuilder.buildResponse("classpath:some_random.xml"));
@@ -139,7 +139,7 @@ public class AuthResponseServiceTest {
 
     @Test
     public void whenResponseDoesNotHaveRequestSession_thenExceptionIsThrow() throws Exception {
-        expectedEx.expect(SAMLAssertionException.class);
+        expectedEx.expect(InvalidRequestException.class);
         expectedEx.expectMessage("No corresponding SAML request session found for the given response assertion!");
 
         requestSessionService.removeRequestSession("_4ededd23fb88e6964df71b8bdb1c706f");
@@ -150,7 +150,7 @@ public class AuthResponseServiceTest {
 
     @Test
     public void whenResponseDoesNotContainSAMLResponse_thenExceptionIsThrown() throws Exception {
-        expectedEx.expect(InvalidEidasParamException.class);
+        expectedEx.expect(InvalidRequestException.class);
         expectedEx.expectMessage("Failed to read SAMLResponse. null");
 
         httpRequest = buildMockHttpServletRequest("someParam", mockResponseBuilder.buildResponse("classpath:idp-metadata.xml"));
@@ -160,7 +160,7 @@ public class AuthResponseServiceTest {
 
     @Test
     public void whenResponseStatusAuthenticationFailed_UnauthorizedIsReturned() throws Exception {
-        expectedEx.expect(EidasAuthenticationFailedException.class);
+        expectedEx.expect(AuthenticationFailedException.class);
         expectedEx.expectMessage("Authentication failed.");
 
         Response response = mockResponseBuilder.buildResponse("classpath:idp-metadata.xml");
@@ -173,7 +173,7 @@ public class AuthResponseServiceTest {
 
     @Test
     public void whenResponseStatusRequesterRequestDenied_UnauthorizedIsReturned() throws Exception {
-        expectedEx.expect(EidasAuthenticationFailedException.class);
+        expectedEx.expect(AuthenticationFailedException.class);
         expectedEx.expectMessage("No user consent received. User denied access.");
 
         Response response = mockResponseBuilder.buildResponse("classpath:idp-metadata.xml");
@@ -186,7 +186,7 @@ public class AuthResponseServiceTest {
 
     @Test
     public void whenResponseDoesNotMatchSchema() throws Exception {
-        expectedEx.expect(InvalidEidasParamException.class);
+        expectedEx.expect(InvalidRequestException.class);
         expectedEx.expectMessage("Error handling message: Message is not schema-valid.");
 
         httpRequest = buildMockHttpServletRequest("<saml2p:Response Destination=\"http://localhost:8889/returnUrl\" ID=\"_cce32a4e19aafb6d8c5d4ab4cc60a27a\" InResponseTo=\"sqajsja\" IssueInstant=\"2018-03-26T14:56:41.033Z\" Version=\"2.0\" xmlns:saml2p=\"urn:oasis:names:tc:SAML:2.0:protocol\"></saml2p:Response>");
