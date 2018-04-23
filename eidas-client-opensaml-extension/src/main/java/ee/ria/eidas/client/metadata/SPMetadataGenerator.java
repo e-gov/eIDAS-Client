@@ -30,8 +30,6 @@ import java.util.Set;
 
 public class SPMetadataGenerator {
 
-    protected static Logger LOGGER = LoggerFactory.getLogger(SPMetadataGenerator.class);
-
     protected int defaultACSIndex = 0;
 
     private EidasClientProperties eidasClientProperties;

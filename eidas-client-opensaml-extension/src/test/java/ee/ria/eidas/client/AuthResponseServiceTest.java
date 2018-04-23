@@ -1,6 +1,7 @@
 package ee.ria.eidas.client;
 
 import ee.ria.eidas.client.authnrequest.AssuranceLevel;
+import ee.ria.eidas.client.authnrequest.EidasAttribute;
 import ee.ria.eidas.client.config.EidasClientConfiguration;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.exception.EidasClientException;
@@ -23,6 +24,7 @@ import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
 import org.opensaml.core.criterion.EntityIdCriterion;
 import org.opensaml.saml.saml2.core.*;
+import org.opensaml.saml.saml2.core.impl.AttributeStatementBuilder;
 import org.opensaml.security.credential.Credential;
 import org.opensaml.security.credential.impl.KeyStoreCredentialResolver;
 import org.opensaml.xmlsec.signature.support.impl.ExplicitKeySignatureTrustEngine;
@@ -38,9 +40,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import javax.xml.validation.Schema;
 import java.security.KeyStore;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -105,7 +105,7 @@ public class AuthResponseServiceTest {
         mockResponseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
 
         requestSessionService.removeRequestSession("_4ededd23fb88e6964df71b8bdb1c706f");
-        requestSessionService.saveRequestSession("_4ededd23fb88e6964df71b8bdb1c706f", new RequestSession(new DateTime(), AssuranceLevel.LOW));
+        requestSessionService.saveRequestSession("_4ededd23fb88e6964df71b8bdb1c706f", new RequestSession(new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET));
     }
 
     @Test
@@ -121,8 +121,28 @@ public class AuthResponseServiceTest {
         expectedEx.expectMessage("AuthnContextClassRef is not greater or equal to the request level of assurance!");
 
         requestSessionService.removeRequestSession("_4ededd23fb88e6964df71b8bdb1c706f");
-        requestSessionService.saveRequestSession("_4ededd23fb88e6964df71b8bdb1c706f", new RequestSession(new DateTime(), AssuranceLevel.SUBSTANTIAL));
+        requestSessionService.saveRequestSession("_4ededd23fb88e6964df71b8bdb1c706f", new RequestSession(new DateTime(), AssuranceLevel.SUBSTANTIAL, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET));
         httpRequest = buildMockHttpServletRequest("SAMLResponse", mockResponseBuilder.buildResponse("classpath:idp-metadata.xml"));
+        AuthenticationResult result = authResponseService.getAuthenticationResult(httpRequest);
+        fail("Should not reach this!");
+    }
+
+    @Test
+    public void whenResponseIsMissingMandatoryRequestedEidasAttributes() throws Exception {
+        expectedEx.expect(InvalidRequestException.class);
+        expectedEx.expectMessage("Missing mandatory attributes in the response assertion: [FamilyName, DateOfBirth, PersonIdentifier, LegalPersonIdentifier]");
+
+
+        List<EidasAttribute> requestedAttributes = new ArrayList<>(AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
+        requestedAttributes.addAll(Arrays.asList(EidasAttribute.LEGAL_NAME, EidasAttribute.LEGAL_PERSON_IDENTIFIER, EidasAttribute.LEI));
+        requestSessionService.removeRequestSession("_4ededd23fb88e6964df71b8bdb1c706f");
+        requestSessionService.saveRequestSession("_4ededd23fb88e6964df71b8bdb1c706f", new RequestSession(new DateTime(), AssuranceLevel.LOW,requestedAttributes ));
+
+        AttributeStatement attributeStatement = new AttributeStatementBuilder().buildObject();
+        attributeStatement.getAttributes().add(mockResponseBuilder.buildAttribute("FirstName", "http://eidas.europa.eu/attributes/naturalperson/CurrentGivenName", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri", "eidas-natural:CurrentGivenNameType", "Alexander", "Αλέξανδρος"));
+        attributeStatement.getAttributes().add(mockResponseBuilder.buildAttribute("LegalName", "http://eidas.europa.eu/attributes/legalperson/LegalName", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri", "eidas:LegalNameTyp", "Acme Corporation", null));
+        Response response = mockResponseBuilder.buildResponse("classpath:idp-metadata.xml", attributeStatement);
+        httpRequest = buildMockHttpServletRequest("SAMLResponse", response);
         AuthenticationResult result = authResponseService.getAuthenticationResult(httpRequest);
         fail("Should not reach this!");
     }

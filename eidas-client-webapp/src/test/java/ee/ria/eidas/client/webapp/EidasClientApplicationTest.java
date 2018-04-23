@@ -6,6 +6,7 @@ import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.jayway.restassured.RestAssured;
 import com.jayway.restassured.config.XmlConfig;
 import com.jayway.restassured.response.ResponseBodyExtractionOptions;
+import ee.ria.eidas.client.AuthInitiationService;
 import ee.ria.eidas.client.authnrequest.AssuranceLevel;
 import ee.ria.eidas.client.fixtures.ResponseBuilder;
 import ee.ria.eidas.client.session.RequestSession;
@@ -22,7 +23,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
 import org.opensaml.core.criterion.EntityIdCriterion;
+import org.opensaml.saml.saml2.core.AttributeStatement;
 import org.opensaml.saml.saml2.core.Response;
+import org.opensaml.saml.saml2.core.impl.AttributeStatementBuilder;
 import org.opensaml.saml.saml2.metadata.EntityDescriptor;
 import org.opensaml.security.credential.Credential;
 import org.opensaml.security.credential.impl.KeyStoreCredentialResolver;
@@ -185,6 +188,20 @@ public class EidasClientApplicationTest {
     }
 
     @Test
+    public void httpPostBinding_shouldFail_whenLoAContainsInvalidValue() {
+        given()
+            .port(port)
+            .queryParam("Country", "EE")
+            .queryParam("LoA", "ABCdef")
+        .when()
+            .get("/login")
+        .then()
+            .statusCode(400)
+            .body("error", equalTo("Bad Request"))
+            .body("message", equalTo("Invalid value for parameter LoA"));
+    }
+
+    @Test
     public void httpPostBinding_shouldPass_whenOnlyCountryParamPresent() {
         given()
             .port(port)
@@ -227,8 +244,20 @@ public class EidasClientApplicationTest {
     }
 
     @Test
-    public void returnUrl_shouldSucceed_whenValidSAMLResponse() {
-        requestSessionService.saveRequestSession("_4ededd23fb88e6964df71b8bdb1c706f", new RequestSession(new DateTime(), AssuranceLevel.LOW));
+    public void httpPostBinding_shouldFail_whenMissingMandatoryParameter() {
+        given()
+            .port(port)
+        .when()
+            .get("/login")
+        .then()
+            .statusCode(400)
+            .body("error", equalTo("Bad Request"))
+            .body("message", equalTo("Required String parameter 'Country' is not present"));
+    }
+
+    @Test
+    public void returnUrl_shouldSucceed_whenValidSAMLResponseWithNaturalPersonMinimalAttributeSet() {
+        requestSessionService.saveRequestSession("_4ededd23fb88e6964df71b8bdb1c706f", new RequestSession(new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET));
 
         given()
             .port(port)
@@ -245,6 +274,40 @@ public class EidasClientApplicationTest {
             .body("attributes.FirstName", equalTo("Αλέξανδρος"))
             .body("attributesTransliterated.FamilyName", equalTo("Onassis"))
             .body("attributesTransliterated.FirstName", equalTo("Alexander"));
+    }
+
+    @Test
+    public void returnUrl_shouldSucceed_whenValidSAMLResponseWithAllAttributesPresent() {
+        requestSessionService.saveRequestSession("_4ededd23fb88e6964df71b8bdb1c706f", new RequestSession(new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET));
+        ResponseBuilder responseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
+        AttributeStatement attributeStatement = new AttributeStatementBuilder().buildObject();
+
+        attributeStatement.getAttributes().add(responseBuilder.buildAttribute("FirstName", "http://eidas.europa.eu/attributes/naturalperson/CurrentGivenName", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri", "eidas-natural:CurrentGivenNameType", "Alexander", "Αλέξανδρος"));
+        attributeStatement.getAttributes().add(responseBuilder.buildAttribute("FamilyName", "http://eidas.europa.eu/attributes/naturalperson/CurrentFamilyName", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri", "eidas-natural:CurrentFamilyNameType", "Onassis", "Ωνάσης"));
+        attributeStatement.getAttributes().add(responseBuilder.buildAttribute("PersonIdentifier", "http://eidas.europa.eu/attributes/naturalperson/PersonIdentifier", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri", "eidas-natural:PersonIdentifierType", "CA/CA/12345"));
+        attributeStatement.getAttributes().add(responseBuilder.buildAttribute("DateOfBirth", "http://eidas.europa.eu/attributes/naturalperson/DateOfBirth", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri", "eidas-natural:DateOfBirthType", "1965-01-01"));
+
+        attributeStatement.getAttributes().add(responseBuilder.buildAttribute("UnknownMsSpecificAttribute", "http://eidas.europa.eu/attributes/ms/specific/Unknown", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri", "eidas-natural:Custom", "Unspecified"));
+
+        Response response = responseBuilder.buildResponse("http://localhost:7771/EidasNode/ConnectorResponderMetadata", attributeStatement);
+
+        given()
+                .port(port)
+                .contentType("application/x-www-form-urlencoded")
+                .formParam("RelayState", "some-state")
+                .formParam("SAMLResponse", Base64.getEncoder().encodeToString(OpenSAMLUtils.getXmlString(response).getBytes(StandardCharsets.UTF_8)))
+        .when()
+                .post("/returnUrl")
+        .then()
+                .statusCode(200)
+                .body("levelOfAssurance", equalTo("http://eidas.europa.eu/LoA/low"))
+                .body("attributes.PersonIdentifier", equalTo("CA/CA/12345"))
+                .body("attributes.FamilyName", equalTo("Ωνάσης"))
+                .body("attributes.FirstName", equalTo("Αλέξανδρος"))
+                .body("attributes.FirstName", equalTo("Αλέξανδρος"))
+                .body("attributes.UnknownMsSpecificAttribute", equalTo("Unspecified"))
+                .body("attributesTransliterated.FamilyName", equalTo("Onassis"))
+                .body("attributesTransliterated.FirstName", equalTo("Alexander"));
     }
 
     @Test
@@ -317,7 +380,7 @@ public class EidasClientApplicationTest {
 
     @Test
     public void returnUrl_shouldFail_whenSAMLResponseParamMissing() {
-        requestSessionService.saveRequestSession("_4ededd23fb88e6964df71b8bdb1c706f", new RequestSession(new DateTime(), AssuranceLevel.LOW));
+        requestSessionService.saveRequestSession("_4ededd23fb88e6964df71b8bdb1c706f", new RequestSession(new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET));
 
         given()
             .port(port)

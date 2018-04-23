@@ -22,8 +22,6 @@ import java.util.List;
 
 public class AuthnRequestBuilder {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(AuthnRequestBuilder.class);
-
     private Credential authnReqSigningCredential;
 
     private EidasClientProperties eidasClientProperties;

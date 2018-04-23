@@ -1,17 +1,23 @@
 package ee.ria.eidas.client.response;
 
 import ee.ria.eidas.client.authnrequest.AssuranceLevel;
+import ee.ria.eidas.client.authnrequest.EidasAttribute;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.exception.InvalidRequestException;
 import ee.ria.eidas.client.session.RequestSession;
 import ee.ria.eidas.client.session.RequestSessionService;
+import org.apache.commons.collections.CollectionUtils;
 import org.joda.time.DateTime;
 import org.opensaml.saml.saml2.core.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class AssertionValidator {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(AssertionValidator.class);
 
     private int acceptedClockSkew;
     private String idpMetadataUrl;
@@ -32,7 +38,8 @@ public class AssertionValidator {
     }
 
     public void validate(Assertion assertion) {
-        validateAgainstRequestSession(assertion);
+        validateEidasRestrictions(assertion);
+        validateExistingRequestSession(assertion);
         validateIssueInstant(assertion);
         validateIssuer(assertion.getIssuer());
         validateSubject(assertion.getSubject());
@@ -40,7 +47,27 @@ public class AssertionValidator {
         validateAuthnStatements(assertion.getAuthnStatements());
     }
 
-    private synchronized void validateAgainstRequestSession(Assertion assertion) {
+    private void validateRequestedMandatoryEidasDatasetsPresent(List<EidasAttribute> requestedAttributes, Assertion assertion) {
+        Set<EidasAttribute> attributesInAssertion = getAttributesPresentInAssertion(assertion);
+        Collection<EidasAttribute> missingAttributes = CollectionUtils.subtract(requestedAttributes, attributesInAssertion);
+        if (!missingAttributes.isEmpty()) {
+            throw new InvalidRequestException("Missing mandatory attributes in the response assertion: " + missingAttributes.stream().map(EidasAttribute::getFriendlyName).collect(Collectors.toList()));
+        }
+    }
+
+    private Set<EidasAttribute> getAttributesPresentInAssertion(Assertion assertion) {
+        Set<EidasAttribute> attributes = new LinkedHashSet<>();
+        for (Attribute attribute : assertion.getAttributeStatements().get(0).getAttributes()) {
+            try {
+                attributes.add(EidasAttribute.fromString(attribute.getFriendlyName()));
+            } catch (IllegalArgumentException e) {
+                LOGGER.warn("Assertion contains unrecognized attribute with FriendlyName: " + attribute.getFriendlyName());
+            }
+        }
+        return attributes;
+    }
+
+    private synchronized void validateExistingRequestSession(Assertion assertion) {
         String requestID = assertion.getSubject().getSubjectConfirmations().get(0).getSubjectConfirmationData().getInResponseTo();
         RequestSession requestSession = requestSessionService.getRequestSession(requestID);
         if (requestSession == null) {
@@ -53,12 +80,6 @@ public class AssertionValidator {
             }
         }
 
-        if (assertion.getAuthnStatements() == null || assertion.getAuthnStatements().size() != 1 ) {
-            throw new InvalidRequestException("Assertion must contain exactly 1 AuthnStatement!");
-        }
-        if (assertion.getAuthnStatements().get(0).getAuthnContext().getAuthnContextClassRef() == null) {
-            throw new InvalidRequestException("Authncontext must contain AuthnContextClassRef!");
-        }
         boolean isReturnedLoaValid = false;
         for (AssuranceLevel loa : AssuranceLevel.values()) {
             if (loa.getUri().equalsIgnoreCase(assertion.getAuthnStatements().get(0).getAuthnContext().getAuthnContextClassRef().getAuthnContextClassRef())
@@ -69,13 +90,27 @@ public class AssertionValidator {
         if (!isReturnedLoaValid) {
             throw new InvalidRequestException("AuthnContextClassRef is not greater or equal to the request level of assurance!");
         }
+
+        validateRequestedMandatoryEidasDatasetsPresent(requestSession.getRequestedAttributes().stream().filter(EidasAttribute::isRequired).collect(Collectors.toList()), assertion);
+    }
+
+    private void validateEidasRestrictions(Assertion assertion) {
+        if (assertion.getAuthnStatements() == null || assertion.getAuthnStatements().size() != 1 ) {
+            throw new InvalidRequestException("Assertion must contain exactly 1 AuthnStatement!");
+        }
+        if (assertion.getAttributeStatements() == null || assertion.getAttributeStatements().size() != 1 ) {
+            throw new InvalidRequestException("Assertion must contain exactly 1 AttributeStatement!");
+        }
+        if (assertion.getAuthnStatements().get(0).getAuthnContext().getAuthnContextClassRef() == null) {
+            throw new InvalidRequestException("Authncontext must contain AuthnContextClassRef!");
+        }
     }
 
     private void validateIssueInstant(Assertion assertion) {
         DateTime now = new DateTime(assertion.getIssueInstant().getZone());
-        if (assertion.getIssueInstant().isAfter(now.plusSeconds(maxAuthenticationLifetime).plusSeconds(acceptedClockSkew))) {
+        if (now.isAfter(assertion.getIssueInstant().plusSeconds(acceptedClockSkew).plusSeconds(maxAuthenticationLifetime))) {
             throw new InvalidRequestException("Assertion issue instant is expired!");
-        } else if (now.plusSeconds(acceptedClockSkew).isBefore(assertion.getIssueInstant())) {
+        } else if (now.isBefore(assertion.getIssueInstant().minusSeconds(acceptedClockSkew).minusSeconds(maxAuthenticationLifetime))) {
             throw new InvalidRequestException("Assertion issue instant is in the future!");
         }
     }

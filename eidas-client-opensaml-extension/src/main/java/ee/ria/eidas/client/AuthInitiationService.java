@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.servlet.http.HttpServletResponse;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -32,9 +33,11 @@ import java.util.stream.Collectors;
 
 public class AuthInitiationService {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(AuthInitiationService.class);
+    public static final List<EidasAttribute> DEFAULT_REQUESTED_ATTRIBUTE_SET = Arrays.asList(EidasAttribute.CURRENT_FAMILY_NAME, EidasAttribute.CURRENT_GIVEN_NAME, EidasAttribute.DATE_OF_BIRTH, EidasAttribute.PERSON_IDENTIFIER);
 
-    private static String RELAYSTATE_VALIDATION_REGEXP = "^[a-zA-Z0-9-_]{0,80}$";
+    private static final Logger LOGGER = LoggerFactory.getLogger(AuthInitiationService.class);
+
+    private static final String RELAYSTATE_VALIDATION_REGEXP = "^[a-zA-Z0-9-_]{0,80}$";
 
     private RequestSessionService requestSessionService;
 
@@ -62,27 +65,36 @@ public class AuthInitiationService {
 
     private List<EidasAttribute> getAdditionalAttributes(String additionalAttributes) {
         if (additionalAttributes == null) {
-            return null;
+            return new ArrayList<>();
         }
 
         try {
-            return Arrays.stream(additionalAttributes.split(" ")).map(x -> EidasAttribute.fromString(x)).collect(Collectors.toList());
+            return Arrays.stream(additionalAttributes.split(" ")).map(EidasAttribute::fromString).collect(Collectors.toList());
         } catch (IllegalArgumentException e) {
-            throw new InvalidRequestException("Found one or more invalid AdditionalAttributes value(s). Allowed values are: " + eidasClientProperties.getAllowedAdditionalAttributes().stream().map(x -> x.getFriendlyName()).collect(Collectors.toList()), e);
+            throw new InvalidRequestException("Found one or more invalid AdditionalAttributes value(s). Allowed values are: " + eidasClientProperties.getAllowedAdditionalAttributes().stream().map(EidasAttribute::getFriendlyName).collect(Collectors.toList()), e);
         }
     }
 
     private void redirectUserForAuthentication(HttpServletResponse httpServletResponse, String country, AssuranceLevel loa, String relayState, List<EidasAttribute> additionalAttributes) {
         AuthnRequestBuilder authnRequestBuilder = new AuthnRequestBuilder(authnReqSigningCredential, eidasClientProperties, singleSignOnService);
         AuthnRequest authnRequest = authnRequestBuilder.buildAuthnRequest(loa, additionalAttributes);
-        saveRequestAsSession(authnRequest);
+        saveRequestAsSession(authnRequest, additionalAttributes);
         redirectUserWithRequest(httpServletResponse, authnRequest, country, relayState);
     }
 
-    private void saveRequestAsSession(AuthnRequest authnRequest) {
+    private void saveRequestAsSession(AuthnRequest authnRequest, List<EidasAttribute> additionalAttributes) {
         String loa = authnRequest.getRequestedAuthnContext().getAuthnContextClassRefs().get(0).getAuthnContextClassRef();
-        RequestSession requestSession = new RequestSession(authnRequest.getIssueInstant(), AssuranceLevel.toEnum(loa));
+        List<EidasAttribute> requestedAttributes = getRequestedEidasAttributesList(additionalAttributes);
+        RequestSession requestSession = new RequestSession(authnRequest.getIssueInstant(), AssuranceLevel.toEnum(loa), requestedAttributes);
         requestSessionService.saveRequestSession(authnRequest.getID(), requestSession);
+    }
+
+    private List<EidasAttribute> getRequestedEidasAttributesList(List<EidasAttribute> additionalAttributes) {
+        List<EidasAttribute> requestedAttributes = new ArrayList<>(DEFAULT_REQUESTED_ATTRIBUTE_SET);
+        if (additionalAttributes != null)
+            requestedAttributes.addAll(additionalAttributes);
+
+        return requestedAttributes;
     }
 
     private void redirectUserWithRequest(HttpServletResponse httpServletResponse, AuthnRequest authnRequest, String country, String relayState) {
@@ -127,8 +139,9 @@ public class AuthInitiationService {
     }
 
     private void validateCountry(String country) {
-        if (!eidasClientProperties.getAvailableCountries().stream().anyMatch(country::equalsIgnoreCase)) {
-            throw new InvalidRequestException("Invalid country! Valid countries:" + eidasClientProperties.getAvailableCountries());
+        List<String> validCountries = eidasClientProperties.getAvailableCountries();
+        if (!validCountries.stream().anyMatch(country::equalsIgnoreCase)) {
+            throw new InvalidRequestException("Invalid country! Valid countries:" + validCountries);
         }
     }
 

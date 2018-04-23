@@ -34,6 +34,10 @@ public class ResponseBuilder {
     }
 
     public Response buildResponse(String issuer) {
+        return buildResponse(issuer, buildAttributeStatement());
+    }
+
+    public Response buildResponse(String issuer, AttributeStatement attributeStatement) {
         try {
             Signature signature = (Signature) XMLObjectProviderRegistrySupport.getBuilderFactory()
                     .getBuilder(Signature.DEFAULT_ELEMENT_NAME).buildObject(Signature.DEFAULT_ELEMENT_NAME);
@@ -56,7 +60,7 @@ public class ResponseBuilder {
             authnResponse.setID(OpenSAMLUtils.generateSecureRandomId());
             authnResponse.setSignature(signature);
             authnResponse.setStatus(buildSuccessStatus());
-            authnResponse.getEncryptedAssertions().add(buildAssertion(now, issuer));
+            authnResponse.getEncryptedAssertions().add(buildAssertion(now, issuer, attributeStatement));
 
             XMLObjectProviderRegistrySupport.getMarshallerFactory().getMarshaller(authnResponse).marshall(authnResponse);
             Signer.signObject(signature);
@@ -111,7 +115,7 @@ public class ResponseBuilder {
         return status;
     }
 
-    private EncryptedAssertion buildAssertion(DateTime issueInstant, String issuer) throws Exception {
+    private EncryptedAssertion buildAssertion(DateTime issueInstant, String issuer, AttributeStatement attributeStatement) throws Exception {
 
         Signature signature = (Signature) XMLObjectProviderRegistrySupport.getBuilderFactory()
                 .getBuilder(Signature.DEFAULT_ELEMENT_NAME).buildObject(Signature.DEFAULT_ELEMENT_NAME);
@@ -132,7 +136,7 @@ public class ResponseBuilder {
         assertion.setSubject(buildSubject(issueInstant));
         assertion.setConditions(buildConditions(issueInstant));
         assertion.getAuthnStatements().add(buildAuthnStatement(issueInstant));
-        assertion.getAttributeStatements().add(buildAttributeStatement());
+        assertion.getAttributeStatements().add(attributeStatement);
         assertion.setSignature(signature);
 
         XMLObjectProviderRegistrySupport.getMarshallerFactory().getMarshaller(assertion).marshall(assertion);
@@ -218,7 +222,7 @@ public class ResponseBuilder {
         return authnStatement;
     }
 
-    private AttributeStatement buildAttributeStatement() {
+    public AttributeStatement buildAttributeStatement() {
         AttributeStatement attributeStatement = new AttributeStatementBuilder().buildObject();
         attributeStatement.getAttributes().add(buildAttribute("FirstName", "http://eidas.europa.eu/attributes/naturalperson/CurrentGivenName", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri", "eidas-natural:CurrentGivenNameType", "Alexander", "Αλέξανδρος"));
         attributeStatement.getAttributes().add(buildAttribute("FamilyName", "http://eidas.europa.eu/attributes/naturalperson/CurrentFamilyName", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri", "eidas-natural:CurrentFamilyNameType", "Onassis", "Ωνάσης"));
@@ -227,11 +231,11 @@ public class ResponseBuilder {
         return attributeStatement;
     }
 
-    private Attribute buildAttribute(String friendlyName, String name, String nameFormat, String xsiType, String value) {
+    public Attribute buildAttribute(String friendlyName, String name, String nameFormat, String xsiType, String value) {
         return buildAttribute(friendlyName, name, nameFormat, xsiType, value, null);
     }
 
-    private Attribute buildAttribute(String friendlyName, String name, String nameFormat, String xsiType, String value, String nonLatinValue) {
+    public Attribute buildAttribute(String friendlyName, String name, String nameFormat, String xsiType, String value, String nonLatinValue) {
         Attribute attribute = new AttributeBuilder().buildObject();
         attribute.setFriendlyName(friendlyName);
         attribute.setName(name);

@@ -19,7 +19,6 @@ import org.w3c.dom.Element;
 import javax.xml.namespace.QName;
 
 public class OpenSAMLUtils {
-    private static Logger LOGGER = LoggerFactory.getLogger(OpenSAMLUtils.class);
 
     private static RandomIdentifierGenerationStrategy secureRandomIdGenerator = new RandomIdentifierGenerationStrategy();
 

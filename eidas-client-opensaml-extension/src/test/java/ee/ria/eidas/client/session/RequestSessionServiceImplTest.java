@@ -1,5 +1,6 @@
 package ee.ria.eidas.client.session;
 
+import ee.ria.eidas.client.AuthInitiationService;
 import ee.ria.eidas.client.authnrequest.AssuranceLevel;
 import ee.ria.eidas.client.config.EidasClientConfiguration;
 import ee.ria.eidas.client.config.EidasClientProperties;
@@ -40,7 +41,7 @@ public class RequestSessionServiceImplTest {
     @Test
     public void getRequestSession_returnsSession_whenSavedBeforehand() {
         String requestID = "_4ededd23fb88e6964df71b8bdb1c706f";
-        RequestSession requestSession = new RequestSession(new DateTime(), AssuranceLevel.LOW);
+        RequestSession requestSession = new RequestSession(new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
         requestSessionService.saveRequestSession(requestID, requestSession);
         assertNotNull(requestSessionService.getRequestSession(requestID));
     }
@@ -57,7 +58,7 @@ public class RequestSessionServiceImplTest {
         expectedEx.expectMessage("A request with an ID: _4ededd23fb88e6964df71b8bdb1c706f already exists!");
 
         String requestID = "_4ededd23fb88e6964df71b8bdb1c706f";
-        RequestSession requestSession = new RequestSession(new DateTime(), AssuranceLevel.LOW);
+        RequestSession requestSession = new RequestSession(new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
         requestSessionService.saveRequestSession(requestID, requestSession);
         requestSessionService.saveRequestSession(requestID, requestSession);
     }
@@ -65,7 +66,7 @@ public class RequestSessionServiceImplTest {
     @Test
     public void getRequestSession_returnsNull_whenSessionIsRemovedBeforehand() {
         String requestID = "_4ededd23fb88e6964df71b8bdb1c706f";
-        RequestSession requestSession = new RequestSession(new DateTime(), AssuranceLevel.LOW);
+        RequestSession requestSession = new RequestSession(new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
         requestSessionService.saveRequestSession(requestID, requestSession);
         requestSessionService.removeRequestSession(requestID);
 
@@ -75,7 +76,7 @@ public class RequestSessionServiceImplTest {
     @Test
     public void getRequestSession_returnsNull_whenSessionExpiresAndThereforeIsRemovedBeforehand() throws InterruptedException {
         String requestID = "_4ededd23fb88e6964df71b8bdb1c706f";
-        RequestSession requestSession = new RequestSession(new DateTime(), AssuranceLevel.LOW);
+        RequestSession requestSession = new RequestSession(new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
         requestSessionService.saveRequestSession(requestID, requestSession);
         Thread.sleep(3000); // take clock skew into account
         requestSessionService.removeExpiredSessions();

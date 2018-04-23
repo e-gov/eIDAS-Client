@@ -13,8 +13,6 @@ import org.slf4j.LoggerFactory;
 
 public class EidasHTTPPostEncoder extends HTTPPostEncoder {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(org.opensaml.saml.saml2.binding.encoding.impl.HTTPPostEncoder.class);
-
     private String countryCode;
     private String relayState;
 

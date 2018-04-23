@@ -6,10 +6,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Collections;
@@ -22,12 +24,18 @@ public class ControllerExceptionHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(ControllerExceptionHandler.class);
 
-    @ExceptionHandler
+    @ExceptionHandler ({InvalidRequestException.class, MissingServletRequestParameterException.class, MethodArgumentTypeMismatchException.class })
     @ResponseBody
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public Map handle(InvalidRequestException exception) {
+    public Map handleBadRequest(Exception exception) {
         LOGGER.error("Bad request!", exception);
-        return getMap(HttpStatus.BAD_REQUEST, exception.getMessage());
+
+        if (exception instanceof MethodArgumentTypeMismatchException) {
+            String name = ((MethodArgumentTypeMismatchException)exception).getName();
+            return getMap(HttpStatus.BAD_REQUEST, "Invalid value for parameter " + name);
+        } else {
+            return getMap(HttpStatus.BAD_REQUEST, exception.getMessage());
+        }
     }
 
     @ExceptionHandler
@@ -49,7 +57,7 @@ public class ControllerExceptionHandler {
     @ExceptionHandler
     @ResponseBody
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public Map handleInternalErrors(Throwable exception) {
+    public Map handleInternalError(Throwable exception) {
         LOGGER.error("Internal server error!", exception);
         return getMap(HttpStatus.INTERNAL_SERVER_ERROR, "Something went wrong internally. Please consult server logs for further details.");
     }
@@ -58,6 +66,6 @@ public class ControllerExceptionHandler {
         return Collections.unmodifiableMap(Stream.of(
                 new SimpleEntry<>("message", message),
                 new SimpleEntry<>("error", badRequest.getReasonPhrase()))
-                .collect(Collectors.toMap((e) -> e.getKey(), (e) -> e.getValue())));
+                .collect(Collectors.toMap(SimpleEntry::getKey, SimpleEntry::getValue)));
     }
 }

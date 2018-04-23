@@ -69,7 +69,7 @@ public class AuthenticationResult {
         if (latinScriptAttributes.isEmpty()) {
             return true;
         } else if (latinScriptAttributes.size() == 1) {
-            return latinScriptAttributes.get(0).equals("true");
+            return latinScriptAttributes.get(0).toString().equals("true");
         } else {
             throw new IllegalStateException("More than one LatinScript attributes not allowed!");
         }

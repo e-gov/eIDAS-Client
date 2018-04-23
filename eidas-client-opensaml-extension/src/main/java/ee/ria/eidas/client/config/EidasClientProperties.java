@@ -272,10 +272,10 @@ public class EidasClientProperties {
     }
 
     public List<EidasAttribute> getAllowedAdditionalAttributes() {
-        return allowedAdditionalAttributes;
+        return new ArrayList<>(allowedAdditionalAttributes);
     }
 
     public void setAllowedAdditionalAttributes(List<EidasAttribute> allowedAdditionalAttributes) {
-        this.allowedAdditionalAttributes = allowedAdditionalAttributes;
+        this.allowedAdditionalAttributes = new ArrayList<>(allowedAdditionalAttributes);
     }
 }

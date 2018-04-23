@@ -211,7 +211,7 @@ public class EidasClientConfiguration {
 
             return resolver.resolveSingle(criteriaSet);
         } catch (ResolverException e) {
-            throw new RuntimeException("Something went wrong reading credentials", e);
+            throw new IllegalStateException("Something went wrong reading credentials", e);
         }
     }
 
@@ -227,8 +227,7 @@ public class EidasClientConfiguration {
             X509CertificateImpl certificate = (X509CertificateImpl) signingDescriptor.getKeyInfo().getX509Datas().get(0).getX509Certificates().get(0);
             CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
             ByteArrayInputStream certInputStream = new ByteArrayInputStream(Base64.getDecoder().decode(certificate.getValue().replaceAll("\n", "")));
-            X509Certificate cert = (X509Certificate) certFactory.generateCertificate(certInputStream);
-            return cert;
+            return (X509Certificate) certFactory.generateCertificate(certInputStream);
         } catch (CertificateException e) {
             throw new EidasClientException("Error initializing. Cannot get IDP metadata trusted certificate", e);
         }

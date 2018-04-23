@@ -56,7 +56,7 @@ import java.util.List;
 
 public class AuthResponseService {
 
-    private static Logger LOGGER = LoggerFactory.getLogger(AuthResponseService.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(AuthResponseService.class);
 
     private RequestSessionService requestSessionService;
 
@@ -105,17 +105,25 @@ public class AuthResponseService {
         StatusMessage statusMessage = samlResponse.getStatus().getStatusMessage();
         if (StatusCode.SUCCESS.equals(statusCode.getValue())) {
             return;
-        }  else if (StatusCode.REQUESTER.equals(statusCode.getValue())
-                && (substatusCode != null && StatusCode.REQUEST_DENIED.equals(substatusCode.getValue()))) {
+        }  else if (isStatusNoConsentGiven(statusCode, substatusCode, StatusCode.REQUESTER, StatusCode.REQUEST_DENIED)) {
             throw new AuthenticationFailedException("No user consent received. User denied access.");
-        }  else if (StatusCode.RESPONDER.equals(statusCode.getValue())
-                && (substatusCode != null && StatusCode.AUTHN_FAILED.equals(substatusCode.getValue()))) {
+        }  else if (isStatusAuthenticationFailed(statusCode, substatusCode, StatusCode.RESPONDER, StatusCode.AUTHN_FAILED)) {
             throw new AuthenticationFailedException("Authentication failed.");
         } else {
             throw new EidasClientException("Eidas node responded with an error! statusCode = " + samlResponse.getStatus().getStatusCode().getValue()
                     + (substatusCode != null ? ", substatusCode = " + substatusCode.getValue() : "")
                     +  ", statusMessage = " + statusMessage.getMessage());
         }
+    }
+
+    private boolean isStatusAuthenticationFailed(StatusCode statusCode, StatusCode substatusCode, String responder, String authnFailed) {
+        return responder.equals(statusCode.getValue())
+                && (substatusCode != null && authnFailed.equals(substatusCode.getValue()));
+    }
+
+    private boolean isStatusNoConsentGiven(StatusCode statusCode, StatusCode substatusCode, String requester, String requestDenied) {
+        return requester.equals(statusCode.getValue())
+                && (substatusCode != null && requestDenied.equals(substatusCode.getValue()));
     }
 
     private Response getSamlResponse(String samlResponse) throws XMLParserException, UnmarshallingException {
@@ -132,8 +140,8 @@ public class AuthResponseService {
         SchemaValidateXMLMessage schemaValidationFilter = new SchemaValidateXMLMessage(samlSchema);
 
         MessageLifetimeSecurityHandler lifetimeSecurityHandler = new MessageLifetimeSecurityHandler();
-        lifetimeSecurityHandler.setClockSkew(eidasClientProperties.getAcceptedClockSkew() * 1000);
-        lifetimeSecurityHandler.setMessageLifetime(eidasClientProperties.getResponseMessageLifeTime() * 1000);
+        lifetimeSecurityHandler.setClockSkew(eidasClientProperties.getAcceptedClockSkew() * 1000L);
+        lifetimeSecurityHandler.setMessageLifetime(eidasClientProperties.getResponseMessageLifeTime() * 1000L);
         lifetimeSecurityHandler.setRequiredRule(true);
 
         ReceivedEndpointSecurityHandler receivedEndpointSecurityHandler = new ReceivedEndpointSecurityHandler();
@@ -146,11 +154,11 @@ public class AuthResponseService {
         receivedEndpointSecurityHandler.setURIComparator(new URIComparator() {
             @Override
             public boolean compare(@Nullable String messageDestination, @Nullable String receiverEndpoint) throws URIException {
-                return messageDestination.equals(eidasClientProperties.getCallbackUrl());
+                return messageDestination!= null && receiverEndpoint != null && messageDestination.equals(eidasClientProperties.getCallbackUrl());
             }
         });
 
-        BasicMessageHandlerChain<ArtifactResponse> handlerChain = new BasicMessageHandlerChain<ArtifactResponse>();
+        BasicMessageHandlerChain<ArtifactResponse> handlerChain = new BasicMessageHandlerChain<>();
         handlerChain.setHandlers(handlers);
 
         try {
