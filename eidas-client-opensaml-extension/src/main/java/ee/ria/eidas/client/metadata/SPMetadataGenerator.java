@@ -20,8 +20,6 @@ import org.opensaml.xmlsec.config.DefaultSecurityConfigurationBootstrap;
 import org.opensaml.xmlsec.keyinfo.KeyInfoGenerator;
 import org.opensaml.xmlsec.keyinfo.NamedKeyInfoGeneratorManager;
 import org.opensaml.xmlsec.signature.KeyInfo;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -88,11 +86,7 @@ public class SPMetadataGenerator {
     }
 
     private String generateEntityDescriptorId() {
-        try {
-            return "_".concat(RandomStringUtils.randomAlphanumeric(39)).toLowerCase();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        return "_".concat(RandomStringUtils.randomAlphanumeric(39)).toLowerCase();
     }
 
     private SPSSODescriptor buildSPSSODescriptor() {

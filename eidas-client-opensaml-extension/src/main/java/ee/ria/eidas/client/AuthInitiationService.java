@@ -26,6 +26,7 @@ import org.slf4j.LoggerFactory;
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -33,7 +34,7 @@ import java.util.stream.Collectors;
 
 public class AuthInitiationService {
 
-    public static final List<EidasAttribute> DEFAULT_REQUESTED_ATTRIBUTE_SET = Arrays.asList(EidasAttribute.CURRENT_FAMILY_NAME, EidasAttribute.CURRENT_GIVEN_NAME, EidasAttribute.DATE_OF_BIRTH, EidasAttribute.PERSON_IDENTIFIER);
+    public static final List<EidasAttribute> DEFAULT_REQUESTED_ATTRIBUTE_SET = Collections.unmodifiableList(Arrays.asList(EidasAttribute.CURRENT_FAMILY_NAME, EidasAttribute.CURRENT_GIVEN_NAME, EidasAttribute.DATE_OF_BIRTH, EidasAttribute.PERSON_IDENTIFIER));
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthInitiationService.class);
 

@@ -22,6 +22,7 @@ public class EidasHTTPPostEncoder extends HTTPPostEncoder {
         velocityEngine.setProperty("classpath.resource.loader.class", ClasspathResourceLoader.class.getName());
         velocityEngine.init();
         setVelocityEngine(velocityEngine);
+        setVelocityTemplateId("/templates/eidas-saml2-post-binding.vm");
     }
 
     @Override
