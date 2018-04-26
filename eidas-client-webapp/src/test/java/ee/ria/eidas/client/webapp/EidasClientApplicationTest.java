@@ -142,7 +142,7 @@ public class EidasClientApplicationTest {
             .queryParam("Country", "EE")
             .queryParam("LoA", "LOW")
             .queryParam("RelayState", "test")
-            .queryParam("AdditionalAttributes", "BirthName PlaceOfBirth CurrentAddress Gender LegalPersonIdentifier LegalName LegalAddress VATRegistrationNumber TaxReference LEI EORI SEED SIC D-2012-17-EUIdentifier")
+            .queryParam("AdditionalAttributes", "BirthName PlaceOfBirth CurrentAddress Gender LegalPersonIdentifier LegalName LegalAddress VATRegistration TaxReference LEI EORI SEED SIC D-2012-17-EUIdentifier")
         .when()
             .get("/login")
         .then()
@@ -184,7 +184,7 @@ public class EidasClientApplicationTest {
         .then()
             .statusCode(400)
             .body("error", equalTo("Bad Request"))
-            .body("message", equalTo("Found one or more invalid AdditionalAttributes value(s). Allowed values are: [BirthName, PlaceOfBirth, CurrentAddress, Gender, LegalPersonIdentifier, LegalName, LegalAddress, VATRegistrationNumber, TaxReference, LEI, EORI, SEED, SIC, D-2012-17-EUIdentifier]"));
+            .body("message", equalTo("Found one or more invalid AdditionalAttributes value(s). Allowed values are: [BirthName, PlaceOfBirth, CurrentAddress, Gender, LegalPersonIdentifier, LegalName, LegalAddress, VATRegistration, TaxReference, LEI, EORI, SEED, SIC, D-2012-17-EUIdentifier]"));
     }
 
     @Test

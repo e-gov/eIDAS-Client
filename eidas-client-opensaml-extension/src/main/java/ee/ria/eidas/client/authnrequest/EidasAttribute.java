@@ -13,7 +13,7 @@ public enum EidasAttribute {
         LEGAL_PERSON_IDENTIFIER("LegalPersonIdentifier", "http://eidas.europa.eu/attributes/legalperson/LegalPersonIdentifier", true),
         LEGAL_NAME("LegalName", "http://eidas.europa.eu/attributes/legalperson/LegalName", true),
         LEGAL_ADDRESS("LegalAddress", "http://eidas.europa.eu/attributes/legalperson/LegalPersonAddress", false),
-        VAT_REGISTRATION_NUMBER("VATRegistrationNumber", "http://eidas.europa.eu/attributes/legalperson/VATRegistrationNumber", false),
+        VAT_REGISTRATION("VATRegistration", "http://eidas.europa.eu/attributes/legalperson/VATRegistrationNumber", false),
         TAX_REFERENCE("TaxReference", "http://eidas.europa.eu/attributes/legalperson/TaxReference", false),
         LEI("LEI", "http://eidas.europa.eu/attributes/legalperson/LEI", false),
         EORI("EORI", "http://eidas.europa.eu/attributes/legalperson/EORI", false),

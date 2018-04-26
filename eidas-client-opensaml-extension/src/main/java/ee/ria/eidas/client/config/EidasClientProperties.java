@@ -91,7 +91,7 @@ public class EidasClientProperties {
     @NotNull
     private List<EidasAttribute> allowedAdditionalAttributes = Arrays.asList(EidasAttribute.BIRTH_NAME, EidasAttribute.PLACE_OF_BIRTH,
             EidasAttribute.CURRENT_ADDRESS, EidasAttribute.GENDER, EidasAttribute.LEGAL_PERSON_IDENTIFIER,
-            EidasAttribute.LEGAL_NAME, EidasAttribute.LEGAL_ADDRESS, EidasAttribute.VAT_REGISTRATION_NUMBER,
+            EidasAttribute.LEGAL_NAME, EidasAttribute.LEGAL_ADDRESS, EidasAttribute.VAT_REGISTRATION,
             EidasAttribute.TAX_REFERENCE, EidasAttribute.LEI,
             EidasAttribute.EORI, EidasAttribute.SEED, EidasAttribute.SIC, EidasAttribute.D_2012_17_EUIdentifier);
 
