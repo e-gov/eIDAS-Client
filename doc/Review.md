@@ -3,7 +3,8 @@
 
 04.05.2018
 
-### Mis on eIDAS-Client
+### Mis on eIDAS-Client?
+
 eIDAS-Client on mikroteenus, mis tegutseb tõlgina autentimisteenuse TARA ja piiriülese autentimistaristu eIDAS vahel.
 
 Tõlgiks olemine tähendab - mõnevõrra lihtsustatult - kahte asja:
@@ -16,7 +17,7 @@ eIDAS-Client oli mõeldud teostada kolmes kehastuses: 1) teek; 2) mikroteenus; 3
 
 ### Kuidas keerukuse kapseldamine õnnestus?
 
-Hästi. Selle tõestuseks eIDAS-Client-i kasutamise näide.
+Võib lugeda õnnestunuks. Mikroteenus teenindab TARA serverit, suheldes lihtsa ja selge API kaudu. SAML on TARA eest täielikult varjestatud. Tõenduseks eIDAS-Client-i kasutamise näide.
 
 Välismaalase autentimiseks saadab TARA eIDAS-Client-i päringu:
 
