@@ -1,5 +1,5 @@
 
-Arhitektuuriline tagasivaade
+# Arhitektuuriline tagasivaade
 
 eIDAS-Client on mikroteenus, mis tegutseb tõlgina autentimisteenuse TARA ja piiriülese autentimistaristu eIDAS vahel.
 
@@ -7,9 +7,12 @@ Tõlgiks olemine tähendab lihtsa HTTP GET päringuna väljendatud autentimissoo
 
 eIDAS-Client oli mõeldud teostada kolmes kehastuses: 1) teek; 2) mikroteenus; 3) mikroteenusega seotud UI. Nüüd, kui eIDAS-Client on peaaegu valmis, on sõelale  jäänud mikroteenus. Kui vajadus peaks tekkima, on eIDAS-Client siiski kasutatav ka teegina. Skoobi kitsenemise põhjustasid ennustamatud, meie mõjuala välised muutused eIDAS ökosüsteemis. Skoobi kitsenemises pole midagi halba. Fookus on hea.
 
-Kuidas on keerukuse kapseldamine õnnestunud? Hästi. Selle tõestuseks eIDAS-Client-i kasutamise näide.
+Kuidas on keerukuse kapseldamine õnnestunud?
+
+Hästi. Selle tõestuseks eIDAS-Client-i kasutamise näide.
 
 Välismaalase autentimiseks saadab TARA eIDAS-Client-i päringu:
+
 
 ```
 GET https://eidas-Client.ria.ee/login?
@@ -21,6 +24,7 @@ Päringu tähendus on "palun autentida rootslane (`SE`), kasutades kõrge tagati
 
 eIDAS-Client teisendab päringu SAML-protokolli, allkirjastab, kontrollib eIDAS-Node metaandmeid jms. Desifreerib vastussõnumi, kontrollib allkirja ja metaandmeid ning edastab TARA-sse JSON-struktuuri:
 
+json
 ```
 {
    "levelOfAssurance":"http://eidas.europa.eu/LoA/substantial",
@@ -37,7 +41,7 @@ Vastus on ise ennast selgitav.
 
 Kui suur on mikroteenuse koodimaht ja milline oli arenduse töömaht?
 
-  | LOC
+ - | LOC
 ------|-----------
 kood | 1900
 ühiktestide kood | 1300
