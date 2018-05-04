@@ -41,16 +41,16 @@ Vastus on ise ennast selgitav.
 
 Kui suur on mikroteenuse koodimaht ja milline oli arenduse töömaht?
 
- - | LOC
-------|-----------
-kood | 1900
-ühiktestide kood | 1300
-integratsioonitestid | 3200
-KOKKU | 6400
+|     | LOC        |
+|------|-----------|
+| kood | 1900 |
+| ühiktestide kood | 1300 |
+| integratsioonitestid | 3200 |
+| KOKKU | 6400 |
 
-           | 
------------|-----------
-arendusaeg | 4 kuud 
-arendustunde | 600
+|           |          |
+|-----------|-----------|
+| arendusaeg | 4 kuud | 
+| arendustunde | 600  |
 
 Arvude tõlgendamisel tuleb arvestada, et eesmärk oli suhteliselt selge, kuid töö sisaldas uue, keerulise tehnoloogia ja seda teostava teegi (OpenSAML) tundmaõppimist.
