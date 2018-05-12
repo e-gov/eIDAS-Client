@@ -7,6 +7,7 @@ import ee.ria.eidas.client.authnrequest.EidasHTTPPostEncoder;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.exception.EidasClientException;
 import ee.ria.eidas.client.exception.InvalidRequestException;
+import ee.ria.eidas.client.metadata.IDPMetadataResolver;
 import ee.ria.eidas.client.session.RequestSession;
 import ee.ria.eidas.client.session.RequestSessionService;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
@@ -46,13 +47,15 @@ public class AuthInitiationService {
 
     private EidasClientProperties eidasClientProperties;
 
-    private SingleSignOnService singleSignOnService;
+    private IDPMetadataResolver idpMetadataResolver;
 
-    public AuthInitiationService(RequestSessionService requestSessionService, Credential authnReqSigningCredential, EidasClientProperties eidasClientProperties, SingleSignOnService singleSignOnService) {
+
+
+    public AuthInitiationService(RequestSessionService requestSessionService, Credential authnReqSigningCredential, EidasClientProperties eidasClientProperties, IDPMetadataResolver idpMetadataResolver) {
         this.requestSessionService = requestSessionService;
         this.authnReqSigningCredential = authnReqSigningCredential;
         this.eidasClientProperties = eidasClientProperties;
-        this.singleSignOnService = singleSignOnService;
+        this.idpMetadataResolver = idpMetadataResolver;
     }
 
     public void authenticate(HttpServletResponse response, String country, AssuranceLevel loa, String relayState, String additionalAttributesParam) {
@@ -77,7 +80,7 @@ public class AuthInitiationService {
     }
 
     private void redirectUserForAuthentication(HttpServletResponse httpServletResponse, String country, AssuranceLevel loa, String relayState, List<EidasAttribute> additionalAttributes) {
-        AuthnRequestBuilder authnRequestBuilder = new AuthnRequestBuilder(authnReqSigningCredential, eidasClientProperties, singleSignOnService);
+        AuthnRequestBuilder authnRequestBuilder = new AuthnRequestBuilder(authnReqSigningCredential, eidasClientProperties, idpMetadataResolver.getSingeSignOnService());
         AuthnRequest authnRequest = authnRequestBuilder.buildAuthnRequest(loa, additionalAttributes);
         saveRequestAsSession(authnRequest, additionalAttributes);
         redirectUserWithRequest(httpServletResponse, authnRequest, country, relayState);
@@ -106,7 +109,7 @@ public class AuthInitiationService {
         SAMLPeerEntityContext peerEntityContext = context.getSubcontext(SAMLPeerEntityContext.class, true);
 
         SAMLEndpointContext endpointContext = peerEntityContext.getSubcontext(SAMLEndpointContext.class, true);
-        endpointContext.setEndpoint(singleSignOnService);
+        endpointContext.setEndpoint(idpMetadataResolver.getSingeSignOnService());
 
         SignatureSigningParameters signatureSigningParameters = new SignatureSigningParameters();
         signatureSigningParameters.setSigningCredential(authnReqSigningCredential);

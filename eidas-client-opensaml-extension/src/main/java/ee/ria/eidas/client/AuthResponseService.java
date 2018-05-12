@@ -1,5 +1,6 @@
 package ee.ria.eidas.client;
 
+import ee.ria.eidas.client.metadata.IDPMetadataResolver;
 import ee.ria.eidas.client.response.AssertionValidator;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.config.OpenSAMLConfiguration;
@@ -62,16 +63,16 @@ public class AuthResponseService {
 
     private EidasClientProperties eidasClientProperties;
 
-    private ExplicitKeySignatureTrustEngine explicitKeySignatureTrustEngine;
+    private IDPMetadataResolver idpMetadataResolver;
 
     private Credential spAssertionDecryptionCredential;
 
     private Schema samlSchema;
 
-    public AuthResponseService(RequestSessionService requestSessionService, EidasClientProperties eidasClientProperties, ExplicitKeySignatureTrustEngine explicitKeySignatureTrustEngine, Credential spAssertionDecryptionCredential, Schema samlSchema) {
+    public AuthResponseService(RequestSessionService requestSessionService, EidasClientProperties eidasClientProperties, IDPMetadataResolver idpMetadataResolver, Credential spAssertionDecryptionCredential, Schema samlSchema) {
         this.requestSessionService = requestSessionService;
         this.eidasClientProperties = eidasClientProperties;
-        this.explicitKeySignatureTrustEngine = explicitKeySignatureTrustEngine;
+        this.idpMetadataResolver = idpMetadataResolver;
         this.spAssertionDecryptionCredential = spAssertionDecryptionCredential;
         this.samlSchema = samlSchema;
     }
@@ -203,7 +204,7 @@ public class AuthResponseService {
             criteriaSet.add(new EntityRoleCriterion(IDPSSODescriptor.DEFAULT_ELEMENT_NAME));
             criteriaSet.add(new ProtocolCriterion(SAMLConstants.SAML20P_NS));
             criteriaSet.add(new EntityIdCriterion(eidasClientProperties.getIdpMetadataUrl()));
-            Credential credential = explicitKeySignatureTrustEngine.getCredentialResolver().resolveSingle(criteriaSet);
+            Credential credential = idpMetadataResolver.responseSignatureTrustEngine().getCredentialResolver().resolveSingle(criteriaSet);
             SignatureValidator.validate(assertion.getSignature(), credential);
 
             LOGGER.info("SAML Assertion signature verified");

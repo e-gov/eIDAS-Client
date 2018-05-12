@@ -153,50 +153,21 @@ public class EidasClientConfiguration {
     }
 
     @Bean
-    public ExplicitKeySignatureTrustEngine responseSignatureTrustEngine(IDPMetadataResolver idpMetadataResolver) {
-        X509Certificate cert = getResponseSigningCertificate(idpMetadataResolver);
-        X509Credential switchCred = CredentialSupport.getSimpleCredential(cert, null);
-        StaticCredentialResolver switchCredResolver = new StaticCredentialResolver(switchCred);
-        return new ExplicitKeySignatureTrustEngine(switchCredResolver, DefaultSecurityConfigurationBootstrap.buildBasicInlineKeyInfoCredentialResolver());
-    }
-
-    @Bean
-    public SingleSignOnService singleSignOnService(IDPMetadataResolver idpMetadataResolver) {
-        try {
-            AbstractReloadingMetadataResolver metadataResolver = idpMetadataResolver.resolve();
-            CriteriaSet criteriaSet = new CriteriaSet(new EntityIdCriterion(eidasClientProperties.getIdpMetadataUrl()));
-            EntityDescriptor entityDescriptor = metadataResolver.resolveSingle(criteriaSet);
-            if (entityDescriptor == null) {
-                throw new EidasClientException("Could not find a valid EntityDescriptor in your IDP metadata! ");
-            }
-            for (SingleSignOnService ssoService : entityDescriptor.getIDPSSODescriptor(SAMLConstants.SAML20P_NS).getSingleSignOnServices()) {
-                if (ssoService.getBinding().equals(SAMLConstants.SAML2_POST_BINDING_URI)) {
-                    return ssoService;
-                }
-            }
-        } catch (final ResolverException e) {
-            throw new EidasClientException("Error initializing IDP metadata", e);
-        }
-
-        throw new EidasClientException("Could not find a valid SAML2 POST BINDING from IDP metadata!");
-    }
-
-    @Bean
     public RequestSessionService requestSessionService() {
         return new RequestSessionServiceImpl(eidasClientProperties);
     }
 
     @Bean
-    public AuthInitiationService authInitiationService(RequestSessionService requestSessionService, @Qualifier("authnReqSigningCredential") Credential signingCredential, SingleSignOnService singleSignOnService) {
-        return new AuthInitiationService(requestSessionService, signingCredential, eidasClientProperties, singleSignOnService);
+    public AuthInitiationService authInitiationService(RequestSessionService requestSessionService, @Qualifier("authnReqSigningCredential") Credential signingCredential, IDPMetadataResolver idpMetadataResolver) {
+        return new AuthInitiationService(requestSessionService, signingCredential, eidasClientProperties, idpMetadataResolver);
     }
 
     @Bean
     public AuthResponseService authResponseService(
             RequestSessionService requestSessionService,
-            @Qualifier("responseSignatureTrustEngine") ExplicitKeySignatureTrustEngine explicitKeySignatureTrustEngine,
+            IDPMetadataResolver idpMetadataResolver,
             @Qualifier("responseAssertionDecryptionCredential") Credential responseAssertionDecryptionCredential, Schema samlSchema) {
-        return new AuthResponseService(requestSessionService, eidasClientProperties, explicitKeySignatureTrustEngine, responseAssertionDecryptionCredential, samlSchema);
+        return new AuthResponseService(requestSessionService, eidasClientProperties, idpMetadataResolver, responseAssertionDecryptionCredential, samlSchema);
     }
 
     private Credential getCredential(KeyStore keystore, String keyPairId, String privateKeyPass) {
@@ -212,24 +183,6 @@ public class EidasClientConfiguration {
             return resolver.resolveSingle(criteriaSet);
         } catch (ResolverException e) {
             throw new IllegalStateException("Something went wrong reading credentials", e);
-        }
-    }
-
-    private X509Certificate getResponseSigningCertificate(IDPMetadataResolver idpMetadataResolver) {
-        try {
-            List<KeyDescriptor> idpSsoKeyDescriptors = idpMetadataResolver.resolve().iterator().next().getIDPSSODescriptor(SAMLConstants.SAML20P_NS).getKeyDescriptors();
-            Optional<KeyDescriptor> matchingDescriptor = idpSsoKeyDescriptors.stream().
-                    filter(d -> d.getUse() == UsageType.SIGNING).findFirst();
-            KeyDescriptor signingDescriptor = matchingDescriptor.orElse(null);
-            if (signingDescriptor == null) {
-                throw new EidasClientException("Could not find signing descriptor from IDP metadata");
-            }
-            X509CertificateImpl certificate = (X509CertificateImpl) signingDescriptor.getKeyInfo().getX509Datas().get(0).getX509Certificates().get(0);
-            CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
-            ByteArrayInputStream certInputStream = new ByteArrayInputStream(Base64.getDecoder().decode(certificate.getValue().replaceAll("\n", "")));
-            return (X509Certificate) certFactory.generateCertificate(certInputStream);
-        } catch (CertificateException e) {
-            throw new EidasClientException("Error initializing. Cannot get IDP metadata trusted certificate", e);
         }
     }
 }

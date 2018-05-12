@@ -8,6 +8,7 @@ import com.jayway.restassured.config.XmlConfig;
 import com.jayway.restassured.response.ResponseBodyExtractionOptions;
 import ee.ria.eidas.client.AuthInitiationService;
 import ee.ria.eidas.client.authnrequest.AssuranceLevel;
+import ee.ria.eidas.client.config.OpenSAMLConfiguration;
 import ee.ria.eidas.client.fixtures.ResponseBuilder;
 import ee.ria.eidas.client.session.RequestSession;
 import ee.ria.eidas.client.session.RequestSessionService;

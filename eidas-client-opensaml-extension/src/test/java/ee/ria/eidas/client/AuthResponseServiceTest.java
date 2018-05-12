@@ -9,6 +9,7 @@ import ee.ria.eidas.client.exception.AuthenticationFailedException;
 import ee.ria.eidas.client.exception.InvalidRequestException;
 import ee.ria.eidas.client.exception.InvalidRequestException;
 import ee.ria.eidas.client.fixtures.ResponseBuilder;
+import ee.ria.eidas.client.metadata.IDPMetadataResolver;
 import ee.ria.eidas.client.response.AuthenticationResult;
 import ee.ria.eidas.client.session.RequestSession;
 import ee.ria.eidas.client.session.RequestSessionService;
@@ -60,7 +61,7 @@ public class AuthResponseServiceTest {
     private EidasClientProperties properties;
 
     @Autowired
-    private ExplicitKeySignatureTrustEngine responseSignatureTrustEngine;
+    private IDPMetadataResolver idpMetadataResolver;
 
     @Autowired
     private Credential responseAssertionDecryptionCredential;
@@ -101,7 +102,7 @@ public class AuthResponseServiceTest {
 
     @Before
     public void setUp() {
-        authResponseService = new AuthResponseService(requestSessionService, properties, responseSignatureTrustEngine, responseAssertionDecryptionCredential, samlSchema);
+        authResponseService = new AuthResponseService(requestSessionService, properties, idpMetadataResolver, responseAssertionDecryptionCredential, samlSchema);
         mockResponseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
 
         requestSessionService.removeRequestSession("_4ededd23fb88e6964df71b8bdb1c706f");

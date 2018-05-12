@@ -2,6 +2,7 @@ package ee.ria.eidas.client.authnrequest;
 
 import ee.ria.eidas.client.config.EidasClientConfiguration;
 import ee.ria.eidas.client.config.EidasClientProperties;
+import ee.ria.eidas.client.metadata.IDPMetadataResolver;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
 import org.joda.time.DateTime;
 import org.junit.Assert;
@@ -45,13 +46,13 @@ public class AuthnRequestBuilderTest {
     private Credential authnReqSigningCredential;
 
     @Autowired
-    private SingleSignOnService singleSignOnService;
+    private IDPMetadataResolver idpMetadataResolver;
 
     private AuthnRequestBuilder requestBuilder;
 
     @Before
     public void setUp() {
-        requestBuilder = new AuthnRequestBuilder(authnReqSigningCredential, properties, singleSignOnService);
+        requestBuilder = new AuthnRequestBuilder(authnReqSigningCredential, properties, idpMetadataResolver.getSingeSignOnService());
     }
 
     @Test
@@ -69,7 +70,7 @@ public class AuthnRequestBuilderTest {
         assertTrue(authnRequest.isForceAuthn());
         assertTrue(authnRequest.getIssueInstant().isBefore(new DateTime()));
         assertEquals(properties.getProviderName(), authnRequest.getProviderName());
-        assertEquals(singleSignOnService.getLocation(), authnRequest.getDestination());
+        assertEquals(idpMetadataResolver.getSingeSignOnService().getLocation(), authnRequest.getDestination());
         assertEquals(SAMLConstants.SAML2_POST_BINDING_URI, authnRequest.getProtocolBinding());
         assertEquals(properties.getCallbackUrl(), authnRequest.getAssertionConsumerServiceURL());
         assertEquals(properties.getSpEntityId(), authnRequest.getIssuer().getValue());

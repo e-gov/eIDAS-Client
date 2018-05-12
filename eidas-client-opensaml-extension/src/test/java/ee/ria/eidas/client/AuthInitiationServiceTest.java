@@ -4,6 +4,7 @@ import ee.ria.eidas.client.authnrequest.AssuranceLevel;
 import ee.ria.eidas.client.config.EidasClientConfiguration;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.exception.EidasClientException;
+import ee.ria.eidas.client.metadata.IDPMetadataResolver;
 import ee.ria.eidas.client.session.RequestSessionService;
 import net.shibboleth.utilities.java.support.codec.HTMLEncoder;
 import org.junit.Before;
@@ -36,13 +37,13 @@ public class AuthInitiationServiceTest {
     private Credential authnReqSigningCredential;
 
     @Autowired
-    private SingleSignOnService singleSignOnService;
+    private IDPMetadataResolver idpMetadataResolver;
 
     private AuthInitiationService authenticationService;
 
     @Before
     public void setUp() {
-        authenticationService = new AuthInitiationService(requestSessionService, authnReqSigningCredential, properties, singleSignOnService);
+        authenticationService = new AuthInitiationService(requestSessionService, authnReqSigningCredential, properties, idpMetadataResolver);
     }
 
     @Test
@@ -51,7 +52,7 @@ public class AuthInitiationServiceTest {
         authenticationService.authenticate(httpResponse, "EE", AssuranceLevel.LOW, "test", null);
 
         assertEquals(HttpStatus.OK.value(), httpResponse.getStatus());
-        String htmlForm = "<form action=\"" + HTMLEncoder.encodeForHTMLAttribute(singleSignOnService.getLocation()) + "\" method=\"post\">";
+        String htmlForm = "<form action=\"" + HTMLEncoder.encodeForHTMLAttribute(idpMetadataResolver.getSingeSignOnService().getLocation()) + "\" method=\"post\">";
         assertTrue(httpResponse.getContentAsString().contains(htmlForm));
         assertTrue(httpResponse.getContentAsString().contains("<input type=\"hidden\" name=\"SAMLRequest\""));
         assertTrue(httpResponse.getContentAsString().contains("<input type=\"hidden\" name=\"country\" value=\"EE\"/>"));
