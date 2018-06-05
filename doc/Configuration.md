@@ -30,7 +30,7 @@ Näide vajalike võtmete genererimisest Java `keytool` abil:
 
 ## 3. Konfiguratsioonifail
 
-eIDAS-Client rakendus vajab oma tööks konfiguratsioonifaili, mis sätestab kasutatavate SAML võtmete asukoha, kliendi nime  ja olulised URLid, mis on vajalikud SAML päringute moodustamiseks ja töötluseks. Detailne konfiguratsiooniparameetrite kirjeldus on toodud alajaotuses [Seadistamine](#5.2-Seadistusparameetrid))
+eIDAS-Client rakendus vajab oma tööks konfiguratsioonifaili, mis sätestab kasutatavate SAML võtmete asukoha, kliendi nime  ja olulised URLid, mis on vajalikud SAML päringute moodustamiseks ja töötluseks. Detailne konfiguratsiooniparameetrite kirjeldus on toodud alajaotuses [Seadistamine](#5.3-Seadistusparameetrid))
 
 Järgnev on näidis minimaalsest vajaminevast konfiguratsioonifailist (viidetega eelnevas punktis genereeritud võtmetele):
 
@@ -61,6 +61,10 @@ eidas.client.spEntityId = http://eidas-client.dev:8080/metadata
 eidas.client.callbackUrl = https://eidas-client.dev/returnUrl
 
 eidas.client.availableCountries = EE,CA,CD
+
+# Spring Boot Actuator endpoints
+endpoints.enabled = false
+endpoints.heartbeat.enabled = true
 ```
 
 ## 4. Paigaldamine war failina Tomcat rakendusserverisse
@@ -88,8 +92,18 @@ Tabel 5.1 - Logi seadistus
 | :---------------- | :---------- | :----------------|
 | `logging.level.ee.ria.eidas.client` | Ei | Logimise tase. Üks järgnevatest väärtustest: `ERROR`, `WARN`, `INFO`, `DEBUG`, `TRACE` |
 
+### 5.2 Rakenduse oleku pärimine
 
-### 5.2 Seadistusparameetrid
+Rakendus kasutab Spring Boot Actuator'i otspunkte, mille seadistamine käib standardsel viisil: <https://docs.spring.io/spring-boot/docs/1.5.10.RELEASE/reference/html/production-ready-endpoints.html>
+
+Rakenduse oleku paljastamiseks on lisatud uus otspunkt **heartbeat**. Järgnev näidiskonfiguratsioon lülitab välja kõik Spring Boot Actuator'i poolt pakutavad otspunktid ning lülitab sisse vaid **heartbeat** otspunkti:
+
+```
+endpoints.enabled = false
+endpoints.heartbeat.enabled = true
+```
+
+### 5.3 Seadistusparameetrid
 
 Tabel 5.2 - Teenusepakkuja metateabe seadistus
 
@@ -128,5 +142,43 @@ Tabel 5.4 - Saadetava AuthnRequesti ja SAML vastuse seadistus
 | `eidas.client.requestSignatureAlgorithm` | Ei | Autentimispäringu allkirja algoritm. Vaikimisi `http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha512` |
 | `eidas.client.availableCountries` | Ei | Lubatud riigikoodid. |
 | `eidas.client.defaultLoa` | Ei | EIDAS tagatistase juhul kui kasutaja tagatistaseme ise määramata. Lubatud väärtused: 'LOW', 'SUBSTANTIAL', 'HIGH'. Vaikimisi 'SUBSTANTIAL'. |
+
+
+## 6. Rakenduse oleku pärimine
+
+Rakenduse olekut on võimalik pärida Spring Boot Actuator'i otspunkti **heartbeat** kaudu.
+
+### Päring
+
+Parameetrid puuduvad.
+
+Näide:
+```bash
+curl 'https://localhost:8889/heartbeat'
+```
+
+### Vastus
+
+**Eduka vastuse** korral tagastatakse HTTP staatuskood 200 ning JSON vastus.
+
+Näide:
+```json
+{
+    "status": "UP",
+    "name": "eidas-client-webapp",
+    "version": "1.0.0-SNAPSHOT",
+    "buildTime": 1528117155,
+    "startTime": 1528121189,
+    "currentTime": 1528121277,
+    "dependencies": [
+        {
+            "status": "UP",
+            "name": "eIDAS-Node"
+        }
+    ]
+}
+```
+
+Vastuse `dependencies` massiiv sisaldab väliseid süsteeme, millest rakendus sõltub. Väliste süsteemide, millega on võimalik ühendust saada, `status` olekuna kuvatakse `UP`, mittevastavate süsteemide korral `DOWN`. Kui mõni väline süsteem, millest rakendus sõltub, on `DOWN`, siis on ka vastuse üldine `status` `DOWN`.
 
 
