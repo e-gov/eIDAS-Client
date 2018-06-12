@@ -2,12 +2,15 @@ package ee.ria.eidas.client.webapp.status;
 
 import ee.ria.eidas.client.config.EidasClientProperties;
 import org.apache.http.HttpStatus;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.utils.HttpClientUtils;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.endpoint.AbstractEndpoint;
 import org.springframework.boot.actuate.health.Status;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -15,6 +18,8 @@ import org.springframework.boot.info.BuildProperties;
 import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.*;
@@ -37,19 +42,45 @@ public class HeartbeatEndpoint extends AbstractEndpoint<Map<String, Object>> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(HeartbeatEndpoint.class);
 
+    private CloseableHttpClient httpClient;
+    private int timeout = 3;
     private String appName;
     private String appVersion;
     private Instant buildTime;
     private Instant startTime;
     private String idpMetadataUrl;
 
-    public HeartbeatEndpoint(ApplicationContext context, EidasClientProperties properties) {
-        super("heartbeat", false);
+    @Autowired
+    private ApplicationContext context;
 
+    @Autowired
+    private EidasClientProperties properties;
+
+    public HeartbeatEndpoint() {
+        super("heartbeat", false);
+    }
+
+    @PostConstruct
+    public void setUp() {
         setApplicationBuildProperties(context);
         startTime = getCurrentTime();
-
         idpMetadataUrl = properties.getIdpMetadataUrl();
+
+        RequestConfig requestConfig = RequestConfig.custom()
+                .setConnectTimeout(timeout * 1000)
+                .setConnectionRequestTimeout(timeout * 1000)
+                .setSocketTimeout(timeout * 1000)
+                .build();
+
+        httpClient = HttpClientBuilder.create()
+                .disableAutomaticRetries()
+                .setDefaultRequestConfig(requestConfig)
+                .build();
+    }
+
+    @PreDestroy
+    public void preDestroy() {
+        HttpClientUtils.closeQuietly(httpClient);
     }
 
     @Override
@@ -81,12 +112,9 @@ public class HeartbeatEndpoint extends AbstractEndpoint<Map<String, Object>> {
     }
 
     private boolean isIdpMetadataEndpointReachableAndOk() {
-        try (CloseableHttpClient httpClient = HttpClients.createDefault()) {
-            HttpGet httpGet = new HttpGet(idpMetadataUrl);
-
-            try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
-                return (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK);
-            }
+        HttpGet httpGet = new HttpGet(idpMetadataUrl);
+        try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
+            return (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK);
         } catch (IOException e) {
             LOGGER.error("Failed to establish connection to '" + idpMetadataUrl + "' > " + e.getMessage());
             return false;
@@ -120,4 +148,7 @@ public class HeartbeatEndpoint extends AbstractEndpoint<Map<String, Object>> {
         return Collections.unmodifiableMap(map);
     }
 
+    public void setTimeout(int timeout) {
+        this.timeout = timeout;
+    }
 }

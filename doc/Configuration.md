@@ -61,10 +61,6 @@ eidas.client.spEntityId = http://eidas-client.dev:8080/metadata
 eidas.client.callbackUrl = https://eidas-client.dev/returnUrl
 
 eidas.client.availableCountries = EE,CA,CD
-
-# Spring Boot Actuator endpoints
-endpoints.enabled = false
-endpoints.heartbeat.enabled = true
 ```
 
 ## 4. Paigaldamine war failina Tomcat rakendusserverisse
@@ -94,14 +90,12 @@ Tabel 5.1 - Logi seadistus
 
 ### 5.2 Rakenduse oleku pärimine
 
-Rakendus kasutab Spring Boot Actuator'i otspunkte, mille seadistamine käib standardsel viisil: <https://docs.spring.io/spring-boot/docs/1.5.10.RELEASE/reference/html/production-ready-endpoints.html>
+Rakenduse oleku info on kättesaadav otspunktilt **/heartbeat** või **/heaartbeat.json**.
 
-Rakenduse oleku paljastamiseks on lisatud uus otspunkt **heartbeat**. Järgnev näidiskonfiguratsioon lülitab välja kõik Spring Boot Actuator'i poolt pakutavad otspunktid ning lülitab sisse vaid **heartbeat** otspunkti:
+Rakenduse oleku info kuvamiseks kasutatakse Spring Boot Actuator raamistikku. Vaikeseadistuses on kõik otspunktid, välja arvatud **/heartbeat** otspunkt, välja lülitatud.
 
-```
-endpoints.enabled = false
-endpoints.heartbeat.enabled = true
-```
+Lisaotspunkte on võimalik vajadusel seadistada vastavalt juhendile: <https://docs.spring.io/spring-boot/docs/1.5.10.RELEASE/reference/html/production-ready-endpoints.html>
+
 
 ### 5.3 Seadistusparameetrid
 
@@ -143,42 +137,9 @@ Tabel 5.4 - Saadetava AuthnRequesti ja SAML vastuse seadistus
 | `eidas.client.availableCountries` | Ei | Lubatud riigikoodid. |
 | `eidas.client.defaultLoa` | Ei | EIDAS tagatistase juhul kui kasutaja tagatistaseme ise määramata. Lubatud väärtused: 'LOW', 'SUBSTANTIAL', 'HIGH'. Vaikimisi 'SUBSTANTIAL'. |
 
+Tabel 5.5 - heartbeat otspunkti seadistus
 
-## 6. Rakenduse oleku pärimine
-
-Rakenduse olekut on võimalik pärida Spring Boot Actuator'i otspunkti **heartbeat** kaudu.
-
-### Päring
-
-Parameetrid puuduvad.
-
-Näide:
-```bash
-curl 'https://localhost:8889/heartbeat'
-```
-
-### Vastus
-
-**Eduka vastuse** korral tagastatakse HTTP staatuskood 200 ning JSON vastus.
-
-Näide:
-```json
-{
-    "status": "UP",
-    "name": "eidas-client-webapp",
-    "version": "1.0.0-SNAPSHOT",
-    "buildTime": 1528117155,
-    "startTime": 1528121189,
-    "currentTime": 1528121277,
-    "dependencies": [
-        {
-            "status": "UP",
-            "name": "eIDAS-Node"
-        }
-    ]
-}
-```
-
-Vastuse `dependencies` massiiv sisaldab väliseid süsteeme, millest rakendus sõltub. Väliste süsteemide, millega on võimalik ühendust saada, `status` olekuna kuvatakse `UP`, mittevastavate süsteemide korral `DOWN`. Kui mõni väline süsteem, millest rakendus sõltub, on `DOWN`, siis on ka vastuse üldine `status` `DOWN`.
-
+| Parameeter        | Kohustuslik | Kirjeldus, näide |
+| :---------------- | :---------- | :----------------|
+| `endpoints.heartbeat.timeout`  | Ei | Sõltuvate süsteemise kontrollimisel tehtava päringu puhul maksimaalne vastuse ooteag sekundites. Vaikimisi 3 sekundit. |
 

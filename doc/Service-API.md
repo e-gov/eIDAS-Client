@@ -11,6 +11,7 @@ Meetod | HTTP päring | Kirjeldus
 [**login**](Service-API.md#login) | **GET** /login | Moodustab ja tagastab ülepiirilise isikutuvastusprotsessi algatamise jaoks vajaliku [päringu](https://e-gov.github.io/eIDAS-Connector/Spetsifikatsioon#6-autentimisp%C3%A4ring) koos HTML ümbersuunamisvormiga.
 [**returnUrl**](Service-API.md#returnUrl) | **POST** /returnUrl | Ülepiirilise isikutuvastuse tulemuse kontroll. SAML vastuse valideerimine vastavalt [SAML 2 Web SSO profiilile](https://docs.oasis-open.org/security/saml/v2.0/saml-profiles-2.0-os.pdf) ja [konnektorteenuse spetsifikatsioonile](https://e-gov.github.io/eIDAS-Connector/Spetsifikatsioon#7-autentimisvastus). Kontrollide edukal läbimisel isikuandmete tagastamine.
 [**metadata**](Service-API.md#metadata) | **GET** /metadata | Tagastab eIDAS klient teenuse [SAML metaandmed](https://e-gov.github.io/eIDAS-Connector/Spetsifikatsioon#53-teenusepakkuja-metateave).
+[**heartbeat**](Service-API.md#heartbeat) | **GET** /heartbeat või /heartbeat.json | Tagastab infot eIDAS klient teenuse versiooni ja oleku kohta.
 
 
 <a name="login"></a>
@@ -270,6 +271,47 @@ urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified
 
 --------------------------------------------------
 
+
+<a name="heartbeat"></a>
+## **heartbeat**
+
+Rakenduse olekut on võimalik pärida Spring Boot Actuator'i otspunkti **/heartbeat** või **/heartbeat.json** kaudu.
+
+### Päring
+
+Parameetrid puuduvad.
+
+Näide:
+```bash
+curl 'https://localhost:8889/heartbeat'
+```
+
+### Vastus
+
+**Eduka vastuse** korral tagastatakse HTTP staatuskood 200 ning JSON vastus.
+
+Näide:
+```json
+{
+    "status": "UP",
+    "name": "eidas-client-webapp",
+    "version": "1.0.0-SNAPSHOT",
+    "buildTime": 1528117155,
+    "startTime": 1528121189,
+    "currentTime": 1528121277,
+    "dependencies": [
+        {
+            "status": "UP",
+            "name": "eIDAS-Node"
+        }
+    ]
+}
+```
+
+Vastuse `dependencies` massiiv sisaldab väliseid süsteeme, millest rakendus sõltub. Väliste süsteemide, millega on võimalik ühendust saada, `status` olekuna kuvatakse `UP`, mittevastavate süsteemide korral `DOWN`. Kui mõni väline süsteem, millest rakendus sõltub, on `DOWN`, siis on ka vastuse üldine `status` `DOWN`.
+
+
+
 <a name="veakasitlus"></a>
 ## **Veakäsitlus**
 
@@ -296,3 +338,4 @@ Näide:
    "message" : "Required String parameter 'country' is not present"
 }
 ```
+

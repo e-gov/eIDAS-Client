@@ -37,7 +37,7 @@ eIDAS-klient veebiteenuse paigaldamiseks ja käivitamiseks vajalikud tegevused l
 >`eidas-client-webapp/src/test/resources/scripts/generateTestConfiguration.sh`
 
 4. Käivita veebiteenus
->`java -Dspring.config.location="./eidas-client-webapp/target/generated-test-conf/application.properties" -jar eidas-client-webapp/target/eidas-client-webapp-1.0-SNAPSHOT.war`
+>`java -Dspring.config.location="./eidas-client-webapp/target/generated-test-conf/application.properties" -jar eidas-client-webapp/target/eidas-client-webapp-1.0.0-SNAPSHOT.war`
 
 5. Veendumaks, et rakendus käivitus edukalt, ava brauseris URL http://localhost:8889/metadata
 
