@@ -275,7 +275,7 @@ urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified
 <a name="heartbeat"></a>
 ## **heartbeat**
 
-Rakenduse olekut on võimalik pärida Spring Boot Actuator'i otspunkti **/heartbeat** või **/heartbeat.json** kaudu.
+Rakenduse töökorras olekut on võimalik pärida Spring Boot Actuator'i otspunkti **/heartbeat** või **/heartbeat.json** kaudu. 
 
 ### Päring
 
@@ -288,9 +288,19 @@ curl 'https://localhost:8889/heartbeat'
 
 ### Vastus
 
-**Eduka vastuse** korral tagastatakse HTTP staatuskood 200 ning JSON vastus.
+| Atribuudi nimi        | Kohustuslik           | Selgitus  |
+| ------------- |:-------------:| :-----|
+| **status** |	Jah | Parameeter, mis indikeerib rakenduse töökorras olekut. . Võimalikud väärtused: `UP`, `DOWN`  |
+| **name** |	Jah | Rakenduse nimi.  |
+| **version** |	Jah | Rakenduse versioon. |
+| **buildTime** |	Jah | Rakenduse ehitamise aeg. Unix timestamp formaadis. |
+| **startTime** |	Jah | Rakenduse käivitamise aeg. Unix timestamp formaadis. |
+| **currentTime** |	Jah | Päringu sooritamise aeg. Unix timestamp formaadis. |
+| **dependencies** |	Jah | Sisaldab nimekirja välistest süsteemidest, millest rakendus sõltub. Väliste süsteemide, millega on võimalik ühendust saada, `status` olekuna kuvatakse `UP`, mittevastavate süsteemide korral `DOWN`. Kui mõni väline süsteem, millest rakendus sõltub, on `DOWN`, siis on ka vastuse üldine `status` `DOWN`. |
+| **dependencies.status** |	Jah | Välise süsteemi status. Võimalikud väärtused: `UP`, `DOWN`  |
+| **dependencies.name** |	Jah | Välise süsteemi lühinimetus. |
 
-Näide:
+Näide vastuse struktuurist:
 ```json
 {
     "status": "UP",
@@ -308,7 +318,27 @@ Näide:
 }
 ```
 
-Vastuse `dependencies` massiiv sisaldab väliseid süsteeme, millest rakendus sõltub. Väliste süsteemide, millega on võimalik ühendust saada, `status` olekuna kuvatakse `UP`, mittevastavate süsteemide korral `DOWN`. Kui mõni väline süsteem, millest rakendus sõltub, on `DOWN`, siis on ka vastuse üldine `status` `DOWN`.
+**Töökorras rakenduse korral** tagastatakse HTTP staatuskood 200 ning JSON vastus, milles `$.status` väärtus on `UP`
+
+Näide 1: edukas vastus
+```bash
+curl http://localhost:8889/heartbeat.json
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   195    0   195    0     0    112      0 --:--:--  0:00:01 --:--:--   112{"status":"UP","name":"eidas-client-webapp","version":"1.0.0-SNAPSHOT","buildTime":1528829409,"startTime":1528877695,"currentTime":1528877733,"dependencies":[{"status":"UP","name":"eIDAS-Node"}]}
+```
+
+**Mittetöökorras rakenduse korral** (näiteks, kui tööks vajalik sõltuvus ei ole kättesaadav), tagastatakse HTTP staatuskood 200 ning JSON vastus, milles `$.status` väärtus on `DOWN`
+
+
+Näide 2: tööks vajalik sõltuvus ei ole kättesaadav
+```bash
+$ curl http://localhost:8889/heartbeat.json
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   199    0   199    0     0     98      0 --:--:--  0:00:02 --:--:--    98{"status":"DOWN","name":"eidas-client-webapp","version":"1.0.0-SNAPSHOT","buildTime":1528829409,"startTime":1528877695,"currentTime":1528877831,"dependencies":[{"status":"DOWN","name":"eIDAS-Node"}]}
+```
+
 
 
 
