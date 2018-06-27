@@ -5,6 +5,7 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.jayway.restassured.RestAssured;
 import com.jayway.restassured.config.XmlConfig;
+import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.response.ResponseBodyExtractionOptions;
 import ee.ria.eidas.client.AuthInitiationService;
 import ee.ria.eidas.client.authnrequest.AssuranceLevel;
@@ -52,8 +53,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.jayway.restassured.RestAssured.given;
 import static com.jayway.restassured.matcher.RestAssuredMatchers.matchesXsd;
-import static org.hamcrest.Matchers.empty;
-import static org.hamcrest.Matchers.not;
+import static org.hamcrest.Matchers.*;
 import static org.hamcrest.core.IsEqual.equalTo;
 import static org.junit.Assert.assertNotNull;
 
@@ -406,6 +406,24 @@ public class EidasClientApplicationTest {
             .statusCode(405)
             .body("error", equalTo("Method Not Allowed"))
             .body("message", equalTo("Request method 'PUT' not supported"));
+    }
+
+    @Test
+    public void heartbeat_shouldSucceed_whenEidasNodeRespondsOk() {
+        given()
+            .port(port)
+        .when()
+            .get("/heartbeat")
+        .then()
+            .statusCode(200)
+            .contentType(ContentType.JSON)
+            .body("name", notNullValue())
+            .body("version", notNullValue())
+            .body("buildTime", notNullValue())
+            .body("startTime", notNullValue())
+            .body("currentTime", notNullValue())
+            .body("status", equalTo("UP"))
+            .body("dependencies[0].status", equalTo("UP"));
     }
 
     public static String readFileBody(String fileName) {
