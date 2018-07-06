@@ -19,25 +19,99 @@ import org.opensaml.xmlsec.keyinfo.impl.X509KeyInfoGeneratorFactory;
 import org.opensaml.xmlsec.signature.KeyInfo;
 import org.opensaml.xmlsec.signature.Signature;
 import org.opensaml.xmlsec.signature.support.SignatureConstants;
+import org.opensaml.xmlsec.signature.support.SignatureException;
 import org.opensaml.xmlsec.signature.support.Signer;
 
 import javax.xml.namespace.QName;
 
 public class ResponseBuilder {
 
+    public static final String DEFAULT_IN_RESPONSE_TO = "_4ededd23fb88e6964df71b8bdb1c706f";
+
     private final Credential encryptionCredential;
     private final Credential signingCredential;
+
+    private Status responseStatus;
+    private String responseInResponseTo;
+    private String assertionInResponseTo;
 
     public ResponseBuilder(Credential signingCredential, Credential responseAssertionDecryptionCredential) {
         this.encryptionCredential = responseAssertionDecryptionCredential;
         this.signingCredential = signingCredential;
+
+        this.responseStatus = buildSuccessStatus();
+        this.responseInResponseTo = DEFAULT_IN_RESPONSE_TO;
+        this.assertionInResponseTo = DEFAULT_IN_RESPONSE_TO;
     }
 
+    public void setResponseStatus(Status responseStatus) {
+        this.responseStatus = responseStatus;
+    }
+
+    public Status getResponseStatus() {
+        return this.responseStatus;
+    }
+
+    public ResponseBuilder withResponseStatus(Status responseStatus) {
+        ResponseBuilder responseBuilder = new ResponseBuilder(signingCredential, encryptionCredential);
+        responseBuilder.setResponseStatus(responseStatus);
+        return responseBuilder;
+    }
+
+    public void setResponseInResponseTo(String responseInResponseTo) {
+        this.responseInResponseTo = responseInResponseTo;
+    }
+
+    public String getResponseInResponseTo() {
+        return this.responseInResponseTo;
+    }
+
+    public ResponseBuilder withResponseInResponseTo(String inResponseTo) {
+        ResponseBuilder responseBuilder = new ResponseBuilder(signingCredential, encryptionCredential);
+        responseBuilder.setResponseInResponseTo(inResponseTo);
+        return responseBuilder;
+    }
+
+    public void setAssertionInResponseTo(String assertionInResponseTo) {
+        this.assertionInResponseTo = assertionInResponseTo;
+    }
+
+    public String getAssertionInResponseTo() {
+        return this.assertionInResponseTo;
+    }
+
+    public ResponseBuilder withAssertionInResponseTo(String inResponseTo) {
+        ResponseBuilder responseBuilder = new ResponseBuilder(signingCredential, encryptionCredential);
+        responseBuilder.setAssertionInResponseTo(inResponseTo);
+        return responseBuilder;
+    }
+
+    public void setAllInResponseTo(String inResponseTo) {
+        this.responseInResponseTo = inResponseTo;
+        this.assertionInResponseTo = inResponseTo;
+    }
+
+    public ResponseBuilder withAllInResponseTo(String inResponseTo) {
+        ResponseBuilder responseBuilder = new ResponseBuilder(signingCredential, encryptionCredential);
+        responseBuilder.setResponseInResponseTo(inResponseTo);
+        responseBuilder.setAssertionInResponseTo(inResponseTo);
+        return responseBuilder;
+    }
+
+
     public Response buildResponse(String issuer) {
-        return buildResponse(issuer, buildAttributeStatement());
+        return buildResponse(issuer, new DateTime(), buildAttributeStatement());
+    }
+
+    public Response buildResponse(String issuer, DateTime issueInstant) {
+        return buildResponse(issuer, issueInstant, buildAttributeStatement());
     }
 
     public Response buildResponse(String issuer, AttributeStatement attributeStatement) {
+        return buildResponse(issuer, new DateTime(), attributeStatement);
+    }
+
+    public Response buildResponse(String issuer, DateTime issueInstant, AttributeStatement attributeStatement) {
         try {
             Signature signature = (Signature) XMLObjectProviderRegistrySupport.getBuilderFactory()
                     .getBuilder(Signature.DEFAULT_ELEMENT_NAME).buildObject(Signature.DEFAULT_ELEMENT_NAME);
@@ -50,17 +124,15 @@ public class ResponseBuilder {
             KeyInfo keyInfo = x509KeyInfoGeneratorFactory.newInstance().generate(signingCredential);
             signature.setKeyInfo(keyInfo);
 
-            DateTime now = new DateTime();
-
             Response authnResponse = OpenSAMLUtils.buildSAMLObject(Response.class);
-            authnResponse.setIssueInstant(now);
+            authnResponse.setIssueInstant(issueInstant);
             authnResponse.setDestination("http://localhost:8889/returnUrl");
-            authnResponse.setInResponseTo("sqajsja");
+            authnResponse.setInResponseTo(responseInResponseTo);
             authnResponse.setVersion(SAMLVersion.VERSION_20);
             authnResponse.setID(OpenSAMLUtils.generateSecureRandomId());
             authnResponse.setSignature(signature);
-            authnResponse.setStatus(buildSuccessStatus());
-            authnResponse.getEncryptedAssertions().add(buildAssertion(now, issuer, attributeStatement));
+            authnResponse.setStatus(responseStatus);
+            authnResponse.getEncryptedAssertions().add(buildAssertion(issueInstant, issuer, attributeStatement));
 
             XMLObjectProviderRegistrySupport.getMarshallerFactory().getMarshaller(authnResponse).marshall(authnResponse);
             Signer.signObject(signature);
@@ -181,7 +253,7 @@ public class ResponseBuilder {
 
         SubjectConfirmationData subjectConfirmationData = new SubjectConfirmationDataBuilder().buildObject();
         subjectConfirmationData.setAddress("172.24.0.1");
-        subjectConfirmationData.setInResponseTo("_4ededd23fb88e6964df71b8bdb1c706f");
+        subjectConfirmationData.setInResponseTo(assertionInResponseTo);
         subjectConfirmationData.setNotOnOrAfter(issueIstant.plusMinutes(5));
         subjectConfirmationData.setRecipient("http://localhost:8889/returnUrl");
 
