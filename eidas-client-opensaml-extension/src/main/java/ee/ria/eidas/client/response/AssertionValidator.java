@@ -178,7 +178,7 @@ public class AssertionValidator {
     private void validateNotOnOrAfter(Conditions conditions) {
         DateTime now = new DateTime(conditions.getNotOnOrAfter().getZone());
         if (conditions.getNotOnOrAfter().plusSeconds(acceptedClockSkew).isBefore(now)) {
-            throw new InvalidRequestException("SubjectConfirmationData NotOnOrAfter is not valid!");
+            throw new InvalidRequestException("Assertion condition NotOnOrAfter is not valid!");
         }
     }
 
