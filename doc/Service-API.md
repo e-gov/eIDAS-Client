@@ -358,3 +358,7 @@ Näide:
 }
 ```
 
+### HEAD ja OPTIONS meetodid
+
+HEAD ja OPTIONS meetodite päringu puhul tagastatakse HTTP staatuskood 403 (Forbidden) ning puudub vastuse keha!
+

@@ -222,7 +222,7 @@ public class AuthResponseServiceTest {
         expectedEx.expect(InvalidRequestException.class);
         expectedEx.expectMessage("Error handling message: Message was rejected due to issue instant expiration");
 
-        DateTime pastTime = new DateTime().minusSeconds(properties.getResponseMessageLifeTime()).minusSeconds(properties.getAcceptedClockSkew());
+        DateTime pastTime = new DateTime().minusSeconds(properties.getResponseMessageLifeTime()).minusSeconds(properties.getAcceptedClockSkew()).minusSeconds(1);
         Response response = mockResponseBuilder.buildResponse("classpath:idp-metadata.xml", pastTime);
         httpRequest = buildMockHttpServletRequest("SAMLResponse" ,response);
 
