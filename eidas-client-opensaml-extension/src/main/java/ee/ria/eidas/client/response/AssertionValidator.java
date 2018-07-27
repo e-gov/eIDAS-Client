@@ -94,8 +94,11 @@ public class AssertionValidator {
         if (assertion.getAttributeStatements() == null || assertion.getAttributeStatements().size() != 1 ) {
             throw new InvalidRequestException("Assertion must contain exactly 1 AttributeStatement!");
         }
+        if (assertion.getAuthnStatements().get(0).getAuthnContext() == null) {
+            throw new InvalidRequestException("AuthnStatement must contain AuthnContext!");
+        }
         if (assertion.getAuthnStatements().get(0).getAuthnContext().getAuthnContextClassRef() == null) {
-            throw new InvalidRequestException("Authncontext must contain AuthnContextClassRef!");
+            throw new InvalidRequestException("AuthnContext must contain AuthnContextClassRef!");
         }
     }
 
@@ -178,7 +181,7 @@ public class AssertionValidator {
     private void validateNotOnOrAfter(Conditions conditions) {
         DateTime now = new DateTime(conditions.getNotOnOrAfter().getZone());
         if (conditions.getNotOnOrAfter().plusSeconds(acceptedClockSkew).isBefore(now)) {
-            throw new InvalidRequestException("SubjectConfirmationData NotOnOrAfter is not valid!");
+            throw new InvalidRequestException("Assertion condition NotOnOrAfter is not valid!");
         }
     }
 

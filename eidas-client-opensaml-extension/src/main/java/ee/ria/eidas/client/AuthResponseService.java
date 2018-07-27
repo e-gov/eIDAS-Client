@@ -16,10 +16,9 @@ import net.shibboleth.utilities.java.support.net.URIComparator;
 import net.shibboleth.utilities.java.support.net.URIException;
 import net.shibboleth.utilities.java.support.resolver.CriteriaSet;
 import net.shibboleth.utilities.java.support.resolver.ResolverException;
-import net.shibboleth.utilities.java.support.xml.XMLParserException;
+import org.apache.commons.lang.StringUtils;
 import org.joda.time.DateTime;
 import org.opensaml.core.criterion.EntityIdCriterion;
-import org.opensaml.core.xml.io.UnmarshallingException;
 import org.opensaml.core.xml.util.XMLObjectSupport;
 import org.opensaml.messaging.context.MessageContext;
 import org.opensaml.messaging.handler.MessageHandler;
@@ -46,6 +45,7 @@ import org.opensaml.xmlsec.signature.support.SignatureException;
 import org.opensaml.xmlsec.signature.support.SignatureValidator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
@@ -77,16 +77,8 @@ public class AuthResponseService {
         this.samlSchema = samlSchema;
     }
 
-    public AuthenticationResult getAuthenticationResult(HttpServletRequest req) {
-        Response samlResponse;
-        try {
-            String encodedSamlResponse = req.getParameter("SAMLResponse");
-            byte[] decodedSamlResponse = Base64.getDecoder().decode(encodedSamlResponse);
-            samlResponse = getSamlResponse(decodedSamlResponse);
-            LOGGER.info(OpenSAMLUtils.getXmlString(samlResponse));
-        } catch (Exception e) {
-            throw new InvalidRequestException("Failed to read SAMLResponse. " + e.getMessage(), e);
-        }
+    public AuthenticationResult getAuthenticationResult(HttpServletRequest req) throws MissingServletRequestParameterException {
+        Response samlResponse = getSamlResponse(req);
         validateDestinationAndLifetime(samlResponse, req);
         verifyResponseSignature(samlResponse);
         validateStatusCode(samlResponse);
@@ -100,6 +92,27 @@ public class AuthResponseService {
         LOGGER.debug("Decrypted Assertion: {}", OpenSAMLUtils.getXmlString(assertion));
 
         return new AuthenticationResult(assertion);
+    }
+
+    private Response getSamlResponse(HttpServletRequest request) throws MissingServletRequestParameterException {
+        String encodedSamlResponse = null;
+
+        try {
+            encodedSamlResponse = request.getParameter("SAMLResponse");
+            if (StringUtils.isEmpty(encodedSamlResponse)) throw new IllegalArgumentException();
+        } catch (Exception e) {
+            throw new MissingServletRequestParameterException("SAMLResponse", "String");
+        }
+
+        try {
+            byte[] decodedSamlResponse = Base64.getDecoder().decode(encodedSamlResponse);
+            Response samlResponse = (Response) XMLObjectSupport.unmarshallFromInputStream(
+                    OpenSAMLConfiguration.getParserPool(), new ByteArrayInputStream(decodedSamlResponse));
+            LOGGER.info(OpenSAMLUtils.getXmlString(samlResponse));
+            return samlResponse;
+        } catch (Exception e) {
+            throw new InvalidRequestException("Failed to read SAMLResponse. " + e.getMessage(), e);
+        }
     }
 
     private void verifyResponseSignature(Response samlResponse) {
@@ -151,11 +164,6 @@ public class AuthResponseService {
     private boolean isStatusNoConsentGiven(StatusCode statusCode, StatusCode substatusCode, String requester, String requestDenied) {
         return requester.equals(statusCode.getValue())
                 && (substatusCode != null && requestDenied.equals(substatusCode.getValue()));
-    }
-
-    private Response getSamlResponse(byte[] samlResponse) throws XMLParserException, UnmarshallingException {
-        return (Response) XMLObjectSupport.unmarshallFromInputStream(
-                OpenSAMLConfiguration.getParserPool(), new ByteArrayInputStream(samlResponse));
     }
 
     private void validateDestinationAndLifetime(Response samlResponse, HttpServletRequest request) {

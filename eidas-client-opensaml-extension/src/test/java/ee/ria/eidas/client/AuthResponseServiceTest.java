@@ -7,7 +7,6 @@ import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.exception.EidasClientException;
 import ee.ria.eidas.client.exception.AuthenticationFailedException;
 import ee.ria.eidas.client.exception.InvalidRequestException;
-import ee.ria.eidas.client.exception.InvalidRequestException;
 import ee.ria.eidas.client.fixtures.ResponseBuilder;
 import ee.ria.eidas.client.metadata.IDPMetadataResolver;
 import ee.ria.eidas.client.response.AuthenticationResult;
@@ -28,7 +27,6 @@ import org.opensaml.saml.saml2.core.*;
 import org.opensaml.saml.saml2.core.impl.AttributeStatementBuilder;
 import org.opensaml.security.credential.Credential;
 import org.opensaml.security.credential.impl.KeyStoreCredentialResolver;
-import org.opensaml.xmlsec.signature.support.impl.ExplicitKeySignatureTrustEngine;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -38,6 +36,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 
 import javax.xml.validation.Schema;
 import java.security.KeyStore;
@@ -142,7 +141,7 @@ public class AuthResponseServiceTest {
         AttributeStatement attributeStatement = new AttributeStatementBuilder().buildObject();
         attributeStatement.getAttributes().add(mockResponseBuilder.buildAttribute("FirstName", "http://eidas.europa.eu/attributes/naturalperson/CurrentGivenName", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri", "eidas-natural:CurrentGivenNameType", "Alexander", "Αλέξανδρος"));
         attributeStatement.getAttributes().add(mockResponseBuilder.buildAttribute("LegalName", "http://eidas.europa.eu/attributes/legalperson/LegalName", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri", "eidas:LegalNameTyp", "Acme Corporation", null));
-        Response response = mockResponseBuilder.buildResponse("classpath:idp-metadata.xml", attributeStatement);
+        Response response = mockResponseBuilder.buildResponse("classpath:idp-metadata.xml", Collections.singletonMap(ResponseBuilder.InputType.ATTRIBUTE_STATEMENT, Optional.of(attributeStatement)));
         httpRequest = buildMockHttpServletRequest("SAMLResponse", response);
         AuthenticationResult result = authResponseService.getAuthenticationResult(httpRequest);
         fail("Should not reach this!");
@@ -174,8 +173,8 @@ public class AuthResponseServiceTest {
         expectedEx.expect(InvalidRequestException.class);
         expectedEx.expectMessage("No corresponding SAML request session found for the given response!");
 
-        httpRequest = buildMockHttpServletRequest("SAMLResponse", mockResponseBuilder
-                .withResponseInResponseTo("invalid-response-inResponseTo").buildResponse("classpath:idp-metadata.xml"));
+        httpRequest = buildMockHttpServletRequest("SAMLResponse", mockResponseBuilder.buildResponse("classpath:idp-metadata.xml",
+                Collections.singletonMap(ResponseBuilder.InputType.IN_RESPONSE_TO, Optional.of("invalid-response-inResponseTo"))));
         AuthenticationResult result = authResponseService.getAuthenticationResult(httpRequest);
         fail("Should not reach this!");
     }
@@ -185,8 +184,8 @@ public class AuthResponseServiceTest {
         expectedEx.expect(InvalidRequestException.class);
         expectedEx.expectMessage("No corresponding SAML request session found for the given response assertion!");
 
-        httpRequest = buildMockHttpServletRequest("SAMLResponse", mockResponseBuilder
-                .withAssertionInResponseTo("invalid-assertion-inResponseTo").buildResponse("classpath:idp-metadata.xml"));
+        httpRequest = buildMockHttpServletRequest("SAMLResponse", mockResponseBuilder.buildResponse("classpath:idp-metadata.xml",
+                Collections.singletonMap(ResponseBuilder.InputType.ASSERTION_IN_RESPONSE_TO, Optional.of("invalid-assertion-inResponseTo"))));
         AuthenticationResult result = authResponseService.getAuthenticationResult(httpRequest);
         fail("Should not reach this!");
     }
@@ -223,7 +222,7 @@ public class AuthResponseServiceTest {
         expectedEx.expectMessage("Error handling message: Message was rejected due to issue instant expiration");
 
         DateTime pastTime = new DateTime().minusSeconds(properties.getResponseMessageLifeTime()).minusSeconds(properties.getAcceptedClockSkew()).minusSeconds(1);
-        Response response = mockResponseBuilder.buildResponse("classpath:idp-metadata.xml", pastTime);
+        Response response = mockResponseBuilder.buildResponse("classpath:idp-metadata.xml", Collections.singletonMap(ResponseBuilder.InputType.ISSUE_INSTANT, Optional.of(pastTime)));
         httpRequest = buildMockHttpServletRequest("SAMLResponse" ,response);
 
         AuthenticationResult result = authResponseService.getAuthenticationResult(httpRequest);
@@ -237,7 +236,7 @@ public class AuthResponseServiceTest {
 
         DateTime futureTime = new DateTime().plusSeconds(1)
                 .plusSeconds(properties.getResponseMessageLifeTime()).plusSeconds(properties.getAcceptedClockSkew());
-        Response response = mockResponseBuilder.buildResponse("classpath:idp-metadata.xml", futureTime);
+        Response response = mockResponseBuilder.buildResponse("classpath:idp-metadata.xml", Collections.singletonMap(ResponseBuilder.InputType.ISSUE_INSTANT, Optional.of(futureTime)));
         httpRequest = buildMockHttpServletRequest("SAMLResponse" ,response);
 
         AuthenticationResult result = authResponseService.getAuthenticationResult(httpRequest);
@@ -245,9 +244,48 @@ public class AuthResponseServiceTest {
     }
 
     @Test
-    public void whenResponseDoesNotContainSAMLResponse_thenExceptionIsThrown() throws Exception {
+    public void whenAuthnContextIsMissing_thenExceptionIsThrown() throws Exception {
         expectedEx.expect(InvalidRequestException.class);
-        expectedEx.expectMessage("Failed to read SAMLResponse. null");
+        expectedEx.expectMessage("AuthnStatement must contain AuthnContext!");
+
+        Response response = mockResponseBuilder.buildResponse("classpath:idp-metadata.xml",
+                Collections.singletonMap(ResponseBuilder.InputType.AUTHN_CONTEXT, Optional.empty()));
+        httpRequest = buildMockHttpServletRequest("SAMLResponse", response);
+
+        AuthenticationResult result = authResponseService.getAuthenticationResult(httpRequest);
+        fail("Should not reach this!");
+    }
+
+    @Test
+    public void whenSubjectConfirmationIsMissing_thenExceptionIsThrown() throws Exception {
+        expectedEx.expect(InvalidRequestException.class);
+        expectedEx.expectMessage("Assertion subject must contain exactly 1 SubjectConfirmation!");
+
+        Response response = mockResponseBuilder.buildResponse("classpath:idp-metadata.xml",
+                Collections.singletonMap(ResponseBuilder.InputType.SUBJECT_CONFIRMATION, Optional.empty()));
+        httpRequest = buildMockHttpServletRequest("SAMLResponse", response);
+
+        AuthenticationResult result = authResponseService.getAuthenticationResult(httpRequest);
+        fail("Should not reach this!");
+    }
+
+    @Test
+    public void whenSubjectConfirmationDataNotOnOrAfterIsInvalid_thenExceptionIsThrown() throws Exception {
+        expectedEx.expect(InvalidRequestException.class);
+        expectedEx.expectMessage("Assertion condition NotOnOrAfter is not valid!");
+
+        Response response = mockResponseBuilder.buildResponse("classpath:idp-metadata.xml",
+                Collections.singletonMap(ResponseBuilder.InputType.ASSERTION_CONDITIONS_NOT_ON_OR_AFTER, Optional.of(new DateTime().minusHours(8))));
+        httpRequest = buildMockHttpServletRequest("SAMLResponse", response);
+
+        AuthenticationResult result = authResponseService.getAuthenticationResult(httpRequest);
+        fail("Should not reach this!");
+    }
+
+    @Test
+    public void whenResponseDoesNotContainSAMLResponse_thenExceptionIsThrown() throws Exception {
+        expectedEx.expect(MissingServletRequestParameterException.class);
+        expectedEx.expectMessage("Required String parameter 'SAMLResponse' is not present");
 
         httpRequest = buildMockHttpServletRequest("someParam", mockResponseBuilder.buildResponse("classpath:idp-metadata.xml"));
         authResponseService.getAuthenticationResult(httpRequest);
@@ -259,9 +297,8 @@ public class AuthResponseServiceTest {
         expectedEx.expect(AuthenticationFailedException.class);
         expectedEx.expectMessage("Authentication failed.");
 
-        Response response = mockResponseBuilder
-                .withResponseStatus(mockResponseBuilder.buildAuthnFailedStatus())
-                .buildResponse("classpath:idp-metadata.xml");
+        Response response = mockResponseBuilder.buildResponse("classpath:idp-metadata.xml",
+                Collections.singletonMap(ResponseBuilder.InputType.STATUS, Optional.of(mockResponseBuilder.buildAuthnFailedStatus())));
         httpRequest = buildMockHttpServletRequest("SAMLResponse", response);
 
         AuthenticationResult result = authResponseService.getAuthenticationResult(httpRequest);
@@ -273,9 +310,8 @@ public class AuthResponseServiceTest {
         expectedEx.expect(AuthenticationFailedException.class);
         expectedEx.expectMessage("No user consent received. User denied access.");
 
-        Response response = mockResponseBuilder
-                .withResponseStatus(mockResponseBuilder.buildRequesterRequestDeniedStatus())
-                .buildResponse("classpath:idp-metadata.xml");
+        Response response = mockResponseBuilder.buildResponse("classpath:idp-metadata.xml",
+                Collections.singletonMap(ResponseBuilder.InputType.STATUS, Optional.of(mockResponseBuilder.buildRequesterRequestDeniedStatus())));
         httpRequest = buildMockHttpServletRequest("SAMLResponse", response);
 
         AuthenticationResult result = authResponseService.getAuthenticationResult(httpRequest);
@@ -298,9 +334,8 @@ public class AuthResponseServiceTest {
         expectedEx.expect(EidasClientException.class);
         expectedEx.expectMessage("Eidas node responded with an error! statusCode = urn:oasis:names:tc:SAML:2.0:status:Responder, statusMessage = 202019 - Incorrect Level of Assurance in IdP response");
 
-        Response response = mockResponseBuilder
-                .withResponseStatus(mockResponseBuilder.buildInvalidLoaStatus())
-                .buildResponse("classpath:idp-metadata.xml");
+        Response response = mockResponseBuilder.buildResponse("classpath:idp-metadata.xml",
+                Collections.singletonMap(ResponseBuilder.InputType.STATUS, Optional.of(mockResponseBuilder.buildInvalidLoaStatus())));
         httpRequest = buildMockHttpServletRequest("SAMLResponse", response);
 
         AuthenticationResult result = authResponseService.getAuthenticationResult(httpRequest);
@@ -312,9 +347,8 @@ public class AuthResponseServiceTest {
         expectedEx.expect(EidasClientException.class);
         expectedEx.expectMessage("Eidas node responded with an error! statusCode = urn:oasis:names:tc:SAML:2.0:status:Responder, statusMessage = 202010 - Mandatory Attribute not found.");
 
-        Response response = mockResponseBuilder
-                .withResponseStatus(mockResponseBuilder.buildMissingMandatoryAttributeStatus())
-                .buildResponse("classpath:idp-metadata.xml");
+        Response response = mockResponseBuilder.buildResponse("classpath:idp-metadata.xml",
+                Collections.singletonMap(ResponseBuilder.InputType.STATUS, Optional.of(mockResponseBuilder.buildMissingMandatoryAttributeStatus())));
         httpRequest = buildMockHttpServletRequest("SAMLResponse" ,response);
 
         AuthenticationResult result = authResponseService.getAuthenticationResult(httpRequest);

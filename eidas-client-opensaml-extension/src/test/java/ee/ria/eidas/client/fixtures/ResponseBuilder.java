@@ -10,6 +10,7 @@ import org.opensaml.saml.common.SAMLVersion;
 import org.opensaml.saml.saml2.core.*;
 import org.opensaml.saml.saml2.core.impl.*;
 import org.opensaml.saml.saml2.encryption.Encrypter;
+import org.opensaml.security.SecurityException;
 import org.opensaml.security.credential.Credential;
 import org.opensaml.xmlsec.encryption.support.DataEncryptionParameters;
 import org.opensaml.xmlsec.encryption.support.EncryptionConstants;
@@ -19,120 +20,61 @@ import org.opensaml.xmlsec.keyinfo.impl.X509KeyInfoGeneratorFactory;
 import org.opensaml.xmlsec.signature.KeyInfo;
 import org.opensaml.xmlsec.signature.Signature;
 import org.opensaml.xmlsec.signature.support.SignatureConstants;
-import org.opensaml.xmlsec.signature.support.SignatureException;
 import org.opensaml.xmlsec.signature.support.Signer;
 
 import javax.xml.namespace.QName;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Supplier;
 
 public class ResponseBuilder {
 
     public static final String DEFAULT_IN_RESPONSE_TO = "_4ededd23fb88e6964df71b8bdb1c706f";
 
+    public enum InputType {
+        ATTRIBUTE_STATEMENT, ISSUE_INSTANT, STATUS, IN_RESPONSE_TO,
+        ASSERTION_IN_RESPONSE_TO, ASSERTION_CONDITIONS_NOT_ON_OR_AFTER,
+        AUTHN_CONTEXT, SUBJECT_CONFIRMATION;
+    }
+
     private final Credential encryptionCredential;
     private final Credential signingCredential;
-
-    private Status responseStatus;
-    private String responseInResponseTo;
-    private String assertionInResponseTo;
 
     public ResponseBuilder(Credential signingCredential, Credential responseAssertionDecryptionCredential) {
         this.encryptionCredential = responseAssertionDecryptionCredential;
         this.signingCredential = signingCredential;
-
-        this.responseStatus = buildSuccessStatus();
-        this.responseInResponseTo = DEFAULT_IN_RESPONSE_TO;
-        this.assertionInResponseTo = DEFAULT_IN_RESPONSE_TO;
     }
 
-    public void setResponseStatus(Status responseStatus) {
-        this.responseStatus = responseStatus;
-    }
+    private static <T> T getInput(Map<InputType, Optional<Object>> inputMap, InputType inputType, Supplier<T> supplier) {
+        Optional<Object> input = (inputMap != null) ? inputMap.get(inputType) : null;
 
-    public Status getResponseStatus() {
-        return this.responseStatus;
-    }
+        if (input != null) {
+            if (input.isPresent()) return (T) input.get();
+        } else if (supplier != null) {
+            return supplier.get();
+        }
 
-    public ResponseBuilder withResponseStatus(Status responseStatus) {
-        ResponseBuilder responseBuilder = new ResponseBuilder(signingCredential, encryptionCredential);
-        responseBuilder.setResponseStatus(responseStatus);
-        return responseBuilder;
+        return null;
     }
-
-    public void setResponseInResponseTo(String responseInResponseTo) {
-        this.responseInResponseTo = responseInResponseTo;
-    }
-
-    public String getResponseInResponseTo() {
-        return this.responseInResponseTo;
-    }
-
-    public ResponseBuilder withResponseInResponseTo(String inResponseTo) {
-        ResponseBuilder responseBuilder = new ResponseBuilder(signingCredential, encryptionCredential);
-        responseBuilder.setResponseInResponseTo(inResponseTo);
-        return responseBuilder;
-    }
-
-    public void setAssertionInResponseTo(String assertionInResponseTo) {
-        this.assertionInResponseTo = assertionInResponseTo;
-    }
-
-    public String getAssertionInResponseTo() {
-        return this.assertionInResponseTo;
-    }
-
-    public ResponseBuilder withAssertionInResponseTo(String inResponseTo) {
-        ResponseBuilder responseBuilder = new ResponseBuilder(signingCredential, encryptionCredential);
-        responseBuilder.setAssertionInResponseTo(inResponseTo);
-        return responseBuilder;
-    }
-
-    public void setAllInResponseTo(String inResponseTo) {
-        this.responseInResponseTo = inResponseTo;
-        this.assertionInResponseTo = inResponseTo;
-    }
-
-    public ResponseBuilder withAllInResponseTo(String inResponseTo) {
-        ResponseBuilder responseBuilder = new ResponseBuilder(signingCredential, encryptionCredential);
-        responseBuilder.setResponseInResponseTo(inResponseTo);
-        responseBuilder.setAssertionInResponseTo(inResponseTo);
-        return responseBuilder;
-    }
-
 
     public Response buildResponse(String issuer) {
-        return buildResponse(issuer, new DateTime(), buildAttributeStatement());
+        return buildResponse(issuer, null);
     }
 
-    public Response buildResponse(String issuer, DateTime issueInstant) {
-        return buildResponse(issuer, issueInstant, buildAttributeStatement());
-    }
-
-    public Response buildResponse(String issuer, AttributeStatement attributeStatement) {
-        return buildResponse(issuer, new DateTime(), attributeStatement);
-    }
-
-    public Response buildResponse(String issuer, DateTime issueInstant, AttributeStatement attributeStatement) {
+    public Response buildResponse(String issuer, Map<InputType, Optional<Object>> inputMap) {
         try {
-            Signature signature = (Signature) XMLObjectProviderRegistrySupport.getBuilderFactory()
-                    .getBuilder(Signature.DEFAULT_ELEMENT_NAME).buildObject(Signature.DEFAULT_ELEMENT_NAME);
-            signature.setSigningCredential(signingCredential);
-            signature.setSignatureAlgorithm(getSignatureAlgorithm(signingCredential));
-            signature.setCanonicalizationAlgorithm(SignatureConstants.ALGO_ID_C14N_EXCL_OMIT_COMMENTS);
-
-            X509KeyInfoGeneratorFactory x509KeyInfoGeneratorFactory = new X509KeyInfoGeneratorFactory();
-            x509KeyInfoGeneratorFactory.setEmitEntityCertificate(true);
-            KeyInfo keyInfo = x509KeyInfoGeneratorFactory.newInstance().generate(signingCredential);
-            signature.setKeyInfo(keyInfo);
+            DateTime issueInstant = getInput(inputMap, InputType.ISSUE_INSTANT, () -> new DateTime());
+            Signature signature = createSignature();
 
             Response authnResponse = OpenSAMLUtils.buildSAMLObject(Response.class);
             authnResponse.setIssueInstant(issueInstant);
             authnResponse.setDestination("http://localhost:8889/returnUrl");
-            authnResponse.setInResponseTo(responseInResponseTo);
+            authnResponse.setInResponseTo(getInput(inputMap, InputType.IN_RESPONSE_TO, () -> DEFAULT_IN_RESPONSE_TO));
             authnResponse.setVersion(SAMLVersion.VERSION_20);
             authnResponse.setID(OpenSAMLUtils.generateSecureRandomId());
             authnResponse.setSignature(signature);
-            authnResponse.setStatus(responseStatus);
-            authnResponse.getEncryptedAssertions().add(buildAssertion(issueInstant, issuer, attributeStatement));
+            authnResponse.setStatus(getInput(inputMap, InputType.STATUS, () -> buildSuccessStatus()));
+            authnResponse.getEncryptedAssertions().add(buildAssertion(issueInstant, issuer, inputMap));
 
             XMLObjectProviderRegistrySupport.getMarshallerFactory().getMarshaller(authnResponse).marshall(authnResponse);
             Signer.signObject(signature);
@@ -141,6 +83,21 @@ public class ResponseBuilder {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public Signature createSignature() throws SecurityException {
+        Signature signature = (Signature) XMLObjectProviderRegistrySupport.getBuilderFactory()
+                .getBuilder(Signature.DEFAULT_ELEMENT_NAME).buildObject(Signature.DEFAULT_ELEMENT_NAME);
+        signature.setSigningCredential(signingCredential);
+        signature.setSignatureAlgorithm(getSignatureAlgorithm(signingCredential));
+        signature.setCanonicalizationAlgorithm(SignatureConstants.ALGO_ID_C14N_EXCL_OMIT_COMMENTS);
+
+        X509KeyInfoGeneratorFactory x509KeyInfoGeneratorFactory = new X509KeyInfoGeneratorFactory();
+        x509KeyInfoGeneratorFactory.setEmitEntityCertificate(true);
+        KeyInfo keyInfo = x509KeyInfoGeneratorFactory.newInstance().generate(signingCredential);
+        signature.setKeyInfo(keyInfo);
+
+        return signature;
     }
 
     private String getSignatureAlgorithm(Credential credential) {
@@ -187,28 +144,19 @@ public class ResponseBuilder {
         return status;
     }
 
-    private EncryptedAssertion buildAssertion(DateTime issueInstant, String issuer, AttributeStatement attributeStatement) throws Exception {
-
-        Signature signature = (Signature) XMLObjectProviderRegistrySupport.getBuilderFactory()
-                .getBuilder(Signature.DEFAULT_ELEMENT_NAME).buildObject(Signature.DEFAULT_ELEMENT_NAME);
-        signature.setSigningCredential(signingCredential);
-        signature.setSignatureAlgorithm(getSignatureAlgorithm(signingCredential));
-        signature.setCanonicalizationAlgorithm(SignatureConstants.ALGO_ID_C14N_EXCL_OMIT_COMMENTS);
-
-        X509KeyInfoGeneratorFactory x509KeyInfoGeneratorFactory = new X509KeyInfoGeneratorFactory();
-        x509KeyInfoGeneratorFactory.setEmitEntityCertificate(true);
-        KeyInfo keyInfo = x509KeyInfoGeneratorFactory.newInstance().generate(signingCredential);
-        signature.setKeyInfo(keyInfo);
+    private EncryptedAssertion buildAssertion(DateTime issueInstant, String issuer, Map<InputType, Optional<Object>> inputMap) throws Exception {
+        AttributeStatement attributeStatement = getInput(inputMap, InputType.ATTRIBUTE_STATEMENT, () -> buildAttributeStatement());
+        Signature signature = createSignature();
 
         Assertion assertion = new AssertionBuilder().buildObject();
         assertion.setIssueInstant(issueInstant);
         assertion.setID(OpenSAMLUtils.generateSecureRandomId());
         assertion.setVersion(SAMLVersion.VERSION_20);
         assertion.setIssuer(buildIssuer(issuer));
-        assertion.setSubject(buildSubject(issueInstant));
-        assertion.setConditions(buildConditions(issueInstant));
-        assertion.getAuthnStatements().add(buildAuthnStatement(issueInstant));
-        assertion.getAttributeStatements().add(attributeStatement);
+        assertion.setSubject(buildSubject(issueInstant, inputMap));
+        assertion.setConditions(buildConditions(issueInstant, inputMap));
+        assertion.getAuthnStatements().add(buildAuthnStatement(issueInstant, inputMap));
+        if (attributeStatement != null) assertion.getAttributeStatements().add(attributeStatement);
         assertion.setSignature(signature);
 
         XMLObjectProviderRegistrySupport.getMarshallerFactory().getMarshaller(assertion).marshall(assertion);
@@ -239,7 +187,7 @@ public class ResponseBuilder {
         return issuer;
     }
 
-    private Subject buildSubject(DateTime issueIstant) {
+    private Subject buildSubject(DateTime issueInstant, Map<InputType, Optional<Object>> inputMap) {
         Subject subject = new SubjectBuilder().buildObject();
 
         NameID nameID = new NameIDBuilder().buildObject();
@@ -248,24 +196,33 @@ public class ResponseBuilder {
         nameID.setValue("CA/CA/12345");
         subject.setNameID(nameID);
 
-        SubjectConfirmation subjectConfirmation = new SubjectConfirmationBuilder().buildObject();
-        subjectConfirmation.setMethod("urn:oasis:names:tc:SAML:2.0:cm:bearer");
+        SubjectConfirmation subjectConfirmation = getInput(inputMap, InputType.SUBJECT_CONFIRMATION, () -> {
+            SubjectConfirmation lambdaSubjectConfirmation = new SubjectConfirmationBuilder().buildObject();
+            lambdaSubjectConfirmation.setMethod("urn:oasis:names:tc:SAML:2.0:cm:bearer");
 
-        SubjectConfirmationData subjectConfirmationData = new SubjectConfirmationDataBuilder().buildObject();
-        subjectConfirmationData.setAddress("172.24.0.1");
-        subjectConfirmationData.setInResponseTo(assertionInResponseTo);
-        subjectConfirmationData.setNotOnOrAfter(issueIstant.plusMinutes(5));
-        subjectConfirmationData.setRecipient("http://localhost:8889/returnUrl");
+            SubjectConfirmationData subjectConfirmationData = new SubjectConfirmationDataBuilder().buildObject();
+            subjectConfirmationData.setAddress("172.24.0.1");
+            subjectConfirmationData.setInResponseTo(getInput(inputMap, InputType.ASSERTION_IN_RESPONSE_TO, () -> DEFAULT_IN_RESPONSE_TO));
+            subjectConfirmationData.setNotOnOrAfter(issueInstant.plusMinutes(5));
+            subjectConfirmationData.setRecipient("http://localhost:8889/returnUrl");
 
-        subjectConfirmation.setSubjectConfirmationData(subjectConfirmationData);
-        subject.getSubjectConfirmations().add(subjectConfirmation);
+            lambdaSubjectConfirmation.setSubjectConfirmationData(subjectConfirmationData);
+            return lambdaSubjectConfirmation;
+        });
+
+        if (subjectConfirmation != null) {
+            subject.getSubjectConfirmations().add(subjectConfirmation);
+        }
+
         return subject;
     }
 
-    private Conditions buildConditions(DateTime issueInstant) {
+    private Conditions buildConditions(DateTime issueInstant, Map<InputType, Optional<Object>> inputMap) {
         Conditions conditions = new ConditionsBuilder().buildObject();
         conditions.setNotBefore(issueInstant);
-        conditions.setNotOnOrAfter(issueInstant.plusMinutes(5));
+        conditions.setNotOnOrAfter(
+                getInput(inputMap, InputType.ASSERTION_CONDITIONS_NOT_ON_OR_AFTER, () -> issueInstant.plusMinutes(5))
+        );
 
         AudienceRestriction audienceRestriction = new AudienceRestrictionBuilder().buildObject();
 
@@ -277,20 +234,27 @@ public class ResponseBuilder {
         return conditions;
     }
 
-    private AuthnStatement buildAuthnStatement(DateTime issueInstant) {
+    private AuthnStatement buildAuthnStatement(DateTime issueInstant, Map<InputType, Optional<Object>> inputMap) {
         AuthnStatement authnStatement = new AuthnStatementBuilder().buildObject();
         authnStatement.setAuthnInstant(issueInstant.minusMinutes(1));
 
-        AuthnContext authnContext = new AuthnContextBuilder().buildObject();
+        AuthnContext authnContext = getInput(inputMap, InputType.AUTHN_CONTEXT, () -> {
+            AuthnContext lambdaAuthnContext = new AuthnContextBuilder().buildObject();
 
-        AuthnContextClassRef authnContextClassRef = new AuthnContextClassRefBuilder().buildObject();
-        authnContextClassRef.setAuthnContextClassRef(AssuranceLevel.LOW.getUri());
-        authnContext.setAuthnContextClassRef(authnContextClassRef);
+            AuthnContextClassRef authnContextClassRef = new AuthnContextClassRefBuilder().buildObject();
+            authnContextClassRef.setAuthnContextClassRef(AssuranceLevel.LOW.getUri());
+            lambdaAuthnContext.setAuthnContextClassRef(authnContextClassRef);
 
-        AuthnContextDecl authnContextDecl = new AuthnContextDeclBuilder().buildObject();
-        authnContext.setAuthnContextDecl(authnContextDecl);
+            AuthnContextDecl authnContextDecl = new AuthnContextDeclBuilder().buildObject();
+            lambdaAuthnContext.setAuthnContextDecl(authnContextDecl);
 
-        authnStatement.setAuthnContext(authnContext);
+            return lambdaAuthnContext;
+        });
+
+        if (authnContext != null) {
+            authnStatement.setAuthnContext(authnContext);
+        }
+
         return authnStatement;
     }
 
