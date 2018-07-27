@@ -34,7 +34,7 @@ public class ResponseBuilder {
     public enum InputType {
         ATTRIBUTE_STATEMENT, ISSUE_INSTANT, STATUS, IN_RESPONSE_TO,
         ASSERTION_IN_RESPONSE_TO, ASSERTION_CONDITIONS_NOT_ON_OR_AFTER,
-        SUBJECT_CONFIRMATION;
+        AUTHN_CONTEXT, SUBJECT_CONFIRMATION;
     }
 
     private final Credential encryptionCredential;
@@ -155,7 +155,7 @@ public class ResponseBuilder {
         assertion.setIssuer(buildIssuer(issuer));
         assertion.setSubject(buildSubject(issueInstant, inputMap));
         assertion.setConditions(buildConditions(issueInstant, inputMap));
-        assertion.getAuthnStatements().add(buildAuthnStatement(issueInstant));
+        assertion.getAuthnStatements().add(buildAuthnStatement(issueInstant, inputMap));
         if (attributeStatement != null) assertion.getAttributeStatements().add(attributeStatement);
         assertion.setSignature(signature);
 
@@ -234,20 +234,27 @@ public class ResponseBuilder {
         return conditions;
     }
 
-    private AuthnStatement buildAuthnStatement(DateTime issueInstant) {
+    private AuthnStatement buildAuthnStatement(DateTime issueInstant, Map<InputType, Optional<Object>> inputMap) {
         AuthnStatement authnStatement = new AuthnStatementBuilder().buildObject();
         authnStatement.setAuthnInstant(issueInstant.minusMinutes(1));
 
-        AuthnContext authnContext = new AuthnContextBuilder().buildObject();
+        AuthnContext authnContext = getInput(inputMap, InputType.AUTHN_CONTEXT, () -> {
+            AuthnContext lambdaAuthnContext = new AuthnContextBuilder().buildObject();
 
-        AuthnContextClassRef authnContextClassRef = new AuthnContextClassRefBuilder().buildObject();
-        authnContextClassRef.setAuthnContextClassRef(AssuranceLevel.LOW.getUri());
-        authnContext.setAuthnContextClassRef(authnContextClassRef);
+            AuthnContextClassRef authnContextClassRef = new AuthnContextClassRefBuilder().buildObject();
+            authnContextClassRef.setAuthnContextClassRef(AssuranceLevel.LOW.getUri());
+            lambdaAuthnContext.setAuthnContextClassRef(authnContextClassRef);
 
-        AuthnContextDecl authnContextDecl = new AuthnContextDeclBuilder().buildObject();
-        authnContext.setAuthnContextDecl(authnContextDecl);
+            AuthnContextDecl authnContextDecl = new AuthnContextDeclBuilder().buildObject();
+            lambdaAuthnContext.setAuthnContextDecl(authnContextDecl);
 
-        authnStatement.setAuthnContext(authnContext);
+            return lambdaAuthnContext;
+        });
+
+        if (authnContext != null) {
+            authnStatement.setAuthnContext(authnContext);
+        }
+
         return authnStatement;
     }
 

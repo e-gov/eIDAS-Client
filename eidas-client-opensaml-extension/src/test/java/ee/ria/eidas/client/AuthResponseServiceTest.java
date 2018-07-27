@@ -244,6 +244,19 @@ public class AuthResponseServiceTest {
     }
 
     @Test
+    public void whenAuthnContextIsMissing_thenExceptionIsThrown() throws Exception {
+        expectedEx.expect(InvalidRequestException.class);
+        expectedEx.expectMessage("AuthnStatement must contain AuthnContext!");
+
+        Response response = mockResponseBuilder.buildResponse("classpath:idp-metadata.xml",
+                Collections.singletonMap(ResponseBuilder.InputType.AUTHN_CONTEXT, Optional.empty()));
+        httpRequest = buildMockHttpServletRequest("SAMLResponse", response);
+
+        AuthenticationResult result = authResponseService.getAuthenticationResult(httpRequest);
+        fail("Should not reach this!");
+    }
+
+    @Test
     public void whenSubjectConfirmationIsMissing_thenExceptionIsThrown() throws Exception {
         expectedEx.expect(InvalidRequestException.class);
         expectedEx.expectMessage("Assertion subject must contain exactly 1 SubjectConfirmation!");
