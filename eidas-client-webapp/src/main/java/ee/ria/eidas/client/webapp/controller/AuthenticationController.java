@@ -8,6 +8,7 @@ import ee.ria.eidas.client.response.AuthenticationResult;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -48,7 +49,7 @@ public class AuthenticationController {
 
     @RequestMapping(value = "/returnUrl", method = POST)
     @ResponseBody
-    public AuthenticationResult getAuthenticationResult(HttpServletRequest req) {
+    public AuthenticationResult getAuthenticationResult(HttpServletRequest req) throws MissingServletRequestParameterException {
         return authResponseService.getAuthenticationResult(req);
     }
 
