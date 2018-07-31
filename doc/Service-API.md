@@ -167,18 +167,7 @@ Näide:
 | HTTP staatuskood  | Vea lühikirjeldus | Viga selgitav tekst  |
 | :-------------: |:-------------| :-----|
 | 400 | Bad request | Required String parameter 'SAMLResponse' is not present |
-| 400 | Bad request  | Invalid SAMLResponse! Not a valid Base64 encoding |
-| 400 | Bad request  | Invalid RelayState! Must match the following regexp: [...] |
-| 400 | Bad request  | Invalid SAML response! Schema validation failed! |
-| 400 | Bad request  | Response not signed. |
-| 400 | Bad request  | Invalid response signature. |
-| 400 | Bad request  | Single assertion is expected. |
-| 400 | Bad request  | Invalid receiver endpoint check. |
-| 400 | Bad request  | Invalid LoA. The LoA of the Identity Provider is not sufficient. |
-| 400 | Bad request  | Inbound SAML message issue instant not present in message context. |
-| 400 | Bad request  | Message was rejected due to issue instant expiration. |
-| 400 | Bad request  | Message was rejected! No matching valid request found! |
-| 400 | Bad request  | Message replay detected. |
+| 400 | Bad request  | Invalid SAMLResponse. [...] |
 | 405 | Method Not Allowed | Request method [...] not supported |
 | 500 | Internal Server Error | Something went wrong internally. Please consult server logs for further details. |
 
@@ -368,4 +357,8 @@ Näide:
    "message" : "Required String parameter 'country' is not present"
 }
 ```
+
+### HEAD ja OPTIONS meetodid
+
+HEAD ja OPTIONS meetodite päringu puhul tagastatakse HTTP staatuskood 403 (Forbidden) ning puudub vastuse keha!
 
