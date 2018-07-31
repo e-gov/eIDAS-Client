@@ -33,8 +33,6 @@ public class ControllerExceptionHandler {
         if (exception instanceof MethodArgumentTypeMismatchException) {
             String name = ((MethodArgumentTypeMismatchException) exception).getName();
             return getMap(HttpStatus.BAD_REQUEST, "Invalid value for parameter " + name);
-        } else if (exception instanceof InvalidRequestException) {
-            return getMap(HttpStatus.BAD_REQUEST, "Invalid SAMLResponse. " + exception.getMessage());
         } else {
             return getMap(HttpStatus.BAD_REQUEST, exception.getMessage());
         }

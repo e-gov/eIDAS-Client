@@ -213,7 +213,7 @@ public class EidasClientApplicationTest {
         .then()
             .statusCode(400)
             .body("error", equalTo("Bad Request"))
-            .body("message", equalTo("Invalid SAMLResponse. Found one or more invalid AdditionalAttributes value(s). Allowed values are: [BirthName, PlaceOfBirth, CurrentAddress, Gender, LegalPersonIdentifier, LegalName, LegalAddress, VATRegistration, TaxReference, LEI, EORI, SEED, SIC, D-2012-17-EUIdentifier]"));
+            .body("message", equalTo("Found one or more invalid AdditionalAttributes value(s). Allowed values are: [BirthName, PlaceOfBirth, CurrentAddress, Gender, LegalPersonIdentifier, LegalName, LegalAddress, VATRegistration, TaxReference, LEI, EORI, SEED, SIC, D-2012-17-EUIdentifier]"));
     }
 
     @Test
@@ -255,7 +255,7 @@ public class EidasClientApplicationTest {
         .then()
             .statusCode(400)
             .body("error", equalTo("Bad Request"))
-            .body("message", equalTo("Invalid SAMLResponse. Invalid country! Valid countries:[EE, CA]"));
+            .body("message", equalTo("Invalid country! Valid countries:[EE, CA]"));
     }
 
     @Test
@@ -269,7 +269,7 @@ public class EidasClientApplicationTest {
         .then()
             .statusCode(400)
             .body("error", equalTo("Bad Request"))
-            .body("message", equalTo("Invalid SAMLResponse. Invalid RelayState! Must match the following regexp: ^[a-zA-Z0-9-_]{0,80}$"));
+            .body("message", equalTo("Invalid RelayState! Must match the following regexp: ^[a-zA-Z0-9-_]{0,80}$"));
     }
 
     @Test
@@ -523,7 +523,7 @@ public class EidasClientApplicationTest {
     @Test
     public void returnUrl_shouldFail_whenRequestSessionHasExpired() {
         ResponseBuilder responseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
-        DateTime issueInstant = new DateTime().minusSeconds(eidasClientProperties.getResponseMessageLifeTime()).minusSeconds(eidasClientProperties.getAcceptedClockSkew());
+        DateTime issueInstant = new DateTime().minusSeconds(eidasClientProperties.getResponseMessageLifeTime()).minusSeconds(eidasClientProperties.getAcceptedClockSkew()).minusSeconds(1);
         saveNewRequestSession(responseBuilder.DEFAULT_IN_RESPONSE_TO, issueInstant, AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
         Response response = responseBuilder.buildResponse("http://localhost:7771/EidasNode/ConnectorResponderMetadata");
 
