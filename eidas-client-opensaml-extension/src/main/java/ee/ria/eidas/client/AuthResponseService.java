@@ -78,20 +78,24 @@ public class AuthResponseService {
     }
 
     public AuthenticationResult getAuthenticationResult(HttpServletRequest req) throws MissingServletRequestParameterException {
-        Response samlResponse = getSamlResponse(req);
-        validateDestinationAndLifetime(samlResponse, req);
-        verifyResponseSignature(samlResponse);
-        validateStatusCode(samlResponse);
+        try {
+            Response samlResponse = getSamlResponse(req);
+            validateDestinationAndLifetime(samlResponse, req);
+            verifyResponseSignature(samlResponse);
+            validateStatusCode(samlResponse);
 
-        RequestSession requestSession = getAndValidateRequestSession(samlResponse);
+            RequestSession requestSession = getAndValidateRequestSession(samlResponse);
 
-        EncryptedAssertion encryptedAssertion = getEncryptedAssertion(samlResponse);
-        Assertion assertion = decryptAssertion(encryptedAssertion);
-        verifyAssertionSignature(assertion);
-        validateAssertion(assertion, requestSession);
-        LOGGER.debug("Decrypted Assertion: {}", OpenSAMLUtils.getXmlString(assertion));
+            EncryptedAssertion encryptedAssertion = getEncryptedAssertion(samlResponse);
+            Assertion assertion = decryptAssertion(encryptedAssertion);
+            verifyAssertionSignature(assertion);
+            validateAssertion(assertion, requestSession);
+            LOGGER.debug("Decrypted Assertion: {}", OpenSAMLUtils.getXmlString(assertion));
 
-        return new AuthenticationResult(assertion);
+            return new AuthenticationResult(assertion);
+        } catch (InvalidRequestException exception) {
+            throw new InvalidRequestException("Invalid SAMLResponse. " + exception.getMessage(), exception);
+        }
     }
 
     private Response getSamlResponse(HttpServletRequest request) throws MissingServletRequestParameterException {

@@ -79,7 +79,7 @@ public class RequestSessionServiceImplTest {
     @Test
     public void getRequestSession_returnsNull_whenSessionExpiresAndThereforeIsRemovedBeforehand() throws InterruptedException {
         String requestID = "_4ededd23fb88e6964df71b8bdb1c706f";
-        DateTime timeInPast = new DateTime().minusSeconds(properties.getAcceptedClockSkew()).minusSeconds(1);
+        DateTime timeInPast = new DateTime().minusSeconds(properties.getMaximumAuthenticationLifetime()).minusSeconds(properties.getAcceptedClockSkew()).minusSeconds(1);
         RequestSession requestSession = new RequestSession(requestID, timeInPast, AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
         requestSessionService.saveRequestSession(requestID, requestSession);
         requestSessionService.removeExpiredSessions();
