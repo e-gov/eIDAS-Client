@@ -145,26 +145,6 @@ public class EidasClientApplicationTest {
     }
 
     @Test
-    public void metadata_shouldFail_whenHeadMethod() {
-        given()
-            .port(port)
-        .when()
-            .head("/metadata")
-        .then()
-            .statusCode(403);
-    }
-
-    @Test
-    public void metadata_shouldFail_whenOptionsMethod() {
-        given()
-            .port(port)
-        .when()
-            .options("/metadata")
-        .then()
-            .statusCode(403);
-    }
-
-    @Test
     public void httpPostBinding_shouldPass_whenAllParamsPresent() {
         given()
             .port(port)
@@ -282,26 +262,6 @@ public class EidasClientApplicationTest {
             .statusCode(400)
             .body("error", equalTo("Bad Request"))
             .body("message", equalTo("Required String parameter 'Country' is not present"));
-    }
-
-    @Test
-    public void httpPostBinding_shouldFail_whenHeadMethod() {
-        given()
-            .port(port)
-        .when()
-            .head("/login")
-        .then()
-            .statusCode(403);
-    }
-
-    @Test
-    public void httpPostBinding_shouldFail_whenOptionsMethod() {
-        given()
-            .port(port)
-        .when()
-            .options("/login")
-        .then()
-            .statusCode(403);
     }
 
     @Test
@@ -630,26 +590,6 @@ public class EidasClientApplicationTest {
     }
 
     @Test
-    public void returnUrl_shouldFail_whenHeadMethod() {
-        given()
-            .port(port)
-        .when()
-            .head("/returnUrl")
-        .then()
-            .statusCode(403);
-    }
-
-    @Test
-    public void returnUrl_shouldFail_whenOptionsMethod() {
-        given()
-            .port(port)
-        .when()
-            .options("/returnUrl")
-        .then()
-            .statusCode(403);
-    }
-
-    @Test
     public void heartbeat_shouldSucceed_whenEidasNodeRespondsOk() {
         given()
             .port(port)
@@ -665,26 +605,6 @@ public class EidasClientApplicationTest {
             .body("currentTime", notNullValue())
             .body("status", equalTo("UP"))
             .body("dependencies[0].status", equalTo("UP"));
-    }
-
-    @Test
-    public void heartbeat_shouldFail_whenHeadMethod() {
-        given()
-            .port(port)
-        .when()
-            .head("/heartbeat")
-        .then()
-            .statusCode(403);
-    }
-
-    @Test
-    public void heartbeat_shouldFail_whenOptionsMethod() {
-        given()
-            .port(port)
-        .when()
-            .options("/heartbeat")
-        .then()
-            .statusCode(403);
     }
 
     public static String readFileBody(String fileName) {
