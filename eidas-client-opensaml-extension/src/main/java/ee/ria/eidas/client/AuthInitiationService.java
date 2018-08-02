@@ -89,8 +89,8 @@ public class AuthInitiationService {
     private void saveRequestAsSession(AuthnRequest authnRequest, List<EidasAttribute> additionalAttributes) {
         String loa = authnRequest.getRequestedAuthnContext().getAuthnContextClassRefs().get(0).getAuthnContextClassRef();
         List<EidasAttribute> requestedAttributes = getRequestedEidasAttributesList(additionalAttributes);
-        RequestSession requestSession = new RequestSession(authnRequest.getIssueInstant(), AssuranceLevel.toEnum(loa), requestedAttributes);
-        requestSessionService.saveRequestSession(authnRequest.getID(), requestSession);
+        RequestSession requestSession = new RequestSession(authnRequest.getID(), authnRequest.getIssueInstant(), AssuranceLevel.toEnum(loa), requestedAttributes);
+        requestSessionService.saveRequestSession(requestSession.getRequestId(), requestSession);
     }
 
     private List<EidasAttribute> getRequestedEidasAttributesList(List<EidasAttribute> additionalAttributes) {

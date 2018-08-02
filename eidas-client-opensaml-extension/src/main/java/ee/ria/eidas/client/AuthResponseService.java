@@ -8,6 +8,7 @@ import ee.ria.eidas.client.exception.AuthenticationFailedException;
 import ee.ria.eidas.client.exception.EidasClientException;
 import ee.ria.eidas.client.exception.InvalidRequestException;
 import ee.ria.eidas.client.response.AuthenticationResult;
+import ee.ria.eidas.client.session.RequestSession;
 import ee.ria.eidas.client.session.RequestSessionService;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
 import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
@@ -15,9 +16,9 @@ import net.shibboleth.utilities.java.support.net.URIComparator;
 import net.shibboleth.utilities.java.support.net.URIException;
 import net.shibboleth.utilities.java.support.resolver.CriteriaSet;
 import net.shibboleth.utilities.java.support.resolver.ResolverException;
-import net.shibboleth.utilities.java.support.xml.XMLParserException;
+import org.apache.commons.lang.StringUtils;
+import org.joda.time.DateTime;
 import org.opensaml.core.criterion.EntityIdCriterion;
-import org.opensaml.core.xml.io.UnmarshallingException;
 import org.opensaml.core.xml.util.XMLObjectSupport;
 import org.opensaml.messaging.context.MessageContext;
 import org.opensaml.messaging.handler.MessageHandler;
@@ -42,15 +43,14 @@ import org.opensaml.xmlsec.encryption.support.InlineEncryptedKeyResolver;
 import org.opensaml.xmlsec.keyinfo.impl.StaticKeyInfoCredentialResolver;
 import org.opensaml.xmlsec.signature.support.SignatureException;
 import org.opensaml.xmlsec.signature.support.SignatureValidator;
-import org.opensaml.xmlsec.signature.support.impl.ExplicitKeySignatureTrustEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import javax.xml.validation.Schema;
 import java.io.ByteArrayInputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -77,27 +77,70 @@ public class AuthResponseService {
         this.samlSchema = samlSchema;
     }
 
-    public AuthenticationResult getAuthenticationResult(HttpServletRequest req) {
-        Response samlResponse;
+    public AuthenticationResult getAuthenticationResult(HttpServletRequest req) throws MissingServletRequestParameterException {
         try {
-            String encodedSamlResponse = req.getParameter("SAMLResponse");
+            Response samlResponse = getSamlResponse(req);
+            validateDestinationAndLifetime(samlResponse, req);
+            verifyResponseSignature(samlResponse);
+            validateStatusCode(samlResponse);
+
+            RequestSession requestSession = getAndValidateRequestSession(samlResponse);
+
+            EncryptedAssertion encryptedAssertion = getEncryptedAssertion(samlResponse);
+            Assertion assertion = decryptAssertion(encryptedAssertion);
+            verifyAssertionSignature(assertion);
+            validateAssertion(assertion, requestSession);
+            LOGGER.debug("Decrypted Assertion: {}", OpenSAMLUtils.getXmlString(assertion));
+
+            return new AuthenticationResult(assertion);
+        } catch (InvalidRequestException exception) {
+            throw new InvalidRequestException("Invalid SAMLResponse. " + exception.getMessage(), exception);
+        }
+    }
+
+    private Response getSamlResponse(HttpServletRequest request) throws MissingServletRequestParameterException {
+        String encodedSamlResponse = null;
+
+        try {
+            encodedSamlResponse = request.getParameter("SAMLResponse");
+            if (StringUtils.isEmpty(encodedSamlResponse)) throw new IllegalArgumentException();
+        } catch (Exception e) {
+            throw new MissingServletRequestParameterException("SAMLResponse", "String");
+        }
+
+        try {
             byte[] decodedSamlResponse = Base64.getDecoder().decode(encodedSamlResponse);
-            String decodedSAMLstr = new String(decodedSamlResponse, StandardCharsets.UTF_8);
-            samlResponse = getSamlResponse(decodedSAMLstr);
+            Response samlResponse = (Response) XMLObjectSupport.unmarshallFromInputStream(
+                    OpenSAMLConfiguration.getParserPool(), new ByteArrayInputStream(decodedSamlResponse));
             LOGGER.info(OpenSAMLUtils.getXmlString(samlResponse));
+            return samlResponse;
         } catch (Exception e) {
             throw new InvalidRequestException("Failed to read SAMLResponse. " + e.getMessage(), e);
         }
-        validateDestinationAndLifetime(samlResponse, req);
-        validateStatusCode(samlResponse);
+    }
 
-        EncryptedAssertion encryptedAssertion = getEncryptedAssertion(samlResponse);
-        Assertion assertion = decryptAssertion(encryptedAssertion);
-        verifyAssertionSignature(assertion);
-        validateAssertion(assertion);
-        LOGGER.debug("Decrypted Assertion: {}", OpenSAMLUtils.getXmlString(assertion));
+    private void verifyResponseSignature(Response samlResponse) {
+        if (!samlResponse.isSigned()) {
+            throw new InvalidRequestException("Response not signed.");
+        }
+        try {
+            samlResponse.getDOM().setIdAttribute("ID", true);
 
-        return new AuthenticationResult(assertion);
+            SAMLSignatureProfileValidator profileValidator = new SAMLSignatureProfileValidator();
+            profileValidator.validate(samlResponse.getSignature());
+
+            final CriteriaSet criteriaSet = new CriteriaSet();
+            criteriaSet.add(new UsageCriterion(UsageType.SIGNING));
+            criteriaSet.add(new EntityRoleCriterion(IDPSSODescriptor.DEFAULT_ELEMENT_NAME));
+            criteriaSet.add(new ProtocolCriterion(SAMLConstants.SAML20P_NS));
+            criteriaSet.add(new EntityIdCriterion(eidasClientProperties.getIdpMetadataUrl()));
+            Credential credential = idpMetadataResolver.responseSignatureTrustEngine().getCredentialResolver().resolveSingle(criteriaSet);
+            SignatureValidator.validate(samlResponse.getSignature(), credential);
+
+            LOGGER.info("SAML Response signature verified");
+        } catch (SignatureException | ResolverException e) {
+            throw new InvalidRequestException("Invalid response signature.");
+        }
     }
 
     private void validateStatusCode(Response samlResponse) {
@@ -125,11 +168,6 @@ public class AuthResponseService {
     private boolean isStatusNoConsentGiven(StatusCode statusCode, StatusCode substatusCode, String requester, String requestDenied) {
         return requester.equals(statusCode.getValue())
                 && (substatusCode != null && requestDenied.equals(substatusCode.getValue()));
-    }
-
-    private Response getSamlResponse(String samlResponse) throws XMLParserException, UnmarshallingException {
-        return (Response) XMLObjectSupport.unmarshallFromInputStream(
-                OpenSAMLConfiguration.getParserPool(), new ByteArrayInputStream(samlResponse.getBytes(StandardCharsets.UTF_8)));
     }
 
     private void validateDestinationAndLifetime(Response samlResponse, HttpServletRequest request) {
@@ -173,9 +211,29 @@ public class AuthResponseService {
 
     }
 
-    private void validateAssertion(Assertion assertion) {
-        AssertionValidator assertionValidator = new AssertionValidator(eidasClientProperties, requestSessionService);
-        assertionValidator.validate(assertion);
+    private RequestSession getAndValidateRequestSession(Response samlResponse) {
+        String requestID = samlResponse.getInResponseTo();
+
+        RequestSession requestSession = requestSessionService.getAndRemoveRequestSession(requestID);
+        if (requestSession == null) {
+            throw new InvalidRequestException("No corresponding SAML request session found for the given response!");
+        } else if (!requestSession.getRequestId().equals(requestID)) {
+            throw new EidasClientException("Request session ID mismatch!");
+        } else {
+            DateTime now = new DateTime(requestSession.getIssueInstant().getZone());
+            int maxAuthenticationLifetime = eidasClientProperties.getMaximumAuthenticationLifetime();
+            int acceptedClockSkew = eidasClientProperties.getAcceptedClockSkew();
+
+            if (now.isAfter(requestSession.getIssueInstant().plusSeconds(maxAuthenticationLifetime).plusSeconds(acceptedClockSkew))) {
+                throw new InvalidRequestException("Request session with ID " + requestID + " has expired!");
+            }
+        }
+        return requestSession;
+    }
+
+    private void validateAssertion(Assertion assertion, RequestSession requestSession) {
+        AssertionValidator assertionValidator = new AssertionValidator(eidasClientProperties);
+        assertionValidator.validate(assertion, requestSession);
     }
 
     private Assertion decryptAssertion(EncryptedAssertion encryptedAssertion) {

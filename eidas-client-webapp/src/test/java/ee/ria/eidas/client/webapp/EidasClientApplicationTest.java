@@ -9,7 +9,8 @@ import com.jayway.restassured.http.ContentType;
 import com.jayway.restassured.response.ResponseBodyExtractionOptions;
 import ee.ria.eidas.client.AuthInitiationService;
 import ee.ria.eidas.client.authnrequest.AssuranceLevel;
-import ee.ria.eidas.client.config.OpenSAMLConfiguration;
+import ee.ria.eidas.client.authnrequest.EidasAttribute;
+import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.fixtures.ResponseBuilder;
 import ee.ria.eidas.client.session.RequestSession;
 import ee.ria.eidas.client.session.RequestSessionService;
@@ -20,6 +21,7 @@ import net.shibboleth.utilities.java.support.resolver.Criterion;
 import net.shibboleth.utilities.java.support.resolver.ResolverException;
 import org.joda.time.DateTime;
 import org.junit.AfterClass;
+import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -45,9 +47,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.KeyStore;
-import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
@@ -77,6 +77,9 @@ public class EidasClientApplicationTest {
 
     @Autowired
     RequestSessionService requestSessionService;
+
+    @Autowired
+    EidasClientProperties eidasClientProperties;
 
     @TestConfiguration
     public static class TestConfWithEidasNodeSigningKey {
@@ -108,6 +111,11 @@ public class EidasClientApplicationTest {
                         .withHeader("Content-Type", "application/xml")
                         .withBody(readFileBody("samples/response/idp-metadata-ok.xml"))
                 ));
+    }
+
+    @Before
+    public void removeDefaultRequestIdFromSessionStore() {
+        requestSessionService.getAndRemoveRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO);
     }
 
     @Test
@@ -258,13 +266,15 @@ public class EidasClientApplicationTest {
 
     @Test
     public void returnUrl_shouldSucceed_whenValidSAMLResponseWithNaturalPersonMinimalAttributeSet() {
-        requestSessionService.saveRequestSession("_4ededd23fb88e6964df71b8bdb1c706f", new RequestSession(new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET));
+        ResponseBuilder responseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
+        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
 
         given()
             .port(port)
             .contentType("application/x-www-form-urlencoded")
             .formParam("RelayState", "some-state")
-            .formParam("SAMLResponse", Base64.getEncoder().encodeToString(OpenSAMLUtils.getXmlString(new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential).buildResponse("http://localhost:7771/EidasNode/ConnectorResponderMetadata")).getBytes(StandardCharsets.UTF_8)))
+            .formParam("SAMLResponse", Base64.getEncoder().encodeToString(OpenSAMLUtils.getXmlString(responseBuilder
+                    .buildResponse("http://localhost:7771/EidasNode/ConnectorResponderMetadata")).getBytes(StandardCharsets.UTF_8)))
         .when()
             .post("/returnUrl")
         .then()
@@ -279,8 +289,8 @@ public class EidasClientApplicationTest {
 
     @Test
     public void returnUrl_shouldSucceed_whenValidSAMLResponseWithAllAttributesPresent() {
-        requestSessionService.saveRequestSession("_4ededd23fb88e6964df71b8bdb1c706f", new RequestSession(new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET));
         ResponseBuilder responseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
+        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
         AttributeStatement attributeStatement = new AttributeStatementBuilder().buildObject();
 
         attributeStatement.getAttributes().add(responseBuilder.buildAttribute("FirstName", "http://eidas.europa.eu/attributes/naturalperson/CurrentGivenName", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri", "eidas-natural:CurrentGivenNameType", "Alexander", "Αλέξανδρος"));
@@ -290,7 +300,8 @@ public class EidasClientApplicationTest {
 
         attributeStatement.getAttributes().add(responseBuilder.buildAttribute("UnknownMsSpecificAttribute", "http://eidas.europa.eu/attributes/ms/specific/Unknown", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri", "eidas-natural:Custom", "Unspecified"));
 
-        Response response = responseBuilder.buildResponse("http://localhost:7771/EidasNode/ConnectorResponderMetadata", attributeStatement);
+        Response response = responseBuilder.buildResponse("http://localhost:7771/EidasNode/ConnectorResponderMetadata",
+                Collections.singletonMap(ResponseBuilder.InputType.ATTRIBUTE_STATEMENT, Optional.of(attributeStatement)));
 
         given()
                 .port(port)
@@ -314,8 +325,8 @@ public class EidasClientApplicationTest {
     @Test
     public void returnUrl_shouldFail_whenAuthenticationFails() {
         ResponseBuilder responseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
-        Response response = responseBuilder.buildResponse("http://localhost:7771/EidasNode/ConnectorResponderMetadata");
-        response.setStatus(responseBuilder.buildAuthnFailedStatus());
+        Response response = responseBuilder.buildResponse("http://localhost:7771/EidasNode/ConnectorResponderMetadata",
+                Collections.singletonMap(ResponseBuilder.InputType.STATUS, Optional.of(responseBuilder.buildAuthnFailedStatus())));
 
         given()
             .port(port)
@@ -340,15 +351,15 @@ public class EidasClientApplicationTest {
         .then()
             .statusCode(400)
             .body("error", equalTo("Bad Request"))
-            .body("message", equalTo("Error handling message: Message is not schema-valid."));
+            .body("message", equalTo("Invalid SAMLResponse. Error handling message: Message is not schema-valid."));
     }
 
 
     @Test
     public void returnUrl_shouldFail_whenNoUserConsentGiven() {
         ResponseBuilder responseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
-        Response response = responseBuilder.buildResponse("http://localhost:8080/EidasNode/ConnectorResponderMetadata");
-        response.setStatus(responseBuilder.buildRequesterRequestDeniedStatus());
+        Response response = responseBuilder.buildResponse("http://localhost:8080/EidasNode/ConnectorResponderMetadata",
+                Collections.singletonMap(ResponseBuilder.InputType.STATUS, Optional.of(responseBuilder.buildRequesterRequestDeniedStatus())));
 
         given()
             .port(port)
@@ -363,14 +374,16 @@ public class EidasClientApplicationTest {
     }
 
     @Test
-    public void returnUrl_shouldFail_whenInternaError() {
+    public void returnUrl_shouldFail_whenInternalError() {
+        ResponseBuilder responseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
+        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
         Mockito.when(responseAssertionDecryptionCredential.getPrivateKey()).thenThrow(new RuntimeException("Ooops! An internal error occurred!"));
 
         given()
             .port(port)
             .contentType("application/x-www-form-urlencoded")
             .formParam("relayState", "some-state")
-            .formParam("SAMLResponse", Base64.getEncoder().encodeToString(OpenSAMLUtils.getXmlString(new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential).buildResponse("http://localhost:7771/EidasNode/ConnectorResponderMetadata")).getBytes(StandardCharsets.UTF_8)))
+            .formParam("SAMLResponse", Base64.getEncoder().encodeToString(OpenSAMLUtils.getXmlString(responseBuilder.buildResponse("http://localhost:7771/EidasNode/ConnectorResponderMetadata")).getBytes(StandardCharsets.UTF_8)))
         .when()
             .post("/returnUrl")
         .then()
@@ -381,19 +394,187 @@ public class EidasClientApplicationTest {
 
     @Test
     public void returnUrl_shouldFail_whenSAMLResponseParamMissing() {
-        requestSessionService.saveRequestSession("_4ededd23fb88e6964df71b8bdb1c706f", new RequestSession(new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET));
+        ResponseBuilder responseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
+        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
 
         given()
             .port(port)
             .contentType("application/x-www-form-urlencoded")
             .formParam("relayState", "some-state")
-            .formParam("notSAMLResponse", Base64.getEncoder().encodeToString(OpenSAMLUtils.getXmlString(new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential).buildResponse("http://localhost:7771/EidasNode/ConnectorResponderMetadata")).getBytes(StandardCharsets.UTF_8)))
+            .formParam("notSAMLResponse", Base64.getEncoder().encodeToString(OpenSAMLUtils.getXmlString(responseBuilder.buildResponse("http://localhost:7771/EidasNode/ConnectorResponderMetadata")).getBytes(StandardCharsets.UTF_8)))
         .when()
             .post("/returnUrl")
         .then()
             .statusCode(400)
             .body("error", equalTo("Bad Request"))
-            .body("message", equalTo("Failed to read SAMLResponse. null"));
+            .body("message", equalTo("Required String parameter 'SAMLResponse' is not present"));
+    }
+
+    @Test
+    public void returnUrl_shouldFail_whenSAMLResponseParamEmpty() {
+        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
+
+        given()
+            .port(port)
+            .contentType("application/x-www-form-urlencoded")
+            .formParam("relayState", "some-state")
+            .formParam("SAMLResponse", "")
+        .when()
+            .post("/returnUrl")
+        .then()
+            .statusCode(400)
+            .body("error", equalTo("Bad Request"))
+            .body("message", equalTo("Required String parameter 'SAMLResponse' is not present"));
+    }
+
+    @Test
+    public void returnUrl_shouldFail_whenSAMLResponseIsNotSigned() {
+        ResponseBuilder responseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
+        Response response = responseBuilder.buildResponse("http://localhost:7771/EidasNode/ConnectorResponderMetadata");
+        response.setSignature(null);
+
+        given()
+            .port(port)
+            .contentType("application/x-www-form-urlencoded")
+            .formParam("SAMLResponse", Base64.getEncoder().encodeToString(OpenSAMLUtils.getXmlString(response).getBytes(StandardCharsets.UTF_8)))
+        .when()
+            .post("/returnUrl")
+        .then()
+            .statusCode(400)
+            .body("error", equalTo("Bad Request"))
+            .body("message", equalTo("Invalid SAMLResponse. Response not signed."));
+    }
+
+    @Test
+    public void returnUrl_shouldFail_whenSAMLResponseSignatureDoesNotVerify() {
+        ResponseBuilder responseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
+        Response response = responseBuilder.buildResponse("http://localhost:7771/EidasNode/ConnectorResponderMetadata");
+        response.setInResponseTo("new-inResponseTo-to-invalidate-signature");
+
+        given()
+            .port(port)
+            .contentType("application/x-www-form-urlencoded")
+            .formParam("SAMLResponse", Base64.getEncoder().encodeToString(OpenSAMLUtils.getXmlString(response).getBytes(StandardCharsets.UTF_8)))
+        .when()
+            .post("/returnUrl")
+        .then()
+            .statusCode(400)
+            .body("error", equalTo("Bad Request"))
+            .body("message", equalTo("Invalid SAMLResponse. Invalid response signature."));
+    }
+
+    @Test
+    public void returnUrl_shouldFail_whenNoRequestSessionPresent() {
+        ResponseBuilder responseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
+        Response response = responseBuilder.buildResponse("http://localhost:7771/EidasNode/ConnectorResponderMetadata");
+
+        given()
+            .port(port)
+            .contentType("application/x-www-form-urlencoded")
+            .formParam("SAMLResponse", Base64.getEncoder().encodeToString(OpenSAMLUtils.getXmlString(response).getBytes(StandardCharsets.UTF_8)))
+        .when()
+            .post("/returnUrl")
+        .then()
+            .statusCode(400)
+            .body("error", equalTo("Bad Request"))
+            .body("message", equalTo("Invalid SAMLResponse. No corresponding SAML request session found for the given response!"));
+    }
+
+    @Test
+    public void returnUrl_shouldFail_whenRequestSessionHasExpired() {
+        ResponseBuilder responseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
+        DateTime issueInstant = new DateTime().minusSeconds(eidasClientProperties.getResponseMessageLifeTime()).minusSeconds(eidasClientProperties.getAcceptedClockSkew()).minusSeconds(1);
+        saveNewRequestSession(responseBuilder.DEFAULT_IN_RESPONSE_TO, issueInstant, AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
+        Response response = responseBuilder.buildResponse("http://localhost:7771/EidasNode/ConnectorResponderMetadata");
+
+        given()
+            .port(port)
+            .contentType("application/x-www-form-urlencoded")
+            .formParam("SAMLResponse", Base64.getEncoder().encodeToString(OpenSAMLUtils.getXmlString(response).getBytes(StandardCharsets.UTF_8)))
+        .when()
+            .post("/returnUrl")
+        .then()
+            .statusCode(400)
+            .body("error", equalTo("Bad Request"))
+            .body("message", equalTo(String.format("Invalid SAMLResponse. Request session with ID %s has expired!", responseBuilder.DEFAULT_IN_RESPONSE_TO)));
+    }
+
+    @Test
+    public void returnUrl_shouldFail_whenResponseIssueInstantHasExpired() {
+        ResponseBuilder responseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
+        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
+        DateTime pastTime = new DateTime().minusSeconds(eidasClientProperties.getResponseMessageLifeTime()).minusSeconds(eidasClientProperties.getAcceptedClockSkew()).minusSeconds(1);
+        Response response = responseBuilder.buildResponse("http://localhost:7771/EidasNode/ConnectorResponderMetadata",
+                Collections.singletonMap(ResponseBuilder.InputType.ISSUE_INSTANT, Optional.of(pastTime)));
+
+        given()
+            .port(port)
+            .contentType("application/x-www-form-urlencoded")
+            .formParam("SAMLResponse", Base64.getEncoder().encodeToString(OpenSAMLUtils.getXmlString(response).getBytes(StandardCharsets.UTF_8)))
+        .when()
+            .post("/returnUrl")
+        .then()
+            .statusCode(400)
+            .body("error", equalTo("Bad Request"))
+            .body("message", equalTo("Invalid SAMLResponse. Error handling message: Message was rejected due to issue instant expiration"));
+    }
+
+    @Test
+    public void returnUrl_shouldFail_whenResponseIssueInstantIsInTheFuture() {
+        ResponseBuilder responseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
+        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
+        DateTime futureTime = new DateTime().plusSeconds(1).plusSeconds(eidasClientProperties.getResponseMessageLifeTime()).plusSeconds(eidasClientProperties.getAcceptedClockSkew());
+        Response response = responseBuilder.buildResponse("http://localhost:7771/EidasNode/ConnectorResponderMetadata",
+                Collections.singletonMap(ResponseBuilder.InputType.ISSUE_INSTANT, Optional.of(futureTime)));
+
+        given()
+            .port(port)
+            .contentType("application/x-www-form-urlencoded")
+            .formParam("SAMLResponse", Base64.getEncoder().encodeToString(OpenSAMLUtils.getXmlString(response).getBytes(StandardCharsets.UTF_8)))
+        .when()
+            .post("/returnUrl")
+        .then()
+            .statusCode(400)
+            .body("error", equalTo("Bad Request"))
+            .body("message", equalTo("Invalid SAMLResponse. Error handling message: Message was rejected because it was issued in the future"));
+    }
+
+    @Test
+    public void returnUrl_shouldFail_whenResponseInResponseToIsInvalid() {
+        ResponseBuilder responseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
+        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
+        Response response = responseBuilder.buildResponse("http://localhost:7771/EidasNode/ConnectorResponderMetadata",
+                Collections.singletonMap(ResponseBuilder.InputType.IN_RESPONSE_TO, Optional.of("invalid-inResponseTo")));
+
+        given()
+            .port(port)
+            .contentType("application/x-www-form-urlencoded")
+            .formParam("SAMLResponse", Base64.getEncoder().encodeToString(OpenSAMLUtils.getXmlString(response).getBytes(StandardCharsets.UTF_8)))
+        .when()
+            .post("/returnUrl")
+        .then()
+            .statusCode(400)
+            .body("error", equalTo("Bad Request"))
+            .body("message", equalTo("Invalid SAMLResponse. No corresponding SAML request session found for the given response!"));
+    }
+
+    @Test
+    public void returnUrl_shouldFail_whenAssertionInResponseToIsInvalid() {
+        ResponseBuilder responseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
+        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
+        Response response = responseBuilder.buildResponse("http://localhost:7771/EidasNode/ConnectorResponderMetadata",
+                Collections.singletonMap(ResponseBuilder.InputType.ASSERTION_IN_RESPONSE_TO, Optional.of("invalid-inResponseTo")));
+
+        given()
+            .port(port)
+            .contentType("application/x-www-form-urlencoded")
+            .formParam("SAMLResponse", Base64.getEncoder().encodeToString(OpenSAMLUtils.getXmlString(response).getBytes(StandardCharsets.UTF_8)))
+        .when()
+            .post("/returnUrl")
+        .then()
+            .statusCode(400)
+            .body("error", equalTo("Bad Request"))
+            .body("message", equalTo("Invalid SAMLResponse. No corresponding SAML request session found for the given response assertion!"));
     }
 
     @Test
@@ -444,6 +625,11 @@ public class EidasClientApplicationTest {
     @AfterClass
     public static void teardown() throws Exception {
         wireMockServer.stop();
+    }
+
+    private void saveNewRequestSession(String requestID, DateTime issueInstant, AssuranceLevel loa, List<EidasAttribute> requestedAttributes) {
+        RequestSession requestSession = new RequestSession(requestID, issueInstant, loa, requestedAttributes);
+        requestSessionService.saveRequestSession(requestID, requestSession);
     }
 
 }

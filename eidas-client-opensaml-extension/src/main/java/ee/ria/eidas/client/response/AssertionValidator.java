@@ -5,7 +5,6 @@ import ee.ria.eidas.client.authnrequest.EidasAttribute;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.exception.InvalidRequestException;
 import ee.ria.eidas.client.session.RequestSession;
-import ee.ria.eidas.client.session.RequestSessionService;
 import org.apache.commons.collections.CollectionUtils;
 import org.joda.time.DateTime;
 import org.opensaml.saml.saml2.core.*;
@@ -25,24 +24,20 @@ public class AssertionValidator {
     private String spEntityID;
     private int maxAuthenticationLifetime;
 
-    private RequestSessionService requestSessionService;
-
-    public AssertionValidator(EidasClientProperties properties, RequestSessionService requestSessionService) {
+    public AssertionValidator(EidasClientProperties properties) {
         this.acceptedClockSkew = properties.getAcceptedClockSkew();
         this.maxAuthenticationLifetime = properties.getMaximumAuthenticationLifetime();
         this.idpMetadataUrl = properties.getIdpMetadataUrl();
         this.callbackUrl = properties.getCallbackUrl();
         this.spEntityID = properties.getSpEntityId();
-
-        this.requestSessionService = requestSessionService;
     }
 
-    public void validate(Assertion assertion) {
+    public void validate(Assertion assertion, RequestSession requestSession) {
         validateEidasRestrictions(assertion);
-        validateExistingRequestSession(assertion);
         validateIssueInstant(assertion);
         validateIssuer(assertion.getIssuer());
         validateSubject(assertion.getSubject());
+        validateExistingRequestSession(assertion, requestSession);
         validateConditions(assertion.getConditions());
         validateAuthnStatements(assertion.getAuthnStatements());
     }
@@ -67,13 +62,11 @@ public class AssertionValidator {
         return attributes;
     }
 
-    private synchronized void validateExistingRequestSession(Assertion assertion) {
+    private void validateExistingRequestSession(Assertion assertion, RequestSession requestSession) {
         String requestID = assertion.getSubject().getSubjectConfirmations().get(0).getSubjectConfirmationData().getInResponseTo();
-        RequestSession requestSession = requestSessionService.getRequestSession(requestID);
-        if (requestSession == null) {
+        if (requestSession == null || !requestSession.getRequestId().equals(requestID)) {
             throw new InvalidRequestException("No corresponding SAML request session found for the given response assertion!");
         } else {
-            requestSessionService.removeRequestSession(requestID);
             DateTime now = new DateTime(requestSession.getIssueInstant().getZone());
             if (now.isAfter(requestSession.getIssueInstant().plusSeconds(maxAuthenticationLifetime).plusSeconds(acceptedClockSkew))) {
                 throw new InvalidRequestException("Request session with ID " + requestID + " has expired!");
@@ -101,8 +94,11 @@ public class AssertionValidator {
         if (assertion.getAttributeStatements() == null || assertion.getAttributeStatements().size() != 1 ) {
             throw new InvalidRequestException("Assertion must contain exactly 1 AttributeStatement!");
         }
+        if (assertion.getAuthnStatements().get(0).getAuthnContext() == null) {
+            throw new InvalidRequestException("AuthnStatement must contain AuthnContext!");
+        }
         if (assertion.getAuthnStatements().get(0).getAuthnContext().getAuthnContextClassRef() == null) {
-            throw new InvalidRequestException("Authncontext must contain AuthnContextClassRef!");
+            throw new InvalidRequestException("AuthnContext must contain AuthnContextClassRef!");
         }
     }
 
@@ -185,7 +181,7 @@ public class AssertionValidator {
     private void validateNotOnOrAfter(Conditions conditions) {
         DateTime now = new DateTime(conditions.getNotOnOrAfter().getZone());
         if (conditions.getNotOnOrAfter().plusSeconds(acceptedClockSkew).isBefore(now)) {
-            throw new InvalidRequestException("SubjectConfirmationData NotOnOrAfter is not valid!");
+            throw new InvalidRequestException("Assertion condition NotOnOrAfter is not valid!");
         }
     }
 

@@ -31,7 +31,7 @@ public class ControllerExceptionHandler {
         LOGGER.error("Bad request!", exception);
 
         if (exception instanceof MethodArgumentTypeMismatchException) {
-            String name = ((MethodArgumentTypeMismatchException)exception).getName();
+            String name = ((MethodArgumentTypeMismatchException) exception).getName();
             return getMap(HttpStatus.BAD_REQUEST, "Invalid value for parameter " + name);
         } else {
             return getMap(HttpStatus.BAD_REQUEST, exception.getMessage());

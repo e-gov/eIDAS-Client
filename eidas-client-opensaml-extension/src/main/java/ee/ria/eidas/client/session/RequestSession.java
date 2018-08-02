@@ -8,14 +8,20 @@ import java.util.List;
 
 public class RequestSession {
 
-    private DateTime issueInstant;
-    private AssuranceLevel loa;
-    private List<EidasAttribute> requestedAttributes;
+    private final String requestId;
+    private final DateTime issueInstant;
+    private final AssuranceLevel loa;
+    private final List<EidasAttribute> requestedAttributes;
 
-    public RequestSession(DateTime issueInstant, AssuranceLevel loa, List<EidasAttribute> requestedAttributes) {
+    public RequestSession(String requestId, DateTime issueInstant, AssuranceLevel loa, List<EidasAttribute> requestedAttributes) {
+        this.requestId = requestId;
         this.issueInstant = issueInstant;
         this.loa = loa;
         this.requestedAttributes = requestedAttributes;
+    }
+
+    public String getRequestId() {
+        return requestId;
     }
 
     public DateTime getIssueInstant() {
