@@ -22,7 +22,7 @@ Rakenduse seadistamine toimib läbi keskse konfiguratsioonfaili.
 
 ### Logimine
 
-Logimine teostatakse läbi SLF4J kasutades Logback raamistikku. Seetõttu on võimalik logimist seadistada läbi tavalise Logback konfiguratsioonifaili. Vaikimisi logitakse INFO tasemel ja kõik logid juhitakse süsteemi konsooli. Täiendavaid väljundkanaleid on võimalik vajadusel seadistada.
+Logimine teostatakse läbi SLF4J kasutades Log4j2 raamistikku. Seetõttu on võimalik logimist seadistada läbi tavalise Log4j2 konfiguratsioonifaili. Vaikimisi logitakse paketis `ee.ria.eidas.client` aset leidvad sündmused INFO tasemel ja kõik muu WARN tasemel ning kõik logid juhitakse süsteemi konsooli. Täiendavaid väljundkanaleid on võimalik vajadusel seadistada.
 
 ## Pakutavad liidesed
 
