@@ -10,16 +10,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Configuration
-public class IncidentLoggingConfiguration {
+public class LoggingConfiguration {
 
     @Bean
-    public FilterRegistrationBean incidentLoggingMDCServletFilter() {
+    public FilterRegistrationBean loggingMDCServletFilter() {
         final Map<String, String> initParams = new HashMap<>();
         final FilterRegistrationBean bean = new FilterRegistrationBean();
-        bean.setFilter(new IncidentLoggingMDCServletFilter());
+        bean.setFilter(new LoggingMDCServletFilter());
         bean.setUrlPatterns(Collections.singleton("/*"));
         bean.setInitParameters(initParams);
-        bean.setName("incidentLoggingMDCServletFilter");
+        bean.setName("loggingMDCServletFilter");
         bean.setOrder(Ordered.HIGHEST_PRECEDENCE + 1);
         return bean;
     }

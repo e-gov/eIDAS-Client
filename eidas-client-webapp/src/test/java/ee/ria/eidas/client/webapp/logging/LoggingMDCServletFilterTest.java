@@ -18,15 +18,15 @@ import java.io.IOException;
 import java.util.Base64;
 import java.util.function.BiConsumer;
 
-public class IncidentLoggingMDCServletFilterTest {
+public class LoggingMDCServletFilterTest {
 
     private static final String REQUEST_ID_REGEX = "[A-Z0-9]{16}";
 
-    private IncidentLoggingMDCServletFilter servletFilter;
+    private LoggingMDCServletFilter servletFilter;
 
     @Before
     public void setUp() {
-        servletFilter = new IncidentLoggingMDCServletFilter();
+        servletFilter = new LoggingMDCServletFilter();
     }
 
     @Test
