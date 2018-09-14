@@ -90,7 +90,9 @@ public class AuthResponseService {
             Assertion assertion = decryptAssertion(encryptedAssertion);
             verifyAssertionSignature(assertion);
             validateAssertion(assertion, requestSession);
-            LOGGER.debug("Decrypted Assertion: {}", OpenSAMLUtils.getXmlString(assertion));
+
+            if (LOGGER.isDebugEnabled())
+                LOGGER.debug("Decrypted Assertion: {}", OpenSAMLUtils.getXmlString(assertion));
 
             return new AuthenticationResult(assertion);
         } catch (InvalidRequestException exception) {
@@ -112,7 +114,11 @@ public class AuthResponseService {
             byte[] decodedSamlResponse = Base64.getDecoder().decode(encodedSamlResponse);
             Response samlResponse = (Response) XMLObjectSupport.unmarshallFromInputStream(
                     OpenSAMLConfiguration.getParserPool(), new ByteArrayInputStream(decodedSamlResponse));
-            LOGGER.info(OpenSAMLUtils.getXmlString(samlResponse));
+
+            LOGGER.info("SAML response ID: " + samlResponse.getID());
+            if (LOGGER.isDebugEnabled())
+                LOGGER.debug(OpenSAMLUtils.getXmlString(samlResponse));
+
             return samlResponse;
         } catch (Exception e) {
             throw new InvalidRequestException("Failed to read SAMLResponse. " + e.getMessage(), e);
@@ -137,7 +143,7 @@ public class AuthResponseService {
             Credential credential = idpMetadataResolver.responseSignatureTrustEngine().getCredentialResolver().resolveSingle(criteriaSet);
             SignatureValidator.validate(samlResponse.getSignature(), credential);
 
-            LOGGER.info("SAML Response signature verified");
+            LOGGER.debug("SAML Response signature verified");
         } catch (SignatureException | ResolverException e) {
             throw new InvalidRequestException("Invalid response signature.");
         }
@@ -265,7 +271,7 @@ public class AuthResponseService {
             Credential credential = idpMetadataResolver.responseSignatureTrustEngine().getCredentialResolver().resolveSingle(criteriaSet);
             SignatureValidator.validate(assertion.getSignature(), credential);
 
-            LOGGER.info("SAML Assertion signature verified");
+            LOGGER.debug("SAML Assertion signature verified");
         } catch (SignatureException | ResolverException e) {
             throw new EidasClientException("Signature verification failed!", e);
         }

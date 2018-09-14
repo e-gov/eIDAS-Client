@@ -6,6 +6,8 @@
 Kõik päringud ja vastused esitatakse UTF-8 kodeeringus.
 HTTPS kasutamine on kohustuslik. Soovituslik on kasutada kahesuunalist HTTPS-i.
 
+`X-Request-ID` ja `X-Correlation-ID` päiste kasutamine on soovituslik. Päiste kasutamisel logitakse vastavate päiste väärtused logikirjetes `requestId` ja `sessionId` väärtustena, mis lihtsustab oluliselt logisündmuste seostamist erinevate süsteemi osade vahel.
+
 Meetod | HTTP päring | Kirjeldus
 ------------- | ------------- | -------------
 [**login**](Service-API.md#login) | **GET** /login | Moodustab ja tagastab ülepiirilise isikutuvastusprotsessi algatamise jaoks vajaliku [päringu](https://e-gov.github.io/eIDAS-Connector/Spetsifikatsioon#6-autentimisp%C3%A4ring) koos HTML ümbersuunamisvormiga.

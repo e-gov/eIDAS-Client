@@ -63,6 +63,7 @@ eidas.client.callbackUrl = https://eidas-client.dev/returnUrl
 eidas.client.availableCountries = EE,CA,CD
 ```
 
+<a name="war_deployment"></a>
 ## 4. Paigaldamine war failina Tomcat rakendusserverisse
 
 1. Järgi [**juhiseid**](../README.md) ning ehita kokku eIDAS-Client `war` fail koos näidis konfiguratsioonifailiga.
@@ -78,17 +79,7 @@ Rakenduse seadistamine toimib läbi keskse Spring boot konfiguratsioonifaili - `
 
 Juhul kui konfiguratsioonifaili asukohta ei täpsustata või fail pole ligipääsetav, rakenduvad vaikeseadistused. Vaikeseadistust on võimalik muuta, andes käivitamisel kaasa oma konfiguratisoonifaili koos soovitud parameetritega.
 
-### 5.1 Logimine
-
-Vaikimisi logitakse `INFO` tasemel rakenduse konsooli.
-
-Tabel 5.1 - Logi seadistus
-
-| Parameeter        | Kohustuslik | Kirjeldus, näide |
-| :---------------- | :---------- | :----------------|
-| `logging.level.ee.ria.eidas.client` | Ei | Logimise tase. Üks järgnevatest väärtustest: `ERROR`, `WARN`, `INFO`, `DEBUG`, `TRACE` |
-
-### 5.2 Rakenduse oleku pärimine
+### 5.1 Rakenduse oleku pärimine
 
 Rakenduse oleku info on kättesaadav otspunktilt **/heartbeat** või **/heaartbeat.json**.
 
@@ -97,9 +88,9 @@ Rakenduse oleku info kuvamiseks kasutatakse Spring Boot Actuator raamistikku. Va
 Lisaotspunkte on võimalik vajadusel seadistada vastavalt juhendile: <https://docs.spring.io/spring-boot/docs/1.5.10.RELEASE/reference/html/production-ready-endpoints.html> (NB! rakendust war failina eraldiseisvasse Tomcat rakendusserverisse paigaldades on otspunktide seadistus piiratud lisa otspunktide sisse- ja väljalülitamisega).
 
 
-### 5.3 Seadistusparameetrid
+### 5.2 Seadistusparameetrid
 
-Tabel 5.2 - Teenusepakkuja metateabe seadistus
+Tabel 5.1 - Teenusepakkuja metateabe seadistus
 
 | Parameeter        | Kohustuslik | Kirjeldus, näide |
 | :---------------- | :---------- | :----------------|
@@ -116,14 +107,14 @@ Tabel 5.2 - Teenusepakkuja metateabe seadistus
 | `eidas.client.spType` | Ei | Lubatud väärtused `public` ja `private`. EIDAS spetsiifiline parameeter metateabes `/md:EntityDescriptor/md:Extensions/eidas:SPType`. Vaikimisi `public`. |
 
 
-Tabel 5.3 - Konnektorteenuse metateabe küsimise seadistus
+Tabel 5.2 - Konnektorteenuse metateabe küsimise seadistus
 
 | Parameeter        | Kohustuslik | Kirjeldus, näide |
 | :---------------- | :---------- | :----------------|
 | `eidas.client.idpMetadataUrl`  | Jah | URL. Konnektorteenuse metateabe asukoht. https://eidastest.eesti.ee/EidasNode/ConnectorResponderMetadata |
 | `eidas.client.idpMetadataSigningCertificateKeyId` | Ei | Konnektorteeenuse metateabe allkirjastamiseks kasutatud sertifikaadi alias võtmehoidlas. Vaikimisi alias: `metadata`. |
 
-Tabel 5.4 - Saadetava AuthnRequesti ja SAML vastuse seadistus
+Tabel 5.3 - Saadetava AuthnRequesti ja SAML vastuse seadistus
 
 | Parameeter        | Kohustuslik | Kirjeldus, näide |
 | :---------------- | :---------- | :----------------|
@@ -137,9 +128,37 @@ Tabel 5.4 - Saadetava AuthnRequesti ja SAML vastuse seadistus
 | `eidas.client.availableCountries` | Ei | Lubatud riigikoodid. |
 | `eidas.client.defaultLoa` | Ei | EIDAS tagatistase juhul kui kasutaja tagatistaseme ise määramata. Lubatud väärtused: 'LOW', 'SUBSTANTIAL', 'HIGH'. Vaikimisi 'SUBSTANTIAL'. |
 
-Tabel 5.5 - heartbeat otspunkti seadistus
+Tabel 5.4 - heartbeat otspunkti seadistus
 
 | Parameeter        | Kohustuslik | Kirjeldus, näide |
 | :---------------- | :---------- | :----------------|
 | `endpoints.heartbeat.timeout`  | Ei | Sõltuvate süsteemise kontrollimisel tehtava päringu puhul maksimaalne vastuse ooteag sekundites. Vaikimisi 3 sekundit. |
+
+
+## 6. Logimine
+----------------
+
+Logimiseks kasutatakse [Log4j2 raamistikku](https://logging.apache.org/log4j/2.x/index.html), mida on võimalik seadistada läbi [XML konfiguratsioonifaili](https://logging.apache.org/log4j/2.x/manual/configuration.html) (`log4j2.xml`).
+
+Rakenduses on kaasas [vaikeseadistusega konfiguratsioonifail](../eidas-client-webapp/src/main/resources/log4j2.xml), mis määrab logimise vaikeväljundiks süsteemi konsooli ning eIDAS-kliendi pakettides aset leidvate sündmuste logimise tasemeks `INFO`. Kõik muud sündmused logitakse tasemel `WARN`.
+Vaikeseadistuses on võimalik juhtida logimise väljundit ning eIDAS-kliendi-spetsiifiliste logisündmuste logimise taset.
+
+Tabel 6.1 - Vaikekonfiguratsioonifaili seadistatavad parameetrid
+
+| Parameeter        | Kirjeldus | Vaikeväärtus |
+| :---------------- | :---------- | :----------------|
+| `eidas.client.log.pattern` | Logisündmuse muster. | `{"date":"%d{yyyy-MM-dd'T'HH:mm:ss,SSSZ}", "level":"%level", "request":"%X{request}", "requestId":"%X{requestId}", "sessionId":"%X{sessionId}", "logger":"%logger", "thread":"%thread", "msg":"%m%throwable"}%n` |
+| `eidas.client.log.level` | eIDAS-kliendi-spetsiifiliste sündmuste logimise tase. Üks järgnevatest väärtustest: `ERROR`, `WARN`, `INFO`, `DEBUG`, `TRACE` | `info` |
+
+Nende parameetrite vaikeväärtusi on võimalik muuta rakenduse käivitamisel etteantavate süsteemiparameetrite abil (vt. [Paigaldamine](Configuration.md#war_deployment) punkt 3), näiteks:
+
+```
+export JAVA_OPTS="-Deidas.client.log.pattern=%m%n -Deidas.client.log.level=debug"
+```
+
+Vajadusel on võimalik vaikekonfiguratsioonifaili asemel oma konfiguratsioonifaili kasutada. Selleks tuleb uue faili asukoht anda rakendusele käivitamisel süsteemiparameetrite abil (vt. [Paigaldamine](Configuration.md#war_deployment) punkt 3), näiteks:
+
+```
+export JAVA_OPTS="-Dlogging.config=/etc/eidas-client/log4j2.xml"
+```
 
