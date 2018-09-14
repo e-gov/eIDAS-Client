@@ -15,20 +15,20 @@ import java.util.Collections;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(
-        classes = IncidentLoggingConfiguration.class,
+        classes = LoggingConfiguration.class,
         initializers = ConfigFileApplicationContextInitializer.class)
-public class IncidentLoggingConfigurationTest {
+public class LoggingConfigurationTest {
 
     @Autowired
     private ApplicationContext applicationContext;
 
     @Test
     public void verifyIncidentLoggingMDCServletFilterBeanPresence() {
-        Object bean = applicationContext.getBean("incidentLoggingMDCServletFilter");
+        Object bean = applicationContext.getBean("loggingMDCServletFilter");
         Assert.assertEquals(FilterRegistrationBean.class, bean.getClass());
 
         final FilterRegistrationBean filterRegistrationBean = (FilterRegistrationBean) bean;
-        Assert.assertEquals(IncidentLoggingMDCServletFilter.class, filterRegistrationBean.getFilter().getClass());
+        Assert.assertEquals(LoggingMDCServletFilter.class, filterRegistrationBean.getFilter().getClass());
         Assert.assertEquals(Collections.singleton("/*"), filterRegistrationBean.getUrlPatterns());
         Assert.assertEquals(Ordered.HIGHEST_PRECEDENCE + 1, filterRegistrationBean.getOrder());
     }

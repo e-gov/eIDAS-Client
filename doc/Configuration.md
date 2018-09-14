@@ -140,10 +140,35 @@ Tabel 5.4 - heartbeat otspunkti seadistus
 
 Logimiseks kasutatakse [Log4j2 raamistikku](https://logging.apache.org/log4j/2.x/index.html), mida on võimalik seadistada läbi [XML konfiguratsioonifaili](https://logging.apache.org/log4j/2.x/manual/configuration.html) (`log4j2.xml`).
 
+### 6.1. Logimise vaikekonfiguratsioon
+
 Rakenduses on kaasas [vaikeseadistusega konfiguratsioonifail](../eidas-client-webapp/src/main/resources/log4j2.xml), mis määrab logimise vaikeväljundiks süsteemi konsooli ning eIDAS-kliendi pakettides aset leidvate sündmuste logimise tasemeks `INFO`. Kõik muud sündmused logitakse tasemel `WARN`.
+Vaikeseadistuses väljastatakse logikirjed JSON kujul, iga logikirje lõpetab reavahetuse sümbol `\n`.
+
+Tabel 6.1 - Logikirje struktuur
+
+| Väli         | Kirjeldus | Alati väärtustatud |
+| :----------- | :-------- | :----------------- |
+| **date** | Sündmuse kuupäev ja kellaaeg ISO-8601 formaadis. Näide: `2018-09-13T10:06:50,682+0000` | Jah |
+| **level** | Logisündmuse tase. Võimalikud väärtused (vähim tõsisest kõige tõsisemani): `TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR`, `FATAL` | Jah |
+| **request** | Päringu meetod ja URL. Väärtustamata, kui logisündmus ei ole väljastatud päringu käigus. Näide: `GET http://eidas-client.arendus.kit:8080/login` | Ei |
+| **requestId** | Päringu `X-Request-ID` päise väärtus, selle puudumisel päringut identifitseeriv juhugenereeritud 16 sümboliline tähtede-numbrite kombinatsioon. Väärtustamata, kui logisündmus ei ole väljastatud päringu käigus. | Ei |
+| **sessionId** | Päringu `X-Correlation-ID` päise väärtus, selle puudumisel sessiooni ID-st genereeritud **sha256** räsi base64 kujul. Väärtustamata, kui logisündmus ei ole väljastatud päringu käigus. | Ei |
+| **logger** | Logija nimi. | Jah |
+| **thread** | Lõime nimi. | Jah |
+| **msg** | Logisõnum. | Jah |
+
+Näide:
+
+```
+{"date":"2018-09-13T10:06:50,682+0000", "level":"INFO", "request":"GET http://eidas-client.arendus.kit:8080/login", "requestId":"0VVIBKN0GMZAKCVP", "sessionId":"LgoVYrdPv4PiHkRFGLfMD9h08dqpOC9NiVAQDL0hpGw=", "logger":"ee.ria.eidas.client.AuthInitiationService", "thread":"http-nio-8080-exec-1", "msg":"SAML request ID: _8d4900cb8ae92034fa2cd89e6d8e8d89"}
+```
+
+### 6.2 Vaikekonfiguratsiooni seadistamine
+
 Vaikeseadistuses on võimalik juhtida logimise väljundit ning eIDAS-kliendi-spetsiifiliste logisündmuste logimise taset.
 
-Tabel 6.1 - Vaikekonfiguratsioonifaili seadistatavad parameetrid
+Tabel 6.2 - Vaikekonfiguratsioonifaili seadistatavad parameetrid
 
 | Parameeter        | Kirjeldus | Vaikeväärtus |
 | :---------------- | :---------- | :----------------|
@@ -155,6 +180,16 @@ Nende parameetrite vaikeväärtusi on võimalik muuta rakenduse käivitamisel et
 ```
 export JAVA_OPTS="-Deidas.client.log.pattern=%m%n -Deidas.client.log.level=debug"
 ```
+
+Tabel 6.3 - Logimisel saadaolevad **MDC** (_Mapped Diagnostic Context_) atribuudid
+
+| Atribuut          | Kirjeldus |
+| :---------------- | :-------- |
+| `request` | Päringu meetod ja URL. Väärtustamata, kui logisündmus ei ole väljastatud päringu käigus. Näide: `GET http://eidas-client.arendus.kit:8080/login` |
+| `requestId` | Päringu `X-Request-ID` päise väärtus, selle puudumisel päringut identifitseeriv juhugenereeritud 16 sümboliline tähtede-numbrite kombinatsioon. Väärtustamata, kui logisündmus ei ole väljastatud päringu käigus. |
+| `sessionId` | Päringu `X-Correlation-ID` päise väärtus, selle puudumisel sessiooni ID-st genereeritud **sha256** räsi base64 kujul. Väärtustamata, kui logisündmus ei ole väljastatud päringu käigus. |
+
+### 6.3 Oma konfiguratsioonifaili kasutamine
 
 Vajadusel on võimalik vaikekonfiguratsioonifaili asemel oma konfiguratsioonifaili kasutada. Selleks tuleb uue faili asukoht anda rakendusele käivitamisel süsteemiparameetrite abil (vt. [Paigaldamine](Configuration.md#war_deployment) punkt 3), näiteks:
 

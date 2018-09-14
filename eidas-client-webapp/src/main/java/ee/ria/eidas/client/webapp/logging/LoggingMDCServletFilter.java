@@ -13,7 +13,7 @@ import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.util.Base64;
 
-public class IncidentLoggingMDCServletFilter implements Filter {
+public class LoggingMDCServletFilter implements Filter {
 
     public static final String MDC_ATTRIBUTE_REQUEST = "request";
     public static final String MDC_ATTRIBUTE_REQUEST_ID = "requestId";
@@ -24,7 +24,7 @@ public class IncidentLoggingMDCServletFilter implements Filter {
 
     private static final char[] REQUEST_ID_CHARACTER_SET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".toCharArray();
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(IncidentLoggingMDCServletFilter.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(LoggingMDCServletFilter.class);
 
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
