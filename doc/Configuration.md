@@ -140,14 +140,14 @@ Tabel 5.4 - heartbeat otspunkti seadistus
 
 Logimiseks kasutatakse [Log4j2 raamistikku](https://logging.apache.org/log4j/2.x/index.html), mida on võimalik seadistada läbi [XML konfiguratsioonifaili](https://logging.apache.org/log4j/2.x/manual/configuration.html) (`log4j2.xml`).
 
-Rakenduses on kaasas [vaikeseadistusega konfiguratsioonifail](eidas-client-webapp/src/main/resources/log4j2.xml), mis määrab logimise vaikeväljundiks süsteemi konsooli ning eIDAS-kliendi pakettides aset leidvate sündmuste logimise tasemeks `INFO`. Kõik muud sündmused logitakse tasemel `WARN`.
+Rakenduses on kaasas [vaikeseadistusega konfiguratsioonifail](../eidas-client-webapp/src/main/resources/log4j2.xml), mis määrab logimise vaikeväljundiks süsteemi konsooli ning eIDAS-kliendi pakettides aset leidvate sündmuste logimise tasemeks `INFO`. Kõik muud sündmused logitakse tasemel `WARN`.
 Vaikeseadistuses on võimalik juhtida logimise väljundit ning eIDAS-kliendi-spetsiifiliste logisündmuste logimise taset.
 
 Tabel 6.1 - Vaikekonfiguratsioonifaili seadistatavad parameetrid
 
 | Parameeter        | Kirjeldus | Vaikeväärtus |
 | :---------------- | :---------- | :----------------|
-| `eidas.client.log.pattern` | Logisündmuse muster. | `{&quot;date&quot;:&quot;%d{yyyy-MM-dd'T'HH:mm:ss,SSSZ}&quot;, &quot;level&quot;:&quot;%level&quot;, &quot;request&quot;:&quot;%X{request}&quot;, &quot;requestId&quot;:&quot;%X{requestId}&quot;, &quot;sessionId&quot;:&quot;%X{sessionId}&quot;, &quot;logger&quot;:&quot;%logger&quot;, &quot;thread&quot;:&quot;%thread&quot;, &quot;msg&quot;:&quot;%m%throwable&quot;}%n` |
+| `eidas.client.log.pattern` | Logisündmuse muster. | `{"date":"%d{yyyy-MM-dd'T'HH:mm:ss,SSSZ}", "level":"%level", "request":"%X{request}", "requestId":"%X{requestId}", "sessionId":"%X{sessionId}", "logger":"%logger", "thread":"%thread", "msg":"%m%throwable"}%n` |
 | `eidas.client.log.level` | eIDAS-kliendi-spetsiifiliste sündmuste logimise tase. Üks järgnevatest väärtustest: `ERROR`, `WARN`, `INFO`, `DEBUG`, `TRACE` | `info` |
 
 Nende parameetrite vaikeväärtusi on võimalik muuta rakenduse käivitamisel etteantavate süsteemiparameetrite abil (vt. [Paigaldamine](Configuration.md#war_deployment) punkt 3), näiteks:
