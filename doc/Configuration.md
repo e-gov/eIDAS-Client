@@ -147,8 +147,8 @@ Vaikeseadistuses väljastatakse logikirjed JSON kujul, iga logikirje lõpetab re
 
 Tabel 6.1 - Logikirje struktuur
 
-| Väli         | Kirjeldus | Alati väärtustatud |
-| :----------- | :-------- | :----------------- |
+| Väli         | Kirjeldus | Alati olemas |
+| :----------- | :-------- | :----------- |
 | **date** | Sündmuse kuupäev ja kellaaeg ISO-8601 formaadis. Näide: `2018-09-13T10:06:50,682+0000` | Jah |
 | **level** | Logisündmuse tase. Võimalikud väärtused (vähim tõsisest kõige tõsisemani): `TRACE`, `DEBUG`, `INFO`, `WARN`, `ERROR`, `FATAL` | Jah |
 | **request** | Päringu meetod ja URL. Väärtustamata, kui logisündmus ei ole väljastatud päringu käigus. Näide: `GET http://eidas-client.arendus.kit:8080/login` | Ei |
@@ -156,12 +156,13 @@ Tabel 6.1 - Logikirje struktuur
 | **sessionId** | Päringu `X-Correlation-ID` päise väärtus, selle puudumisel sessiooni ID-st genereeritud **sha256** räsi base64 kujul. Väärtustamata, kui logisündmus ei ole väljastatud päringu käigus. | Ei |
 | **logger** | Logija nimi. | Jah |
 | **thread** | Lõime nimi. | Jah |
-| **msg** | Logisõnum. | Jah |
+| **message** | Logisõnum. | Jah |
+| **throwable** | Vea _stack trace_. | Ei |
 
 Näide:
 
 ```
-{"date":"2018-09-13T10:06:50,682+0000", "level":"INFO", "request":"GET http://eidas-client.arendus.kit:8080/login", "requestId":"0VVIBKN0GMZAKCVP", "sessionId":"LgoVYrdPv4PiHkRFGLfMD9h08dqpOC9NiVAQDL0hpGw=", "logger":"ee.ria.eidas.client.AuthInitiationService", "thread":"http-nio-8080-exec-1", "msg":"SAML request ID: _8d4900cb8ae92034fa2cd89e6d8e8d89"}
+{"date":"2018-09-13T10:06:50,682+0000", "level":"INFO", "request":"GET http://eidas-client.arendus.kit:8080/login", "requestId":"0VVIBKN0GMZAKCVP", "sessionId":"LgoVYrdPv4PiHkRFGLfMD9h08dqpOC9NiVAQDL0hpGw=", "logger":"ee.ria.eidas.client.AuthInitiationService", "thread":"http-nio-8080-exec-1", "message":"SAML request ID: _8d4900cb8ae92034fa2cd89e6d8e8d89"}
 ```
 
 ### 6.2 Vaikekonfiguratsiooni seadistamine
@@ -172,7 +173,7 @@ Tabel 6.2 - Vaikekonfiguratsioonifaili seadistatavad parameetrid
 
 | Parameeter        | Kirjeldus | Vaikeväärtus |
 | :---------------- | :---------- | :----------------|
-| `eidas.client.log.pattern` | Logisündmuse muster. | `{"date":"%d{yyyy-MM-dd'T'HH:mm:ss,SSSZ}", "level":"%level", "request":"%X{request}", "requestId":"%X{requestId}", "sessionId":"%X{sessionId}", "logger":"%logger", "thread":"%thread", "msg":"%m%throwable"}%n` |
+| `eidas.client.log.pattern` | Logisündmuse muster. | `{"date":"%d{yyyy-MM-dd'T'HH:mm:ss,SSSZ}", "level":"%level"%notEmpty{, "request":"%X{request}"}%notEmpty{, "requestId":"%X{requestId}"}%notEmpty{, "sessionId":"%X{sessionId}"}, "logger":"%logger", "thread":"%thread", "message":"%msg"%notEmpty{, "throwable":"%throwable"}}%n` |
 | `eidas.client.log.level` | eIDAS-kliendi-spetsiifiliste sündmuste logimise tase. Üks järgnevatest väärtustest: `ERROR`, `WARN`, `INFO`, `DEBUG`, `TRACE` | `info` |
 
 Nende parameetrite vaikeväärtusi on võimalik muuta rakenduse käivitamisel etteantavate süsteemiparameetrite abil (vt. [Paigaldamine](Configuration.md#war_deployment) punkt 3), näiteks:
