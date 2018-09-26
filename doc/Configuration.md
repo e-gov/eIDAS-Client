@@ -162,7 +162,7 @@ Tabel 6.1 - Logikirje struktuur
 Näide:
 
 ```
-{"date":"2018-09-13T10:06:50,682+0000", "level":"INFO", "request":"GET http://eidas-client.arendus.kit:8080/login", "requestId":"0VVIBKN0GMZAKCVP", "sessionId":"LgoVYrdPv4PiHkRFGLfMD9h08dqpOC9NiVAQDL0hpGw=", "logger":"ee.ria.eidas.client.AuthInitiationService", "thread":"http-nio-8080-exec-1", "msg":"SAML request ID: _8d4900cb8ae92034fa2cd89e6d8e8d89"}
+{"date":"2018-09-13T10:06:50,682+0000", "level":"INFO", "request":"GET http://eidas-client.arendus.kit:8080/login", "requestId":"0VVIBKN0GMZAKCVP", "sessionId":"LgoVYrdPv4PiHkRFGLfMD9h08dqpOC9NiVAQDL0hpGw=", "logger":"ee.ria.eidas.client.AuthInitiationService", "thread":"http-nio-8080-exec-1", "message":"SAML request ID: _8d4900cb8ae92034fa2cd89e6d8e8d89"}
 ```
 
 ### 6.2 Vaikekonfiguratsiooni seadistamine
