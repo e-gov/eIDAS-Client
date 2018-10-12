@@ -190,6 +190,7 @@ Tabel 6.3 - Logimisel saadaolevad **MDC** (_Mapped Diagnostic Context_) atribuud
 | `requestId` | Päringu `X-Request-ID` päise väärtus, selle puudumisel päringut identifitseeriv juhugenereeritud 16 sümboliline tähtede-numbrite kombinatsioon. Väärtustamata, kui logisündmus ei ole väljastatud päringu käigus. |
 | `sessionId` | Päringu `X-Correlation-ID` päise väärtus, selle puudumisel sessiooni ID-st genereeritud **sha256** räsi base64 kujul. Väärtustamata, kui logisündmus ei ole väljastatud päringu käigus. |
 
+
 ### 6.3 Oma konfiguratsioonifaili kasutamine
 
 Vajadusel on võimalik vaikekonfiguratsioonifaili asemel oma konfiguratsioonifaili kasutada. Selleks tuleb uue faili asukoht anda rakendusele käivitamisel süsteemiparameetrite abil (vt. [Paigaldamine](Configuration.md#war_deployment) punkt 3), näiteks:
@@ -197,4 +198,13 @@ Vajadusel on võimalik vaikekonfiguratsioonifaili asemel oma konfiguratsioonifai
 ```
 export JAVA_OPTS="-Dlogging.config=/etc/eidas-client/log4j2.xml"
 ```
+
+### 6.4 Syslog serveri kasutuselevõtt
+
+Vaikekonfiguratsioonis sisalduv näidisseadistus võimaldab logi saata ka kesksesse syslog serverisse, mis toetab [RFC-5424 sõnumi formaati](https://tools.ietf.org/html/rfc5424.html#section-6.2.1) ning TLS-TCP protokolli. 
+
+Syslog protokolli sõnumiformaati on kitsendatud selliselt, et `facility` kood oleks alati `local1(17)` ja syslog prioriteet vea korral `error(3)` ja muudel juhtudel `notice(5)`.
+
+NB! Logide kesksesse syslog serverisse saatmine ei ole vaikimisi sisselülitatud ning vajab lisaseadistust vastavalt konkreetse keskse syslog serveri parameetritele (serveri asukoht, port ja TLS kanali võtmed tuleb seadistada otse `log4j2.xml` failis.
+
 
