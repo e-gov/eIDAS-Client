@@ -17,7 +17,6 @@ import org.opensaml.messaging.encoder.MessageEncodingException;
 import org.opensaml.saml.common.messaging.context.SAMLEndpointContext;
 import org.opensaml.saml.common.messaging.context.SAMLPeerEntityContext;
 import org.opensaml.saml.saml2.core.AuthnRequest;
-import org.opensaml.saml.saml2.metadata.SingleSignOnService;
 import org.opensaml.security.credential.Credential;
 import org.opensaml.xmlsec.SignatureSigningParameters;
 import org.opensaml.xmlsec.context.SecurityParametersContext;
@@ -131,10 +130,12 @@ public class AuthInitiationService {
             throw new EidasClientException("Error initializing encoder", e);
         }
 
-        LOGGER.info("AuthnRequest: ");
-        LOGGER.info(OpenSAMLUtils.getXmlString(authnRequest));
+        LOGGER.info("SAML request ID: " + authnRequest.getID());
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug("AuthnRequest: {}", OpenSAMLUtils.getXmlString(authnRequest));
+            LOGGER.debug("Redirecting to IDP");
+        }
 
-        LOGGER.info("Redirecting to IDP");
         try {
             encoder.encode();
         } catch (MessageEncodingException e) {

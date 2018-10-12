@@ -9,7 +9,7 @@
 
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
 
-    <body onload="document.forms[0].submit()">
+    <body>
         <noscript>
             <p>
                 <strong>Note:</strong> Since your browser does not support JavaScript,
@@ -33,6 +33,8 @@
                 </div>
             </noscript>
         </form>
+
+        <script type="text/javascript">document.forms[0].submit();</script>
 
     </body>
 </html>
