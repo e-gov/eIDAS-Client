@@ -128,7 +128,13 @@ Tabel 5.3 - Saadetava AuthnRequesti ja SAML vastuse seadistus
 | `eidas.client.availableCountries` | Ei | Lubatud riigikoodid. |
 | `eidas.client.defaultLoa` | Ei | EIDAS tagatistase juhul kui kasutaja tagatistaseme ise määramata. Lubatud väärtused: 'LOW', 'SUBSTANTIAL', 'HIGH'. Vaikimisi 'SUBSTANTIAL'. |
 
-Tabel 5.4 - heartbeat otspunkti seadistus
+Tabel 5.4 - turvaseadistused
+
+| Parameeter        | Kohustuslik | Kirjeldus, näide |
+| :---------------- | :---------- | :----------------|
+| `security.allowedAuthenticationPort` | Ei | Piirab ligipääsu autentimisotspunktidele (`/login` ja `/returnUrl`) vaid kindla pordi kaudu. Lubatud väärtused: täisarv vahemikus 1 - 65535. |
+
+Tabel 5.5 - heartbeat otspunkti seadistus
 
 | Parameeter        | Kohustuslik | Kirjeldus, näide |
 | :---------------- | :---------- | :----------------|
