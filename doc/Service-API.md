@@ -93,6 +93,7 @@ Näide:
 | 400 | Bad request  | Invalid LoA! One of [...] expected. |
 | 400 | Bad request  | Invalid RelayState! Must match the following regexp: [...] |
 | 400 | Bad request  | Invalid AdditionalParameters! Unrecognized attibute(s) provided: [...] |
+| 403 | Forbidden | Endpoint not allowed to be accessed via port number [...] |
 | 405 | Method Not Allowed | Request method [...] not supported |
 | 500 | Internal Server Error | Something went wrong internally. Please consult server logs for further details. |
 
@@ -170,6 +171,7 @@ Näide:
 | :-------------: |:-------------| :-----|
 | 400 | Bad request | Required String parameter 'SAMLResponse' is not present |
 | 400 | Bad request  | Invalid SAMLResponse. [...] |
+| 403 | Forbidden | Endpoint not allowed to be accessed via port number [...] |
 | 405 | Method Not Allowed | Request method [...] not supported |
 | 500 | Internal Server Error | Something went wrong internally. Please consult server logs for further details. |
 
