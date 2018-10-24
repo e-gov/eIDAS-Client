@@ -132,7 +132,7 @@ Tabel 5.4 - turvaseadistused
 
 | Parameeter        | Kohustuslik | Kirjeldus, näide |
 | :---------------- | :---------- | :----------------|
-| `security.allowedAuthenticationPort` | Ei | Piirab ligipääsu autentimisotspunktidele (`/login` ja `/returnUrl`) vaid kindla pordi kaudu. Lubatud väärtused: täisarv vahemikus 1 - 65535. |
+| `security.allowedAuthenticationPort` | Ei | Olemasolu korral piirab ligipääsu autentimisotspunktidele (`/login` ja `/returnUrl`) vaid määratud pordi kaudu, misjuhul nimetatud otspunktide poole pöördumisel muude portide kaudu tagastatakse `403 Forbidden` ja [veakirjeldus JSON objektina](Service-API.md#veakasitlus). Lubatud väärtused: täisarv vahemikus 1 - 65535. |
 
 Tabel 5.5 - heartbeat otspunkti seadistus
 

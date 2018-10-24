@@ -9,6 +9,12 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
 
+/**
+ * This filter allows to limit access (to certain URL patterns) via one specific port.
+ * When incoming request's local port number equals the allowed port number, then the processing of the incoming request is continued as if this filter didn't exist.
+ * When incoming request's local port number is anything else but the allowed port number, then the further processing of the incoming request is stopped
+ * and a 403 response, with a simple JSON object describing the error, is sent.
+ */
 public class AuthenticationPortFilter implements Filter {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationPortFilter.class);

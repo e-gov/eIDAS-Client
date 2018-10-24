@@ -18,6 +18,8 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import static ee.ria.eidas.client.webapp.EidasClientApi.ENDPOINT_AUTHENTICATION_LOGIN;
+import static ee.ria.eidas.client.webapp.EidasClientApi.ENDPOINT_AUTHENTICATION_RETURN_URL;
 import static org.springframework.web.bind.annotation.RequestMethod.GET;
 import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
@@ -38,7 +40,7 @@ public class AuthenticationController {
         binder.registerCustomEditor(String.class, new StringTrimmerEditor(true));
     }
 
-    @RequestMapping(value = "/login", method = GET)
+    @RequestMapping(value = ENDPOINT_AUTHENTICATION_LOGIN, method = GET)
     public void authenticate(HttpServletResponse response,
             @RequestParam("Country") String country,
             @RequestParam(value = "LoA", required=false) AssuranceLevel loa,
@@ -47,7 +49,7 @@ public class AuthenticationController {
         authInitiationService.authenticate(response, country, loa, relayState, additionalAttributes);
     }
 
-    @RequestMapping(value = "/returnUrl", method = POST)
+    @RequestMapping(value = ENDPOINT_AUTHENTICATION_RETURN_URL, method = POST)
     @ResponseBody
     public AuthenticationResult getAuthenticationResult(HttpServletRequest req) throws MissingServletRequestParameterException {
         return authResponseService.getAuthenticationResult(req);
