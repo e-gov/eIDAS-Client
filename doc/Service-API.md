@@ -14,6 +14,7 @@ Meetod | HTTP päring | Kirjeldus
 [**returnUrl**](Service-API.md#returnUrl) | **POST** /returnUrl | Ülepiirilise isikutuvastuse tulemuse kontroll. SAML vastuse valideerimine vastavalt [SAML 2 Web SSO profiilile](https://docs.oasis-open.org/security/saml/v2.0/saml-profiles-2.0-os.pdf) ja [konnektorteenuse spetsifikatsioonile](https://e-gov.github.io/eIDAS-Connector/Spetsifikatsioon#7-autentimisvastus). Kontrollide edukal läbimisel isikuandmete tagastamine.
 [**metadata**](Service-API.md#metadata) | **GET** /metadata | Tagastab eIDAS klient teenuse [SAML metaandmed](https://e-gov.github.io/eIDAS-Connector/Spetsifikatsioon#53-teenusepakkuja-metateave).
 [**heartbeat**](Service-API.md#heartbeat) | **GET** /heartbeat või /heartbeat.json | Tagastab infot eIDAS klient teenuse versiooni ja oleku kohta.
+[**hazelcast**](Service-API.md#hazelcast) | **GET** /hazelcast või /hazelcast.json | Tagastab infot eIDAS klient teenuses jooksva Hazelcast klastri eksemplari kohta. **Vaikimisi välja lülitatud**.
 
 
 <a name="login"></a>
@@ -333,6 +334,81 @@ $ curl http://localhost:8889/heartbeat.json
 ```
 
 
+<a name="hazelcast"></a>
+## **hazelcast**
+
+Juhul kui rakenduses on seadistatud Hazelcast, kuvatakse selle olek ja räsitabelite [metainfo](https://docs.hazelcast.org/docs/3.11/manual/html-single/index.html#map-statistics) Spring Boot Actuator'i otspunkti **/hazelcast** või **/hazelcast.json** kaudu.
+
+NB! otspunkt on vaikimisi välja lülitatud.
+
+
+### Päring
+
+Parameetrid puuduvad.
+
+Näide:
+```bash
+curl 'https://localhost:8889/hazelcast'
+```
+
+### Vastus
+
+| Atribuudi nimi        | Kohustuslik           | Selgitus  |
+| ------------- |:-------------:| :-----|
+| **clusterState** |	Jah | Klastri olek. `ACTIVE` kui klaster on töökorras ja valmis päringuid teenindama. Võimalikud väärtused vastavalt [API dokumentatsioonile](https://docs.hazelcast.org/docs/3.11/manual/html-single/index.html#managing-cluster-and-member-states)  |
+| **clusterSize** |	Jah | Klastriga liitunud liikmete arv.  |
+| **maps** |	Jah | Massiiv klastris loodud räsitabelitest. |
+| **maps[].mapName** |	Jah | Konkreetse räsitabeli nimi. |
+| **maps[].creationTime** |	Jah | Räsitabeli loomise aeg. Unix timestamp formaadis. |
+| **maps[].ownedEntryCount** |	Jah | Kirjete arv kohalikus eksemplaris. |
+| **maps[].backupEntryCount** |	Jah | Varundamiskirjete arv kohalikus eksemplaris. |
+| **maps[].backupCount** |	Jah |  Varukoopiate arv ühe kirje kohta. |
+| **maps[].hitsCount** |	Jah | Kohaliku eksemplari lugemisoperatsioonide loendur. |
+| **maps[].lastUpdateTime** |	Jah | Viimane kirje uuendamise aeg kohalikus eksemplaris. |
+| **maps[].lastAccessTime** |	Jah | Viimane kirje lugemise aeg kohalikus eksemplaris. |
+| **maps[].lockedEntryCount** |	Jah | Lukustatud kirjete arv kohalikus eksemplaris. |
+| **maps[].dirtyEntryCount** |	Jah | Rakendumata uuendustega kirjete arv. |
+| **maps[].totalGetLatency** |	Jah | GET operatsioonide maksimaalne latentsusaeg. |
+| **maps[].totalPutLatency** |	Jah | PUT operatsioonide maksimaalne latentsusaeg. |
+| **maps[].totalRemoveLatency** |	Jah | Kirjete kustutamise maksimaalne latsentsusaeg.  |
+| **maps[].heapCost** |	Jah | Hoitud andmete maht baitides. |
+
+Näide vastuse struktuurist:
+```json
+{
+   "clusterState":"ACTIVE",
+   "clusterSize":3,
+   "maps":[
+      {
+         "mapName":"unansweredRequestsMap",
+         "currentCapacity":0,
+         "creationTime":1541962062911,
+         "ownedEntryCount":0,
+         "backupEntryCount":0,
+         "backupCount":0,
+         "hitsCount":0,
+         "lastUpdateTime":0,
+         "lastAccessTime":0,
+         "lockedEntryCount":0,
+         "dirtyEntryCount":0,
+         "totalGetLatency":0,
+         "totalPutLatency":0,
+         "totalRemoveLatency: ":0,
+         "heapCost":0
+      }
+   ]
+}
+```
+
+**Sisselülitatud Hazelcasti** puhul tagastatakse HTTP staatuskood 200 ning JSON vastus:
+
+Näide:
+```bash
+curl http://localhost:8889/hazelcast.json
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   381    0   381    0     0   8106      0 --:--:-- --:--:-- --:--:--  8106{"clusterState":"ACTIVE","clusterSize":1,"maps":[{"mapName":"unansweredRequestsMap","currentCapacity":0,"creationTime":1541962062911,"ownedEntryCount":0,"backupEntryCount":0,"backupCount":0,"hitsCount":0,"lastUpdateTime":0,"lastAccessTime":0,"lockedEntryCount":0,"dirtyEntryCount":0,"totalGetLatency":0,"totalPutLatency":0,"totalRemoveLatency: ":0,"heapCost":0}]}
+```
 
 
 <a name="veakasitlus"></a>

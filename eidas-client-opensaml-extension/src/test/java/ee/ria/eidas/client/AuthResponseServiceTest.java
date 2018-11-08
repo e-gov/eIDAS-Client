@@ -10,7 +10,7 @@ import ee.ria.eidas.client.exception.InvalidRequestException;
 import ee.ria.eidas.client.fixtures.ResponseBuilder;
 import ee.ria.eidas.client.metadata.IDPMetadataResolver;
 import ee.ria.eidas.client.response.AuthenticationResult;
-import ee.ria.eidas.client.session.RequestSession;
+import ee.ria.eidas.client.session.UnencodedRequestSession;
 import ee.ria.eidas.client.session.RequestSessionService;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
 import net.shibboleth.utilities.java.support.resolver.CriteriaSet;
@@ -384,7 +384,7 @@ public class AuthResponseServiceTest {
     }
 
     private void saveNewRequestSession(String requestID, DateTime issueIntant, AssuranceLevel loa, List<EidasAttribute> requestedAttributes) {
-        RequestSession requestSession = new RequestSession(requestID, issueIntant, loa, requestedAttributes);
+        UnencodedRequestSession requestSession = new UnencodedRequestSession(requestID, issueIntant, loa, requestedAttributes);
         requestSessionService.saveRequestSession(requestID, requestSession);
     }
 

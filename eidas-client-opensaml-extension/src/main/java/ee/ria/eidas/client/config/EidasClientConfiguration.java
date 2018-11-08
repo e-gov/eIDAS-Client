@@ -6,32 +6,26 @@ import ee.ria.eidas.client.exception.EidasClientException;
 import ee.ria.eidas.client.metadata.IDPMetadataResolver;
 import ee.ria.eidas.client.metadata.SPMetadataGenerator;
 import ee.ria.eidas.client.session.RequestSessionService;
-import ee.ria.eidas.client.session.RequestSessionServiceImpl;
+import ee.ria.eidas.client.session.LocalRequestSessionServiceImpl;
 import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
 import net.shibboleth.utilities.java.support.resolver.CriteriaSet;
 import net.shibboleth.utilities.java.support.resolver.Criterion;
 import net.shibboleth.utilities.java.support.resolver.ResolverException;
 import org.opensaml.core.criterion.EntityIdCriterion;
-import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.common.xml.SAMLSchemaBuilder;
-import org.opensaml.saml.metadata.resolver.impl.AbstractReloadingMetadataResolver;
 import org.opensaml.saml.metadata.resolver.impl.PredicateRoleDescriptorResolver;
-import org.opensaml.saml.saml2.metadata.EntityDescriptor;
-import org.opensaml.saml.saml2.metadata.KeyDescriptor;
-import org.opensaml.saml.saml2.metadata.SingleSignOnService;
 import org.opensaml.saml.security.impl.MetadataCredentialResolver;
 import org.opensaml.security.credential.Credential;
 import org.opensaml.security.credential.CredentialSupport;
-import org.opensaml.security.credential.UsageType;
 import org.opensaml.security.credential.impl.KeyStoreCredentialResolver;
 import org.opensaml.security.credential.impl.StaticCredentialResolver;
 import org.opensaml.security.x509.X509Credential;
 import org.opensaml.xmlsec.config.DefaultSecurityConfigurationBootstrap;
 import org.opensaml.xmlsec.keyinfo.KeyInfoCredentialResolver;
-import org.opensaml.xmlsec.signature.impl.X509CertificateImpl;
 import org.opensaml.xmlsec.signature.support.impl.ExplicitKeySignatureTrustEngine;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -41,13 +35,11 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 import org.xml.sax.SAXException;
 
 import javax.xml.validation.Schema;
-import java.io.ByteArrayInputStream;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
-import java.security.cert.CertificateException;
-import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 
 @Configuration
 @EnableConfigurationProperties({
@@ -152,13 +144,14 @@ public class EidasClientConfiguration {
         return new IDPMetadataResolver(eidasClientProperties.getIdpMetadataUrl(), metadataSignatureTrustEngine);
     }
 
-    @Bean
+    @ConditionalOnProperty(name = "eidas.client.hazelcastConfig", matchIfMissing = true)
+    @Bean(name = "requestSessionService")
     public RequestSessionService requestSessionService() {
-        return new RequestSessionServiceImpl(eidasClientProperties);
+        return new LocalRequestSessionServiceImpl(eidasClientProperties);
     }
 
     @Bean
-    public AuthInitiationService authInitiationService(RequestSessionService requestSessionService, @Qualifier("authnReqSigningCredential") Credential signingCredential, IDPMetadataResolver idpMetadataResolver) {
+    public AuthInitiationService authInitiationService(@Qualifier("requestSessionService") RequestSessionService requestSessionService, @Qualifier("authnReqSigningCredential") Credential signingCredential, IDPMetadataResolver idpMetadataResolver) {
         return new AuthInitiationService(requestSessionService, signingCredential, eidasClientProperties, idpMetadataResolver);
     }
 
