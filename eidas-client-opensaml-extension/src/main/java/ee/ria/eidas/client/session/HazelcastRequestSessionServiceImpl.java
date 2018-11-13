@@ -45,16 +45,14 @@ public class HazelcastRequestSessionServiceImpl implements RequestSessionService
     @Override
     public void saveRequestSession(String requestID, RequestSession requestSession) {
         String encodedSessionId = this.encodeSessionId(requestID);
-
         IMap<String, RequestSession> sessionMap = this.getRequestSessionMapInstance(UNANSWERED_REQUESTS_MAP);
-        if (sessionMap.containsKey(encodedSessionId)) {
+        log.debug("Adding request [{}] with ttl [{}s]", requestSession.getRequestId(), maxAuthenticationLifetime);
+        RequestSession encodedSession = sessionMap.putIfAbsent(encodedSessionId, this.encodeRequestSession(requestSession), maxAuthenticationLifetime, TimeUnit.SECONDS);
+        if (encodedSession == null) {
+            log.debug("Added request [{}] with ttl [{}s]", encodedSessionId, maxAuthenticationLifetime);
+        } else {
             throw new EidasClientException("A request with an ID: " + requestID + " already exists!");
         }
-
-        log.debug("Adding request [{}] with ttl [{}s]", requestSession.getRequestId(), maxAuthenticationLifetime);
-        RequestSession encodedSession = this.encodeRequestSession(requestSession);
-        sessionMap.set(encodedSessionId, encodedSession, maxAuthenticationLifetime, TimeUnit.SECONDS);
-        log.debug("Added request [{}] with ttl [{}s]", encodedSession.getRequestId(), maxAuthenticationLifetime);
     }
 
     @Override

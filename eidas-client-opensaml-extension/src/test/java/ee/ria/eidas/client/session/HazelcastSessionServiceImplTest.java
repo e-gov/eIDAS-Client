@@ -51,9 +51,6 @@ public class HazelcastSessionServiceImplTest {
     public void setUp() {
     }
 
-
-    // TODO test if configuration missing
-
     @Test
     public void getRequestSession_returnsSession_whenSavedBeforehand() {
         String requestID = UUID.randomUUID().toString();

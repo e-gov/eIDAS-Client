@@ -9,14 +9,14 @@
 - [4. Logimine](#logimine)
   * [4.1 Logimise vaikekonfiguratsioon](#logimine_naidis)
   * [4.2 Vaikekonfiguratsiooni seadistamine](#logimine_naidis)
-  * [4.3 Oma konfiguratsioonifaili kasutamine](#oma_seadistus)
+  * [4.3 Välise log4j2.xml konfiguratsioonifaili kasutamine](#logimine_valine)
   * [4.4 Syslog serverisse edastamine](#syslog)
 - [5. Monitoorimine](#heartbeat)
 - [6. Hazelcast ja mitmes eksemplaris paigaldamine](#klasterdamine)
-  * [6.1 Hazelcasti sisselülitamine](hazelcast)
+  * [6.1 Hazelcasti sisselülitamine](#hazelcast)
   * [6.2 Hazelcasti seadistamine](#hazelcast_seadistus)
   * [6.3 Andmete turvamine](#hazelcast_turva)
-  * [6.4 Monitooring](#hazelcast_monitooring)
+  * [6.4 Monitooring ja kasutusstatistika](#hazelcast_monitooring)
 
 <a name="eeldused"></a>
 ## 1. Paigaldamise eeldused
@@ -29,7 +29,7 @@ eIDAS-Clienti paigaldamiseks on minimaalselt vajalik:
 NB! Lisaks on nõutav ka ligipääs eIDAS Node rakendusele
 
 
-<a name="conf_all"></a>
+<a name="konf_all"></a>
 ## 2. eIDAS-Client'i seadistamine
 --------------------
 
@@ -163,7 +163,7 @@ Tabel 2.3.7 - Hazelcast kasutusstatistika otspunkt
 
 | Parameeter        | Kohustuslik | Kirjeldus, näide |
 | :---------------- | :---------- | :----------------|
-| `endpoints.hazelcast.enabled`  | Ei | Võimalikud vaäärtused: `true`, `false`. Lülitab sisse `/hazelcast` otspunkti. Vaikimisi `false`. |
+| `endpoints.hazelcast.enabled`  | Ei | Võimalikud väärtused: `true`, `false`. Lülitab sisse `/hazelcast` otspunkti. Vaikimisi `false`. |
 
 
 <a name="votmed"></a>
@@ -247,7 +247,8 @@ Tabel 4.2.2 - Logimisel saadaolevad **MDC** (_Mapped Diagnostic Context_) atribu
 | `sessionId` | Päringu `X-Correlation-ID` päise väärtus, selle puudumisel sessiooni ID-st genereeritud **sha256** räsi base64 kujul. Väärtustamata, kui logisündmus ei ole väljastatud päringu käigus. |
 
 
-### 4.3 Oma konfiguratsioonifaili kasutamine
+<a name="logimine_valine"></a>
+### 4.3 Välise log4j2.xml konfiguratsioonifaili kasutamine
 
 Vajadusel on võimalik vaikekonfiguratsioonifaili asemel oma konfiguratsioonifaili kasutada. Selleks tuleb uue faili asukoht anda rakendusele käivitamisel süsteemiparameetrite abil (vt. [Paigaldamine](Configuration.md#war_deployment) punkt 3), näiteks:
 
@@ -265,9 +266,9 @@ Syslog protokolli sõnumiformaati on kitsendatud selliselt, et `facility` kood o
 NB! Logide kesksesse syslog serverisse saatmine ei ole vaikimisi sisselülitatud ning vajab lisaseadistust vastavalt konkreetse keskse syslog serveri parameetritele (serveri asukoht, port ja TLS kanali võtmed tuleb seadistada otse `log4j2.xml` failis.
 
 <a name="heartbeat"></a>
-## 5. Rakenduse oleku pärimine
+## 5. Monitoorimine - rakenduse oleku pärimine
 
-Rakenduse oleku info on kättesaadav otspunktilt **/heartbeat** või **/heaartbeat.json**.
+Rakenduse oleku info on kättesaadav otspunktilt **/heartbeat** või **/heartbeat.json**.
 
 Rakenduse oleku info kuvamiseks kasutatakse Spring Boot Actuator raamistikku. Vaikeseadistuses on kõik otspunktid, välja arvatud **/heartbeat** otspunkt, välja lülitatud.
 
@@ -322,7 +323,7 @@ Näide minimaalsest konfiguratsioonist, mis kasutab TCP-IP tuvastamismehanismi:
 eIDAS-Client krüpteerib ja allkirjastab andmed enne jagatud räsitabelisse salvestamist (vt. [seadistusparaameetreid](#conf_hazelcast)).
 
 <a name="hazelcast_monitooring"></a>
-### 6.4 Kasutusstatisika ja monitooring
+### 6.4 Monitooring ja kasutusstatisika
 
 Hazelcasti monitooringuks on võimalik kasutada Hazelcasti enda [health otspunkti](https://docs.hazelcast.org/docs/3.11/manual/html-single/index.html#health-check) (vaikimisi väljalülitatud).
 
