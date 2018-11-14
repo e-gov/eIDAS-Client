@@ -141,17 +141,19 @@ Tabel 2.3.6 - Hazelcast seadistus
 
 | Parameeter        | Kohustuslik | Kirjeldus, näide |
 | :---------------- | :---------- | :----------------|
-| `eidas.client.hazelcastConfig`  | Ei | <p>Viide Hazelcasti seadistusfailile. </p><p>Näide: `classpath:hazelcast.xml`, kui fail loetakse classpathi kaudu või `file:/etc/eidas-client/hazelcast.xml` kui loetakse otse failisüsteemist.</p> |
+| `eidas.client.hazelcastEnabled`  | Ei | Hazelcasti toe aktiveerimine. |
+| `eidas.client.hazelcastConfig`  | Ei <sup>1</sup> | <p>Viide Hazelcasti seadistusfailile. </p><p>Näide: `classpath:hazelcast.xml`, kui fail loetakse classpathi kaudu või `file:/etc/eidas-client/hazelcast.xml` kui loetakse otse failisüsteemist.</p> |
 | `eidas.client.hazelcastSigningKey`  | Ei <sup>1</sup> | <p>HMAC võti base64 kodeeritud kujul (räsitabeli sisu allkirjastamiseks). Võtme pikkus sõltub allkirjastamise algoritmi valikust.</p> <p>Vaikimisi kasutatava HMAC512 puhul peab kasutama 512 bitist juhuarvu. </p><p>NB! Näide 512 bitise võtme genereerimisest openssl'ga: `openssl rand -base64 64`</p>|
 | `eidas.client.hazelcastSigningAlgorithm`  | Ei | Allkirjastamisalgoritm (`HS512`, `HS384`, `HS256`). Vaikimisi `HS512`. |
 | `eidas.client.hazelcastEncryptionKey`  | Ei <sup>1</sup> | <p>Krüpteerimisvõti base64 kodeeritud kujul (räsitabeli sisu krüpteerimisel kasutatav sümmeetriline võti). </p><p>Vaikimisi kasutatava `AES` algoritmi puhul peab võti olema alati 128 bitti</p><p>Näide 128 bitise võtme genereerimisest openssl'ga `openssl rand -base64 16` </p>|
 | `eeidas.client.hazelcastEncryptionAlg`  | Ei | Krüpteerimisalgoritm vastavalt standardsele [Java Krüptograafiliste Algoritmide nimistule](https://docs.oracle.com/javase/8/docs/technotes/guides/security/StandardNames.html#Cipher). Vaikimisi `AES`. |
 
-<sup>1</sup> Kohustuslik juhul kui `eidas.client.hazelcastConfig` on määratud.
+<sup>1</sup> Kohustuslik juhul kui `eidas.client.hazelcastEnabled` on määratud.
 
 
 Näide konfiguratsioonist:
 ```
+eidas.client.hazelcastEnabled = true
 eidas.client.hazelcastConfig = file:/etc/eidas-client/hazelcast.xml
 eidas.client.hazelcastSigningKey=JgeUmXWHRs1FClKuStKRNWvfNWfFHWGSR8jgN8_xEoBSGnkiHHgEEHMttYmMtzy88rnlO6yfmQpSAJ0yNA9NWw
 eidas.client.hazelcastSigningAlgorithm=XHS512
@@ -320,7 +322,9 @@ Näide minimaalsest konfiguratsioonist, mis kasutab TCP-IP tuvastamismehanismi:
 <a name="hazelcast_turva"></a>
 ### 6.3 Andmete turvamine
 
-eIDAS-Client krüpteerib ja allkirjastab andmed enne jagatud räsitabelisse salvestamist (vt. [seadistusparaameetreid](#conf_hazelcast)).
+eIDAS-Client krüpteerib sümmeetrilise võtmega (vaikimisi AES algoritmiga) ja allkirjastab andmed (vaikimisi HMAC512 algoritmiga) enne jagatud räsitabelisse salvestamist. Andmete küsimisel Hazelcastist verifitseeritakse allkiri ning alles seejärel dekrüpteeritakse.
+
+Algoritmide seadistamise osas vt. [seadistusparaameetreid](#conf_hazelcast).
 
 <a name="hazelcast_monitooring"></a>
 ### 6.4 Monitooring ja kasutusstatisika

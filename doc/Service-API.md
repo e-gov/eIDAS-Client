@@ -292,7 +292,7 @@ curl 'https://localhost:8889/heartbeat'
 | **currentTime** |	Jah | Päringu sooritamise aeg. Unix timestamp formaadis. |
 | **dependencies** |	Jah | Sisaldab nimekirja välistest süsteemidest, millest rakendus sõltub. Väliste süsteemide, millega on võimalik ühendust saada, `status` olekuna kuvatakse `UP`, mittevastavate süsteemide korral `DOWN`. Kui mõni väline süsteem, millest rakendus sõltub, on `DOWN`, siis on ka vastuse üldine `status` `DOWN`. |
 | **dependencies.status** |	Jah | Välise süsteemi status. Võimalikud väärtused: `UP`, `DOWN`  |
-| **dependencies.name** |	Jah | Välise süsteemi lühinimetus. |
+| **dependencies.name** |	Jah | Välise süsteemi lühinimetus (näiteks: `eIDAS-Node`, `hazelcast`). |
 
 Näide vastuse struktuurist:
 ```json
@@ -307,6 +307,10 @@ Näide vastuse struktuurist:
         {
             "status": "UP",
             "name": "eIDAS-Node"
+        },
+        {
+            "status": "UP",
+            "name": "hazelcast"
         }
     ]
 }
