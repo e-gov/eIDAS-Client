@@ -1,6 +1,9 @@
 package ee.ria.eidas.client.webapp.status;
 
+import com.hazelcast.cluster.ClusterState;
+import com.hazelcast.core.HazelcastInstance;
 import ee.ria.eidas.client.config.EidasClientProperties;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
@@ -8,8 +11,6 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.utils.HttpClientUtils;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.endpoint.AbstractEndpoint;
 import org.springframework.boot.actuate.health.Status;
@@ -24,6 +25,7 @@ import java.io.IOException;
 import java.time.Instant;
 import java.util.*;
 
+@Slf4j
 @Component
 @ConfigurationProperties(
         prefix = "endpoints.heartbeat"
@@ -39,8 +41,7 @@ public class HeartbeatEndpoint extends AbstractEndpoint<Map<String, Object>> {
     public static final String RESPONSE_PARAM_STATUS = "status";
     public static final String NOT_AVAILABLE = "N/A";
     public static final String DEPENDENCY_NAME_EIDAS_NODE = "eIDAS-Node";
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(HeartbeatEndpoint.class);
+    public static final String DEPENDENCY_NAME_HAZELCAST = "hazelcast";
 
     private CloseableHttpClient httpClient;
     private int timeout = 3;
@@ -87,20 +88,51 @@ public class HeartbeatEndpoint extends AbstractEndpoint<Map<String, Object>> {
     public Map<String, Object> invoke() {
         Map<String, Object> response = new LinkedHashMap<>();
 
-        Status dependencyStatus = isIdpMetadataEndpointReachableAndOk() ? Status.UP : Status.DOWN;
-        response.put(RESPONSE_PARAM_STATUS, formatValue(formatStatus(dependencyStatus)));
-
         response.put(RESPONSE_PARAM_NAME, formatValue(appName));
         response.put(RESPONSE_PARAM_VERSION, formatValue(appVersion));
         response.put(RESPONSE_PARAM_BUILD_TIME, formatValue(formatTime(buildTime)));
         response.put(RESPONSE_PARAM_START_TIME, formatValue(formatTime(startTime)));
         response.put(RESPONSE_PARAM_CURRENT_TIME, formatValue(formatTime(getCurrentTime())));
 
-        response.put(RESPONSE_PARAM_DEPENDENCIES, formatValue(
-                Arrays.asList(asMap(dependencyStatus, DEPENDENCY_NAME_EIDAS_NODE))
-        ));
+        List<Map<String, Object>> dependentSystemStatuses = getListOfDependencies();
+        response.put(RESPONSE_PARAM_DEPENDENCIES, formatValue(dependentSystemStatuses));
+
+        Status overallStatus = getOverallSystemStatus( dependentSystemStatuses );
+        response.put(RESPONSE_PARAM_STATUS, formatValue(formatStatus( overallStatus )));
 
         return Collections.unmodifiableMap(response);
+    }
+
+    private Status getOverallSystemStatus(List<Map<String, Object>> dependentSystemStatuses) {
+        for (Map<String, Object> system : dependentSystemStatuses) {
+            Map.Entry<String, Object> entry = system.entrySet().iterator().next();
+            if ( entry != null && !entry.getValue().equals(Status.UP.getCode()) ) {
+                return new Status(entry.getValue().toString());
+            }
+        }
+        return Status.UP;
+    }
+
+    private List<Map<String, Object>> getListOfDependencies() {
+        List<Map<String, Object>> dependenciesList = new ArrayList();
+
+        Status dependencyStatusEidasNode = isIdpMetadataEndpointReachableAndOk() ? Status.UP : Status.DOWN;
+        dependenciesList.add(asMap(dependencyStatusEidasNode, DEPENDENCY_NAME_EIDAS_NODE));
+
+        if (properties.getHazelcastConfig() != null) {
+            Status dependencyStatusHazelcast = isHazelcastUpAndRunning(context) ? Status.UP : Status.DOWN;
+            dependenciesList.add(asMap(dependencyStatusHazelcast, DEPENDENCY_NAME_HAZELCAST));
+        }
+        return dependenciesList;
+    }
+
+    private boolean isHazelcastUpAndRunning(ApplicationContext context) {
+        try {
+            HazelcastInstance hazelcast = context.getBean(HazelcastInstance.class);
+            return hazelcast != null && hazelcast.getCluster().getClusterState() == ClusterState.ACTIVE;
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private void setApplicationBuildProperties(ApplicationContext context) {
@@ -116,7 +148,7 @@ public class HeartbeatEndpoint extends AbstractEndpoint<Map<String, Object>> {
         try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
             return (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK);
         } catch (IOException e) {
-            LOGGER.error("Failed to establish connection to '" + idpMetadataUrl + "' > " + e.getMessage());
+            log.error("Failed to establish connection to '{}' > {}", idpMetadataUrl, e.getMessage());
             return false;
         }
     }

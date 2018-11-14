@@ -4,35 +4,15 @@ import ee.ria.eidas.client.authnrequest.AssuranceLevel;
 import ee.ria.eidas.client.authnrequest.EidasAttribute;
 import org.joda.time.DateTime;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class RequestSession {
+public interface RequestSession extends Serializable, Comparable<RequestSession> {
+    String getRequestId();
 
-    private final String requestId;
-    private final DateTime issueInstant;
-    private final AssuranceLevel loa;
-    private final List<EidasAttribute> requestedAttributes;
+    DateTime getIssueInstant();
 
-    public RequestSession(String requestId, DateTime issueInstant, AssuranceLevel loa, List<EidasAttribute> requestedAttributes) {
-        this.requestId = requestId;
-        this.issueInstant = issueInstant;
-        this.loa = loa;
-        this.requestedAttributes = requestedAttributes;
-    }
+    AssuranceLevel getLoa();
 
-    public String getRequestId() {
-        return requestId;
-    }
-
-    public DateTime getIssueInstant() {
-        return issueInstant;
-    }
-
-    public AssuranceLevel getLoa() {
-        return loa;
-    }
-
-    public List<EidasAttribute> getRequestedAttributes() {
-        return requestedAttributes;
-    }
+    List<EidasAttribute> getRequestedAttributes();
 }

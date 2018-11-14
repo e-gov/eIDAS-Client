@@ -12,7 +12,7 @@ import ee.ria.eidas.client.authnrequest.AssuranceLevel;
 import ee.ria.eidas.client.authnrequest.EidasAttribute;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.fixtures.ResponseBuilder;
-import ee.ria.eidas.client.session.RequestSession;
+import ee.ria.eidas.client.session.UnencodedRequestSession;
 import ee.ria.eidas.client.session.RequestSessionService;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
 import ee.ria.eidas.client.utils.XmlUtils;
@@ -109,7 +109,7 @@ public class EidasClientApplicationTest {
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/xml")
-                        .withBody(readFileBody("samples/response/idp-metadata-ok.xml"))
+                        .withBody(XmlUtils.readFileBody("samples/response/idp-metadata-ok.xml"))
                 ));
     }
 
@@ -604,22 +604,19 @@ public class EidasClientApplicationTest {
             .body("startTime", notNullValue())
             .body("currentTime", notNullValue())
             .body("status", equalTo("UP"))
-            .body("dependencies[0].status", equalTo("UP"));
+            .body("dependencies", hasSize(1))
+            .body("dependencies[0].status", equalTo("UP"))
+            .body("dependencies[0].name", equalTo("eIDAS-Node"));
     }
 
-    public static String readFileBody(String fileName) {
-        return new String(readFileBytes(fileName), StandardCharsets.UTF_8);
-    }
-
-    public static byte[] readFileBytes(String fileName) {
-        try {
-            ClassLoader classLoader = EidasClientApplicationTest.class.getClassLoader();
-            URL resource = classLoader.getResource(fileName);
-            assertNotNull("File not found: " + fileName, resource);
-            return Files.readAllBytes(Paths.get(resource.toURI()));
-        } catch (Exception e) {
-            throw new RuntimeException("Exception: " + e.getMessage(), e);
-        }
+    @Test
+    public void hazelcast_shouldNotBeAvailableByDefault() {
+        given()
+                .port(port)
+        .when()
+                .get("/hazelcast")
+        .then()
+                .statusCode(404);
     }
 
     @AfterClass
@@ -628,7 +625,7 @@ public class EidasClientApplicationTest {
     }
 
     private void saveNewRequestSession(String requestID, DateTime issueInstant, AssuranceLevel loa, List<EidasAttribute> requestedAttributes) {
-        RequestSession requestSession = new RequestSession(requestID, issueInstant, loa, requestedAttributes);
+        UnencodedRequestSession requestSession = new UnencodedRequestSession(requestID, issueInstant, loa, requestedAttributes);
         requestSessionService.saveRequestSession(requestID, requestSession);
     }
 
