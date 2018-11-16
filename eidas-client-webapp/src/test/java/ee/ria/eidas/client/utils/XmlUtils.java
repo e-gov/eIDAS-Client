@@ -1,6 +1,5 @@
 package ee.ria.eidas.client.utils;
 
-import ee.ria.eidas.client.webapp.EidasClientApplicationTest;
 import net.shibboleth.utilities.java.support.xml.QNameSupport;
 import net.shibboleth.utilities.java.support.xml.XMLParserException;
 import org.junit.Assert;

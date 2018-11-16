@@ -119,7 +119,7 @@ public class HeartbeatEndpoint extends AbstractEndpoint<Map<String, Object>> {
         Status dependencyStatusEidasNode = isIdpMetadataEndpointReachableAndOk() ? Status.UP : Status.DOWN;
         dependenciesList.add(asMap(dependencyStatusEidasNode, DEPENDENCY_NAME_EIDAS_NODE));
 
-        if (properties.getHazelcastConfig() != null) {
+        if (properties.isHazelcastEnabled()) {
             Status dependencyStatusHazelcast = isHazelcastUpAndRunning(context) ? Status.UP : Status.DOWN;
             dependenciesList.add(asMap(dependencyStatusHazelcast, DEPENDENCY_NAME_HAZELCAST));
         }

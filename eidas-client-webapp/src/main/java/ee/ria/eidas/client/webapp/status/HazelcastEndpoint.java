@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 import java.util.*;
 
 @Component
-@ConditionalOnProperty("eidas.client.hazelcastConfig")
+@ConditionalOnProperty("eidas.client.hazelcastEnabled")
 @ConfigurationProperties(
         prefix = "endpoints.hazelcast"
 )
@@ -55,7 +55,7 @@ public class HazelcastEndpoint extends AbstractEndpoint<Map<String, Object>> {
                 mapStats.put("dirtyEntryCount", localMapStats.getDirtyEntryCount());
                 mapStats.put("totalGetLatency", localMapStats.getMaxGetLatency());
                 mapStats.put("totalPutLatency", localMapStats.getTotalPutLatency());
-                mapStats.put("totalRemoveLatency: ", localMapStats.getTotalRemoveLatency());
+                mapStats.put("totalRemoveLatency", localMapStats.getTotalRemoveLatency());
                 mapStats.put("heapCost", localMapStats.getHeapCost());
 
                 statsList.add(mapStats);

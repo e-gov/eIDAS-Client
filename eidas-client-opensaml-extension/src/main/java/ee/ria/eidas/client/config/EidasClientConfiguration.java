@@ -144,7 +144,7 @@ public class EidasClientConfiguration {
         return new IDPMetadataResolver(eidasClientProperties.getIdpMetadataUrl(), metadataSignatureTrustEngine);
     }
 
-    @ConditionalOnProperty(name = "eidas.client.hazelcastConfig", matchIfMissing = true)
+    @ConditionalOnProperty(name = "eidas.client.hazelcastEnabled", havingValue = "false", matchIfMissing = true)
     @Bean(name = "requestSessionService")
     public RequestSessionService requestSessionService() {
         return new LocalRequestSessionServiceImpl(eidasClientProperties);

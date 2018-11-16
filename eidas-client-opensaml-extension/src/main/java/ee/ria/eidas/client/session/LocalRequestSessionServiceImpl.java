@@ -24,7 +24,7 @@ public class LocalRequestSessionServiceImpl implements RequestSessionService {
     private int acceptedClockSkew;
 
     public LocalRequestSessionServiceImpl(EidasClientProperties properties) {
-        log.debug("Using in memory map for request tracking");
+        log.info("Using in memory map for request tracking");
         this.maxAuthenticationLifetime = properties.getMaximumAuthenticationLifetime();
         this.acceptedClockSkew = properties.getAcceptedClockSkew();
     }

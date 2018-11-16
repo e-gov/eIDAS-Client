@@ -96,6 +96,8 @@ public class EidasClientProperties {
     @NotNull
     private int responseMessageLifeTime = DEFAULT_RESPONSE_MESSAGE_LIFETIME;
 
+    private boolean hazelcastEnabled = false;
+
     private String hazelcastConfig;
 
     private String hazelcastEncryptionKey;
