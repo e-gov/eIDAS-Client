@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<hazelcast xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xmlns="http://www.hazelcast.com/schema/config"
+           xsi:schemaLocation="http://www.hazelcast.com/schema/config
+                               https://hazelcast.com/schema/config/hazelcast-config-3.7.xsd">
+    <properties>
+        <property name="hazelcast.jmx">true</property>
+    </properties>
+    <group>
+        <name>eidas-client-cluster</name>
+    </group>
+    <network>
+        <port auto-increment="false">5702</port>
+        <join>
+            <multicast enabled="false"></multicast>
+            <tcp-ip enabled="true">
+				<member>localhost:5702</member>				
+			</tcp-ip>  
+        </join>
+    </network>
+</hazelcast>

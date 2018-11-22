@@ -8,8 +8,9 @@ import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.exception.EidasClientException;
 import ee.ria.eidas.client.exception.InvalidRequestException;
 import ee.ria.eidas.client.metadata.IDPMetadataResolver;
-import ee.ria.eidas.client.session.RequestSession;
+import ee.ria.eidas.client.session.UnencodedRequestSession;
 import ee.ria.eidas.client.session.RequestSessionService;
+import ee.ria.eidas.client.session.RequestSession;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
 import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
 import org.opensaml.messaging.context.MessageContext;
@@ -88,7 +89,7 @@ public class AuthInitiationService {
     private void saveRequestAsSession(AuthnRequest authnRequest, List<EidasAttribute> additionalAttributes) {
         String loa = authnRequest.getRequestedAuthnContext().getAuthnContextClassRefs().get(0).getAuthnContextClassRef();
         List<EidasAttribute> requestedAttributes = getRequestedEidasAttributesList(additionalAttributes);
-        RequestSession requestSession = new RequestSession(authnRequest.getID(), authnRequest.getIssueInstant(), AssuranceLevel.toEnum(loa), requestedAttributes);
+        RequestSession requestSession = new UnencodedRequestSession(authnRequest.getID(), authnRequest.getIssueInstant(), AssuranceLevel.toEnum(loa), requestedAttributes);
         requestSessionService.saveRequestSession(requestSession.getRequestId(), requestSession);
     }
 

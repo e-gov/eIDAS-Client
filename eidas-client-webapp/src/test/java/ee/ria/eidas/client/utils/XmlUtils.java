@@ -11,7 +11,12 @@ import org.w3c.dom.Element;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+
+import static org.junit.Assert.assertNotNull;
 
 public class XmlUtils {
 
@@ -27,6 +32,21 @@ public class XmlUtils {
             throw new RuntimeException("Unable to parse element file " + xml);
         } catch (final UnmarshallingException e) {
             throw new RuntimeException("Unmarshalling failed when parsing element file " + xml + ": " + e);
+        }
+    }
+
+    public static String readFileBody(String fileName) {
+        return new String(readFileBytes(fileName), StandardCharsets.UTF_8);
+    }
+
+    public static byte[] readFileBytes(String fileName) {
+        try {
+            ClassLoader classLoader = XmlUtils.class.getClassLoader();
+            URL resource = classLoader.getResource(fileName);
+            assertNotNull("File not found: " + fileName, resource);
+            return Files.readAllBytes(Paths.get(resource.toURI()));
+        } catch (Exception e) {
+            throw new RuntimeException("Exception: " + e.getMessage(), e);
         }
     }
 

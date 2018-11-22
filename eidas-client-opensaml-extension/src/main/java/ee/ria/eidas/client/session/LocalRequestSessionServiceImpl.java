@@ -2,6 +2,7 @@ package ee.ria.eidas.client.session;
 
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.exception.EidasClientException;
+import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,9 +11,10 @@ import org.springframework.scheduling.annotation.Scheduled;
 import java.util.HashMap;
 import java.util.Map;
 
-public class RequestSessionServiceImpl implements RequestSessionService {
+@Slf4j
+public class LocalRequestSessionServiceImpl implements RequestSessionService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(RequestSessionServiceImpl.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(LocalRequestSessionServiceImpl.class);
 
     private final Object requestSessionLock = new Object();
     private final Map<String, RequestSession> requestSessionMap = new HashMap<String, RequestSession>();
@@ -21,7 +23,8 @@ public class RequestSessionServiceImpl implements RequestSessionService {
 
     private int acceptedClockSkew;
 
-    public RequestSessionServiceImpl(EidasClientProperties properties) {
+    public LocalRequestSessionServiceImpl(EidasClientProperties properties) {
+        log.info("Using in memory map for request tracking");
         this.maxAuthenticationLifetime = properties.getMaximumAuthenticationLifetime();
         this.acceptedClockSkew = properties.getAcceptedClockSkew();
     }
