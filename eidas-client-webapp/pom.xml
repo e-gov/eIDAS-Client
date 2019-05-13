@@ -7,7 +7,7 @@
     <parent>
         <artifactId>eidas-client-parent</artifactId>
         <groupId>ee.ria.eidas</groupId>
-        <version>1.0.3</version>
+        <version>1.0.4</version>
     </parent>
 
     <artifactId>eidas-client-webapp</artifactId>
@@ -55,7 +55,7 @@
         <dependency>
             <groupId>com.github.tomakehurst</groupId>
             <artifactId>wiremock-standalone</artifactId>
-            <version>2.19.0</version>
+            <version>2.23.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -94,7 +94,7 @@
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
-                <version>0.7.9</version>
+                <version>0.8.3</version>
                 <executions>
                     <execution>
                         <id>jacoco-initialize</id>
