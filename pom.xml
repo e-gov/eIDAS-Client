@@ -5,14 +5,14 @@
 
     <groupId>ee.ria.eidas</groupId>
     <artifactId>eidas-client-parent</artifactId>
-    <version>1.0.3</version>
+    <version>1.0.4</version>
     <packaging>pom</packaging>
     <name>eIDAS-Client</name>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>1.5.17.RELEASE</version>
+        <version>1.5.20.RELEASE</version>
     </parent>
 
     <modules>
