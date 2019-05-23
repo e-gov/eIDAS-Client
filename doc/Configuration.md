@@ -156,7 +156,7 @@ Näide konfiguratsioonist:
 eidas.client.hazelcastEnabled = true
 eidas.client.hazelcastConfig = file:/etc/eidas-client/hazelcast.xml
 eidas.client.hazelcastSigningKey=JgeUmXWHRs1FClKuStKRNWvfNWfFHWGSR8jgN8_xEoBSGnkiHHgEEHMttYmMtzy88rnlO6yfmQpSAJ0yNA9NWw
-eidas.client.hazelcastSigningAlgorithm=XHS512
+eidas.client.hazelcastSigningAlgorithm=HS512
 eidas.client.hazelcastEncryptionKey=K7KVMOrgRj7Pw5GDHdXjKQ==
 eidas.client.hazelcastEncryptionAlg=AES
 ```
