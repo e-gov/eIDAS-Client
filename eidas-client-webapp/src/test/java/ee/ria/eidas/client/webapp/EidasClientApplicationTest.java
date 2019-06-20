@@ -33,10 +33,12 @@ import org.springframework.boot.context.embedded.LocalServerPort;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
@@ -144,13 +146,13 @@ public abstract class EidasClientApplicationTest {
     }
 
     @Test
-    public void httpPostBinding_shouldPass_whenAllParamsPresent() {
+    public void httpPostBinding_shouldPass_whenAllAllowedParamsPresent() {
         given()
                 .port(port)
                 .queryParam("Country", "EE")
                 .queryParam("LoA", "LOW")
                 .queryParam("RelayState", "test")
-                .queryParam("Attributes", "BirthName PlaceOfBirth CurrentAddress Gender LegalPersonIdentifier LegalName LegalAddress VATRegistration TaxReference LEI EORI SEED SIC D-2012-17-EUIdentifier")
+                .queryParam("Attributes", "BirthName PlaceOfBirth CurrentAddress Gender LegalPersonIdentifier LegalName LegalAddress VATRegistration TaxReference LEI EORI SEED SIC")
         .when()
                 .get("/login")
         .then()
@@ -190,9 +192,25 @@ public abstract class EidasClientApplicationTest {
         .when()
                 .get("/login")
         .then()
+                    .statusCode(400)
+                .body("error", equalTo("Bad Request"))
+                .body("message", equalTo("Found one or more invalid Attributes value(s). Valid values are: " + Arrays.stream(EidasAttribute.values()).map(EidasAttribute::getFriendlyName).collect(Collectors.toList())));
+    }
+
+    @Test
+    public void httpPostBinding_shouldFail_whenAttributesContainsNotAllowedAttribute() {
+        given()
+                .port(port)
+                .queryParam("Country", "EE")
+                .queryParam("LoA", "LOW")
+                .queryParam("RelayState", "test")
+                .queryParam("Attributes", "LegalPersonIdentifier LegalName D-2012-17-EUIdentifier")
+                .when()
+                .get("/login")
+                .then()
                 .statusCode(400)
                 .body("error", equalTo("Bad Request"))
-                .body("message", equalTo("Found one or more invalid Attributes value(s). Allowed values are: [BirthName, PlaceOfBirth, CurrentAddress, Gender, LegalPersonIdentifier, LegalName, LegalAddress, VATRegistration, TaxReference, LEI, EORI, SEED, SIC, D-2012-17-EUIdentifier]"));
+                .body("message", equalTo("Attributes value 'D-2012-17-EUIdentifier' is not allowed. Allowed values are: " + eidasClientProperties.getAllowedEidasAttributes().stream().map(EidasAttribute::getFriendlyName).collect(Collectors.toList())));
     }
 
     @Test

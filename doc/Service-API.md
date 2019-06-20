@@ -93,7 +93,8 @@ Näide:
 | 400 | Bad request  | Invalid country! Valid countries:[...] |
 | 400 | Bad request  | Invalid LoA! One of [...] expected. |
 | 400 | Bad request  | Invalid RelayState! Must match the following regexp: [...] |
-| 400 | Bad request  | Invalid Attributes! Unrecognized attibute(s) provided: [...] |
+| 400 | Bad request  | Found one or more invalid Attributes value(s). Valid values are: [...] |
+| 400 | Bad request  | Attributes value '[.]' is not allowed. Allowed values are: : [...] |
 | 403 | Forbidden | Endpoint not allowed to be accessed via port number [...] |
 | 405 | Method Not Allowed | Request method [...] not supported |
 | 500 | Internal Server Error | Something went wrong internally. Please consult server logs for further details. |

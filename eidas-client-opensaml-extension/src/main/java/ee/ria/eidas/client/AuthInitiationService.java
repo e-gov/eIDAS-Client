@@ -72,6 +72,7 @@ public class AuthInitiationService {
             LOGGER.info("No eIDAS attributes presented, using default (natural person) set: {}", DEFAULT_REQUESTED_ATTRIBUTE_SET);
             return new ArrayList<>(DEFAULT_REQUESTED_ATTRIBUTE_SET);
         }
+        validateEidasAttributesAllowed(eidasAttributes);
         LOGGER.info("Using following eIDAS attributes presented in the request: {}", eidasAttributes);
         return eidasAttributes;
     }
@@ -84,7 +85,18 @@ public class AuthInitiationService {
         try {
             return Arrays.stream(attributesSet.split(" ")).map(EidasAttribute::fromString).collect(Collectors.toList());
         } catch (IllegalArgumentException e) {
-            throw new InvalidRequestException("Found one or more invalid Attributes value(s). Allowed values are: " + eidasClientProperties.getAllowedEidasAttributes().stream().map(EidasAttribute::getFriendlyName).collect(Collectors.toList()), e);
+            List<String> validEidasAttributes = Arrays.stream(EidasAttribute.values()).map(EidasAttribute::getFriendlyName).collect(Collectors.toList());
+            throw new InvalidRequestException("Found one or more invalid Attributes value(s). Valid values are: " + validEidasAttributes, e);
+        }
+    }
+
+    private void validateEidasAttributesAllowed(List<EidasAttribute> eidasAttributes) {
+        List<EidasAttribute> allowedEidasAttributes = eidasClientProperties.getAllowedEidasAttributes();
+        for (EidasAttribute eidasAttribute : eidasAttributes) {
+            if (!allowedEidasAttributes.contains(eidasAttribute)) {
+                throw new InvalidRequestException("Attributes value '" + eidasAttribute.getFriendlyName() + "' is not allowed. Allowed values are: " +
+                        allowedEidasAttributes.stream().map(EidasAttribute::getFriendlyName).collect(Collectors.toList()));
+            }
         }
     }
 
