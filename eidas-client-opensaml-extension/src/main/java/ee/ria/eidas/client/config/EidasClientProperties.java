@@ -11,7 +11,6 @@ import org.springframework.validation.annotation.Validated;
 import javax.annotation.Nonnegative;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -24,6 +23,8 @@ public class EidasClientProperties {
     private static final String DEFAULT_IDP_METADATA_SIGN_CERT_KEY = "metadata";
     private static final int DEFAULT_ACCEPTED_CLOCK_SKEW = 2;
     private static final int DEFAULT_RESPONSE_MESSAGE_LIFETIME = 900;
+    private static final List<EidasAttribute> DEFAULT_ALLOWED_EIDAS_ATTRIBUTES = Arrays.asList(EidasAttribute.values());
+
     public static final String DEFAULT_HAZELCAST_SIGNING_ALGORITHM = "HS512";
     public static final String DEFAULT_HAZELCAST_ENCRYPTION_ALGORITHM = "AES";
 
@@ -116,11 +117,7 @@ public class EidasClientProperties {
     private String hazelcastSigningAlgorithm = DEFAULT_HAZELCAST_SIGNING_ALGORITHM;
 
     @NotNull
-    private List<EidasAttribute> allowedAdditionalAttributes = Arrays.asList(EidasAttribute.BIRTH_NAME, EidasAttribute.PLACE_OF_BIRTH,
-            EidasAttribute.CURRENT_ADDRESS, EidasAttribute.GENDER, EidasAttribute.LEGAL_PERSON_IDENTIFIER,
-            EidasAttribute.LEGAL_NAME, EidasAttribute.LEGAL_ADDRESS, EidasAttribute.VAT_REGISTRATION,
-            EidasAttribute.TAX_REFERENCE, EidasAttribute.LEI,
-            EidasAttribute.EORI, EidasAttribute.SEED, EidasAttribute.SIC, EidasAttribute.D_2012_17_EUIdentifier);
+    private List<EidasAttribute> allowedEidasAttributes = DEFAULT_ALLOWED_EIDAS_ATTRIBUTES;
 
 
 }

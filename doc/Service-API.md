@@ -30,7 +30,7 @@ Parameetrid:
 | **Country** |	Jah | Parameeter määrab ära tuvastatava kodaniku riigi ([ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2) kood). |
 | **LoA** |	Ei | Parameeter, määrab nõutava eIDAS isikutuvastuse taseme. Üks järgnevatest väärtustest: `LOW`, `SUBSTANTIAL`, `HIGH`. Kui parameeter on määramata, siis vaikimisi loetakse väärtuseks `SUBSTANTIAL`. |
 | **RelayState** |	Ei | Parameeter, mis saadetakse edasi konnektorteenusele muutmata kujul. Väärtus peab vastama regulaaravaldisele `[a-zA-Z0-9-_]{0,80}`. |
-| **AdditionalAttributes** | Ei | Parameeter, sisaldab tühikuga eraldatud nimekirja täiendavatest eIDAS atribuutidest (nn *FriendlyName* kujul), mida autentispäringus sihtriigi eIDAS identiteediteenuselt küsitakse. Tühikud esitada kasutades URL kodeeringut ([RFC 3986](https://www.ietf.org/rfc/rfc3986.txt)). Lubatud eIDAS atribuudid: `BirthName`, `PlaceOfBirth`,`CurrentAddress`,`Gender`, `LegalPersonIdentifier`, `LegalName`, `LegalAddress`, `VATRegistration`, `TaxReference`, `LEI`, `EORI`, `SEED`, `SIC`, `D-2012-17-EUIdentifier` (vt ka atribuutide kirjeldusi [eIDAS Atribuutide profiilis](https://ec.europa.eu/cefdigital/wiki/download/attachments/46992719/eIDAS%20SAML%20Attribute%20Profile%20v1.1_2.pdf?version=1&modificationDate=1497252920100&api=v2))|
+| **Attributes** | Ei | Parameeter, sisaldab tühikuga eraldatud nimekirja eIDAS atribuutidest (nn *FriendlyName* kujul), mida autentispäringus sihtriigi eIDAS identiteediteenuselt küsitakse. Tühikud esitada kasutades URL kodeeringut ([RFC 3986](https://www.ietf.org/rfc/rfc3986.txt)). Lubatud eIDAS atribuudid: `FamilyName`, `FirstName`, `DateOfBirth`, `PersonIdentifier`, `BirthName`, `PlaceOfBirth`,`CurrentAddress`,`Gender`, `LegalPersonIdentifier`, `LegalName`, `LegalAddress`, `VATRegistration`, `TaxReference`, `LEI`, `EORI`, `SEED`, `SIC`, `D-2012-17-EUIdentifier` (vt ka atribuutide kirjeldusi [eIDAS Atribuutide profiilis](https://ec.europa.eu/cefdigital/wiki/download/attachments/46992719/eIDAS%20SAML%20Attribute%20Profile%20v1.1_2.pdf?version=1&modificationDate=1497252920100&api=v2)). Kui parameeter on määramata, siis vaikimisi loetakse väärtuseks nimikiri järgnevatest parameetritest: `FamilyName`, `FirstName`, `DateOfBirth`, `PersonIdentifier`|
 
 Näide:
 ```bash
@@ -46,7 +46,7 @@ curl 'https://localhost:8889/login?country=CA&LoA=LOW&RelayState=kse2vna8221lyau
 ```
 
 ```bash
-curl 'https://localhost:8889/login?country=CA&LoA=LOW&RelayState=kse2vna8221lyauej&AdditionalAttributes=LegalPersonIdentifier%20LegalName%20LegalAddress'
+curl 'https://localhost:8889/login?country=CA&LoA=LOW&RelayState=kse2vna8221lyauej&Attributes=LegalPersonIdentifier%20LegalName%20LegalAddress'
 ```
 
 
@@ -93,7 +93,8 @@ Näide:
 | 400 | Bad request  | Invalid country! Valid countries:[...] |
 | 400 | Bad request  | Invalid LoA! One of [...] expected. |
 | 400 | Bad request  | Invalid RelayState! Must match the following regexp: [...] |
-| 400 | Bad request  | Invalid AdditionalParameters! Unrecognized attibute(s) provided: [...] |
+| 400 | Bad request  | Found one or more invalid Attributes value(s). Valid values are: [...] |
+| 400 | Bad request  | Attributes value '[.]' is not allowed. Allowed values are: : [...] |
 | 403 | Forbidden | Endpoint not allowed to be accessed via port number [...] |
 | 405 | Method Not Allowed | Request method [...] not supported |
 | 500 | Internal Server Error | Something went wrong internally. Please consult server logs for further details. |

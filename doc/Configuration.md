@@ -123,6 +123,7 @@ Tabel 2.3.3 - Saadetava AuthnRequesti ja SAML vastuse seadistus
 | `eidas.client.requestSignatureAlgorithm` | Ei | Autentimispäringu allkirja algoritm. Vaikimisi `http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha512` |
 | `eidas.client.availableCountries` | Ei | Lubatud riigikoodid. |
 | `eidas.client.defaultLoa` | Ei | EIDAS tagatistase juhul kui kasutaja tagatistaseme ise määramata. Lubatud väärtused: 'LOW', 'SUBSTANTIAL', 'HIGH'. Vaikimisi 'SUBSTANTIAL'. |
+| `eidas.client.allowedEidasAttributes` | Ei | Komaga eraldatud lubatud EidasAttribute väärtuste nimekiri. Vaikimisi väärtus on nimekiri kõigist võimalikest EidasAttribute enum väärtustest. |
 
 Tabel 2.3.4 - turvaseadistused
 

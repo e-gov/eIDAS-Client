@@ -8,11 +8,12 @@ import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.exception.EidasClientException;
 import ee.ria.eidas.client.exception.InvalidRequestException;
 import ee.ria.eidas.client.metadata.IDPMetadataResolver;
-import ee.ria.eidas.client.session.UnencodedRequestSession;
-import ee.ria.eidas.client.session.RequestSessionService;
 import ee.ria.eidas.client.session.RequestSession;
+import ee.ria.eidas.client.session.RequestSessionService;
+import ee.ria.eidas.client.session.UnencodedRequestSession;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
 import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
+import org.apache.commons.collections.CollectionUtils;
 import org.opensaml.messaging.context.MessageContext;
 import org.opensaml.messaging.encoder.MessageEncodingException;
 import org.opensaml.saml.common.messaging.context.SAMLEndpointContext;
@@ -58,47 +59,58 @@ public class AuthInitiationService {
         this.idpMetadataResolver = idpMetadataResolver;
     }
 
-    public void authenticate(HttpServletResponse response, String country, AssuranceLevel loa, String relayState, String additionalAttributesParam) {
+    public void authenticate(HttpServletResponse response, String country, AssuranceLevel loa, String relayState, String attributesSet) {
         validateCountry(country);
         validateRelayState(relayState);
-
-        List<EidasAttribute> additionalAttributes = getAdditionalAttributes(additionalAttributesParam);
-
-        redirectUserForAuthentication(response, country, loa, relayState, additionalAttributes);
+        List<EidasAttribute> eidasAttributes = determineEidasAttributes(attributesSet);
+        redirectUserForAuthentication(response, country, loa, relayState, eidasAttributes);
     }
 
-    private List<EidasAttribute> getAdditionalAttributes(String additionalAttributes) {
-        if (additionalAttributes == null) {
+    private List<EidasAttribute> determineEidasAttributes(String attributesSet) {
+        List<EidasAttribute> eidasAttributes = parseEidasAttributes(attributesSet);
+        if (CollectionUtils.isEmpty(eidasAttributes)) {
+            LOGGER.info("No eIDAS attributes presented, using default (natural person) set: {}", DEFAULT_REQUESTED_ATTRIBUTE_SET);
+            return new ArrayList<>(DEFAULT_REQUESTED_ATTRIBUTE_SET);
+        }
+        validateEidasAttributesAllowed(eidasAttributes);
+        LOGGER.info("Using following eIDAS attributes presented in the request: {}", eidasAttributes);
+        return eidasAttributes;
+    }
+
+    private List<EidasAttribute> parseEidasAttributes(String attributesSet) {
+        if (attributesSet == null) {
             return new ArrayList<>();
         }
 
         try {
-            return Arrays.stream(additionalAttributes.split(" ")).map(EidasAttribute::fromString).collect(Collectors.toList());
+            return Arrays.stream(attributesSet.split(" ")).map(EidasAttribute::fromString).collect(Collectors.toList());
         } catch (IllegalArgumentException e) {
-            throw new InvalidRequestException("Found one or more invalid AdditionalAttributes value(s). Allowed values are: " + eidasClientProperties.getAllowedAdditionalAttributes().stream().map(EidasAttribute::getFriendlyName).collect(Collectors.toList()), e);
+            List<String> validEidasAttributes = Arrays.stream(EidasAttribute.values()).map(EidasAttribute::getFriendlyName).collect(Collectors.toList());
+            throw new InvalidRequestException("Found one or more invalid Attributes value(s). Valid values are: " + validEidasAttributes, e);
         }
     }
 
-    private void redirectUserForAuthentication(HttpServletResponse httpServletResponse, String country, AssuranceLevel loa, String relayState, List<EidasAttribute> additionalAttributes) {
+    private void validateEidasAttributesAllowed(List<EidasAttribute> eidasAttributes) {
+        List<EidasAttribute> allowedEidasAttributes = eidasClientProperties.getAllowedEidasAttributes();
+        for (EidasAttribute eidasAttribute : eidasAttributes) {
+            if (!allowedEidasAttributes.contains(eidasAttribute)) {
+                throw new InvalidRequestException("Attributes value '" + eidasAttribute.getFriendlyName() + "' is not allowed. Allowed values are: " +
+                        allowedEidasAttributes.stream().map(EidasAttribute::getFriendlyName).collect(Collectors.toList()));
+            }
+        }
+    }
+
+    private void redirectUserForAuthentication(HttpServletResponse httpServletResponse, String country, AssuranceLevel loa, String relayState, List<EidasAttribute> eidasAttributes) {
         AuthnRequestBuilder authnRequestBuilder = new AuthnRequestBuilder(authnReqSigningCredential, eidasClientProperties, idpMetadataResolver.getSingeSignOnService());
-        AuthnRequest authnRequest = authnRequestBuilder.buildAuthnRequest(loa, additionalAttributes);
-        saveRequestAsSession(authnRequest, additionalAttributes);
+        AuthnRequest authnRequest = authnRequestBuilder.buildAuthnRequest(loa, eidasAttributes);
+        saveRequestAsSession(authnRequest, eidasAttributes);
         redirectUserWithRequest(httpServletResponse, authnRequest, country, relayState);
     }
 
-    private void saveRequestAsSession(AuthnRequest authnRequest, List<EidasAttribute> additionalAttributes) {
+    private void saveRequestAsSession(AuthnRequest authnRequest, List<EidasAttribute> eidasAttributes) {
         String loa = authnRequest.getRequestedAuthnContext().getAuthnContextClassRefs().get(0).getAuthnContextClassRef();
-        List<EidasAttribute> requestedAttributes = getRequestedEidasAttributesList(additionalAttributes);
-        RequestSession requestSession = new UnencodedRequestSession(authnRequest.getID(), authnRequest.getIssueInstant(), AssuranceLevel.toEnum(loa), requestedAttributes);
+        RequestSession requestSession = new UnencodedRequestSession(authnRequest.getID(), authnRequest.getIssueInstant(), AssuranceLevel.toEnum(loa), eidasAttributes);
         requestSessionService.saveRequestSession(requestSession.getRequestId(), requestSession);
-    }
-
-    private List<EidasAttribute> getRequestedEidasAttributesList(List<EidasAttribute> additionalAttributes) {
-        List<EidasAttribute> requestedAttributes = new ArrayList<>(DEFAULT_REQUESTED_ATTRIBUTE_SET);
-        if (additionalAttributes != null)
-            requestedAttributes.addAll(additionalAttributes);
-
-        return requestedAttributes;
     }
 
     private void redirectUserWithRequest(HttpServletResponse httpServletResponse, AuthnRequest authnRequest, String country, String relayState) {

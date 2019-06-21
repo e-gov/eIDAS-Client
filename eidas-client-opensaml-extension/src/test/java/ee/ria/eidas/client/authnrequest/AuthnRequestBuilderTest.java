@@ -12,8 +12,11 @@ import org.junit.runner.RunWith;
 import org.opensaml.core.xml.XMLObject;
 import org.opensaml.saml.common.SAMLObjectContentReference;
 import org.opensaml.saml.common.xml.SAMLConstants;
-import org.opensaml.saml.saml2.core.*;
-import org.opensaml.saml.saml2.metadata.SingleSignOnService;
+import org.opensaml.saml.saml2.core.AuthnContextComparisonTypeEnumeration;
+import org.opensaml.saml.saml2.core.AuthnRequest;
+import org.opensaml.saml.saml2.core.NameIDPolicy;
+import org.opensaml.saml.saml2.core.NameIDType;
+import org.opensaml.saml.saml2.core.RequestedAuthnContext;
 import org.opensaml.security.credential.Credential;
 import org.opensaml.xmlsec.signature.Signature;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,9 +33,14 @@ import javax.xml.validation.Validator;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = EidasClientConfiguration.class)
@@ -57,16 +65,41 @@ public class AuthnRequestBuilderTest {
 
     @Test
     public void buildAuthnRequest() {
-        AuthnRequest authnRequest = requestBuilder.buildAuthnRequest(AssuranceLevel.SUBSTANTIAL, null);
+        List<EidasAttribute> requestEidasAttributes = Arrays.asList(EidasAttribute.CURRENT_GIVEN_NAME, EidasAttribute.CURRENT_FAMILY_NAME, EidasAttribute.GENDER);
+        AuthnRequest authnRequest = requestBuilder.buildAuthnRequest(AssuranceLevel.SUBSTANTIAL, requestEidasAttributes);
 
-        assertAuthnRequest(authnRequest);
+        assertAuthnRequest(authnRequest, requestEidasAttributes);
 
         InputStream authnRequestInputStream = new ByteArrayInputStream(OpenSAMLUtils.getXmlString(authnRequest).getBytes());
         InputStream schemaInputStream = getClass().getResourceAsStream("/saml-schema-protocol-2.0");
         validateXMLAgainstSchema(authnRequestInputStream, schemaInputStream);
     }
 
-    private void assertAuthnRequest(AuthnRequest authnRequest) {
+    @Test
+    public void buildAuthnRequestWithNoEidasAttributes() {
+        List<EidasAttribute> requestedEidasAttributes = Collections.emptyList();
+        AuthnRequest authnRequest = requestBuilder.buildAuthnRequest(AssuranceLevel.SUBSTANTIAL, requestedEidasAttributes);
+
+        assertAuthnRequest(authnRequest, requestedEidasAttributes);
+
+        InputStream authnRequestInputStream = new ByteArrayInputStream(OpenSAMLUtils.getXmlString(authnRequest).getBytes());
+        InputStream schemaInputStream = getClass().getResourceAsStream("/saml-schema-protocol-2.0");
+        validateXMLAgainstSchema(authnRequestInputStream, schemaInputStream);
+    }
+
+    @Test
+    public void buildAuthnRequestWithAllEidasAttributes() {
+        List<EidasAttribute> requestedEidasAttributes = Arrays.asList(EidasAttribute.values());
+        AuthnRequest authnRequest = requestBuilder.buildAuthnRequest(AssuranceLevel.SUBSTANTIAL, requestedEidasAttributes);
+
+        assertAuthnRequest(authnRequest, requestedEidasAttributes);
+
+        InputStream authnRequestInputStream = new ByteArrayInputStream(OpenSAMLUtils.getXmlString(authnRequest).getBytes());
+        InputStream schemaInputStream = getClass().getResourceAsStream("/saml-schema-protocol-2.0");
+        validateXMLAgainstSchema(authnRequestInputStream, schemaInputStream);
+    }
+
+    private void assertAuthnRequest(AuthnRequest authnRequest, List<EidasAttribute> eidasAttributes) {
         assertTrue(authnRequest.isForceAuthn());
         assertTrue(authnRequest.getIssueInstant().isBefore(new DateTime()));
         assertEquals(properties.getProviderName(), authnRequest.getProviderName());
@@ -81,7 +114,7 @@ public class AuthnRequestBuilderTest {
         assertSignature(authnRequest.getSignature());
 
         List<XMLObject> extensions = authnRequest.getExtensions().getUnknownXMLObjects();
-        assertExtensions(extensions);
+        assertExtensions(extensions, eidasAttributes);
     }
 
     private void assertSignature(Signature signature) {
@@ -101,14 +134,14 @@ public class AuthnRequestBuilderTest {
         assertEquals(AssuranceLevel.SUBSTANTIAL.getUri(), requestedAuthnContext.getAuthnContextClassRefs().get(0).getAuthnContextClassRef());
     }
 
-    private void assertExtensions(List<XMLObject> extensions) {
+    private void assertExtensions(List<XMLObject> extensions, List<EidasAttribute> eidasAttributes) {
         assertSpType(extensions.get(0));
 
-        XMLObject requestedAttributes = extensions.get(1);
-        assertRequestedAttribute(requestedAttributes.getOrderedChildren().get(0), "FirstName", "http://eidas.europa.eu/attributes/naturalperson/CurrentGivenName", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri");
-        assertRequestedAttribute(requestedAttributes.getOrderedChildren().get(1), "FamilyName", "http://eidas.europa.eu/attributes/naturalperson/CurrentFamilyName", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri");
-        assertRequestedAttribute(requestedAttributes.getOrderedChildren().get(2), "PersonIdentifier", "http://eidas.europa.eu/attributes/naturalperson/PersonIdentifier", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri");
-        assertRequestedAttribute(requestedAttributes.getOrderedChildren().get(3), "DateOfBirth", "http://eidas.europa.eu/attributes/naturalperson/DateOfBirth", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri");
+        List<XMLObject> requestedAttributes = extensions.get(1).getOrderedChildren();
+        assertSame(eidasAttributes.size(), requestedAttributes.size());
+        for (int i = 0; i < eidasAttributes.size(); i++) {
+            assertRequestedAttribute(requestedAttributes.get(i), eidasAttributes.get(i));
+        }
     }
 
     private void assertSpType(XMLObject spType) {
@@ -116,11 +149,11 @@ public class AuthnRequestBuilderTest {
         Assert.assertEquals(SPType.PUBLIC.getValue(), spType.getDOM().getTextContent());
     }
 
-    private void assertRequestedAttribute(XMLObject requestedAttribute, String expectedFriendlyName, String expectedName, String expectedNameFormat) {
-        assertEquals(expectedFriendlyName, requestedAttribute.getDOM().getAttribute("FriendlyName"));
-        assertEquals(expectedName, requestedAttribute.getDOM().getAttribute("Name"));
-        assertEquals(expectedNameFormat, requestedAttribute.getDOM().getAttribute("NameFormat"));
-        assertEquals("true", requestedAttribute.getDOM().getAttribute("isRequired"));
+    private void assertRequestedAttribute(XMLObject requestedAttribute, EidasAttribute eidasAttribute) {
+        assertEquals(eidasAttribute.getFriendlyName(), requestedAttribute.getDOM().getAttribute("FriendlyName"));
+        assertEquals(eidasAttribute.getName(), requestedAttribute.getDOM().getAttribute("Name"));
+        assertEquals(AuthnRequestBuilder.REQUESTED_ATTRIBUTE_NAME_FORMAT, requestedAttribute.getDOM().getAttribute("NameFormat"));
+        assertEquals(eidasAttribute.isRequired() ? "true" : "false", requestedAttribute.getDOM().getAttribute("isRequired"));
     }
 
     private boolean validateXMLAgainstSchema(InputStream xml, InputStream xsd) {
