@@ -32,4 +32,4 @@
 | AV-25 | SAML `Assertion` `AuthnStatement` kontrollid - `AuthnInstant` kehtivuse kontroll|  `/saml2:Assertion/saml2:AuthnStatement/@AuthnInstant` atribuudi väärtus ei tohi olla aegunud (serveri kellade erinevust ja aegumisaega) ega ka tulevikus. Tingimustele mittevastamise korral peab tagastama vea **400 Bad Request**.|
 | AV-26 | Käsitlemata vead | Kõik nõuetes käsitlemata vead tuleb kinni püüda ning kasutajale tagastada vastus **500 Internal Server Error**. |
 | AV-27 | Kohustuslike atribuutide olemasolu vastuses | SAML autentimisvastus peab sisaldama kõiki päringus kirjeldatud kohustuslikke attribuute. Puudumise korral tagastatakse viga **400 Bad Request**. |
-| AV-28 | Edukas autentimine | Kontrollide läbimisel ning eduka autentimisvastuse korral moodustatakse JSON vastus vastavalt [**API kirjelduses**](Service-API.md#returnUrl) toodud kirjeldusele. |
+| AV-29 | Edukas autentimine | Kontrollide läbimisel ning eduka autentimisvastuse korral moodustatakse JSON vastus vastavalt [**API kirjelduses**](Service-API.md#returnUrl) toodud kirjeldusele. |
