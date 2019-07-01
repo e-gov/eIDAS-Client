@@ -34,19 +34,19 @@ Parameetrid:
 
 Näide:
 ```bash
-curl 'https://localhost:8889/login?country=CA'
+curl 'https://localhost:8889/login?Country=CA'
 ```
 
 ```bash
-curl 'https://localhost:8889/login?country=CA&LoA=LOW'
+curl 'https://localhost:8889/login?Country=CA&LoA=LOW'
 ```
 
 ```bash
-curl 'https://localhost:8889/login?country=CA&LoA=LOW&RelayState=kse2vna8221lyauej'
+curl 'https://localhost:8889/login?Country=CA&LoA=LOW&RelayState=kse2vna8221lyauej'
 ```
 
 ```bash
-curl 'https://localhost:8889/login?country=CA&LoA=LOW&RelayState=kse2vna8221lyauej&Attributes=LegalPersonIdentifier%20LegalName%20LegalAddress'
+curl 'https://localhost:8889/login?Country=CA&LoA=LOW&RelayState=kse2vna8221lyauej&Attributes=LegalPersonIdentifier%20LegalName%20LegalAddress'
 ```
 
 
