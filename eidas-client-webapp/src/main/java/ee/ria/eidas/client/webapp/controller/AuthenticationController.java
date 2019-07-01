@@ -45,8 +45,8 @@ public class AuthenticationController {
             @RequestParam("Country") String country,
             @RequestParam(value = "LoA", required=false) AssuranceLevel loa,
             @RequestParam(value = "RelayState", required=false) String relayState,
-            @RequestParam(value = "AdditionalAttributes", required=false) String additionalAttributes) {
-        authInitiationService.authenticate(response, country, loa, relayState, additionalAttributes);
+            @RequestParam(value = "Attributes", required=false) String eidasAttributes) {
+        authInitiationService.authenticate(response, country, loa, relayState, eidasAttributes);
     }
 
     @RequestMapping(value = ENDPOINT_AUTHENTICATION_RETURN_URL, method = POST)
