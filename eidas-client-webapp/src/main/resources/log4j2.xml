@@ -1,8 +1,10 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <Configuration monitorInterval="30">
     <Properties>
-        <Property name="eidas.client.log.pattern">{&quot;date&quot;:&quot;%d{yyyy-MM-dd'T'HH:mm:ss,SSSZ}&quot;, &quot;level&quot;:&quot;%level&quot;%notEmpty{, &quot;request&quot;:&quot;%X{request}&quot;}%notEmpty{, &quot;requestId&quot;:&quot;%X{requestId}&quot;}%notEmpty{, &quot;sessionId&quot;:&quot;%X{sessionId}&quot;}, &quot;logger&quot;:&quot;%logger&quot;, &quot;thread&quot;:&quot;%thread&quot;, &quot;message&quot;:&quot;%msg&quot;%notEmpty{, &quot;throwable&quot;:&quot;%throwable&quot;}}%n</Property>
+        <Property name="eidas.client.log.pattern">{&quot;date&quot;:&quot;%d{yyyy-MM-dd'T'HH:mm:ss,SSSZ}&quot;, &quot;level&quot;:&quot;%level&quot;%notEmpty{, &quot;request&quot;:&quot;%X{request}&quot;}%notEmpty{, &quot;requestId&quot;:&quot;%X{requestId}&quot;}%notEmpty{, &quot;sessionId&quot;:&quot;%X{sessionId}&quot;}, &quot;logger&quot;:&quot;%logger&quot;, &quot;thread&quot;:&quot;%thread&quot;, &quot;message&quot;:&quot;%enc{%msg}{JSON}&quot;notEmpty{, &quot;throwable&quot;:&quot;%enc{%throwable}{JSON}&quot;}}%n</Property>
         <Property name="eidas.client.log.level">info</Property>
+        <Property name="eidas.client.log.dir">/var/log/eidas</Property>
+
         <!-- Uncomment when using syslog appender; Log record format for syslog. Note that the syslog facility code is constant: 'local1' (17). And syslog priority is assigned error (3) in case of ERROR level, otherwise 'notice' (5) shall be used) -->
         <!--Property name="eidas.client.syslog.pattern">&lt;%level{WARN=141, DEBUG=141, ERROR=139, TRACE=141, INFO=141}&gt;1 %d{yyyy-MM-dd'T'HH:mm:ss.SSSZ} ${hostName} rak-eidas-client.log - - - ${sys:eidas.client.log.pattern}</Property-->
     </Properties>
@@ -11,6 +13,17 @@
         <Console name="default" target="SYSTEM_OUT">
             <PatternLayout charset="UTF-8" pattern="${sys:eidas.client.log.pattern}" alwaysWriteExceptions="false"/>
         </Console>
+        <RollingFile name="file" append="true"
+                     filePattern="${sys:eidas.client.log.dir}/eIDAS-Client-%d{yyyy-MM-dd}.log">
+            <PatternLayout alwaysWriteExceptions="false" pattern="${sys:eidas.client.log.pattern}" />
+            <CronTriggeringPolicy schedule="0 0 * * * ?"/>
+            <DirectWriteRolloverStrategy>
+                <Delete basePath="${sys:eidas.client.log.dir}">
+                    <IfFileName glob="eIDAS-Client-*.log" />
+                    <IfLastModified age="7d" />
+                </Delete>
+            </DirectWriteRolloverStrategy>
+        </RollingFile>
 
         <!-- Uncomment when using syslog appender; Example of an appender for sending log events to syslog; -->
         <!--Socket name="eidasClientSyslog" host="example.host" port="example.port" protocol="SSL">
@@ -27,13 +40,13 @@
 
 
         <Logger name="ee.ria.eidas.client" level="${sys:eidas.client.log.level}" additivity="false">
-            <AppenderRef ref="default" />
+            <AppenderRef ref="file"/>
             <!-- Uncomment when using syslog appender -->
             <!-- AppenderRef ref="eidasClientSyslog" /-->
         </Logger>
 
         <Root level="warn">
-            <AppenderRef ref="default" />
+            <AppenderRef ref="file" />
             <!-- Uncomment when using syslog appender -->
             <!-- AppenderRef ref="eidasClientSyslog" /-->
         </Root>
