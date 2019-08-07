@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Configuration monitorInterval="30">
+    <Properties>
+        <Property name="eidas.client.log.pattern">{&quot;date&quot;:&quot;%d{yyyy-MM-dd'T'HH:mm:ss,SSSZ}&quot;, &quot;level&quot;:&quot;%level&quot;%notEmpty{, &quot;request&quot;:&quot;%X{request}&quot;}%notEmpty{, &quot;requestId&quot;:&quot;%X{requestId}&quot;}%notEmpty{, &quot;sessionId&quot;:&quot;%X{sessionId}&quot;}, &quot;logger&quot;:&quot;%logger&quot;, &quot;thread&quot;:&quot;%thread&quot;, &quot;message&quot;:&quot;%msg&quot;%notEmpty{, &quot;throwable&quot;:&quot;%throwable&quot;}}%n</Property>
+        <Property name="eidas.client.log.level">info</Property>
+    </Properties>
+
+    <Appenders>
+        <Console name="default" target="SYSTEM_OUT">
+            <PatternLayout charset="UTF-8" pattern="${sys:eidas.client.log.pattern}" alwaysWriteExceptions="false"/>
+        </Console>
+    </Appenders>
+
+    <Loggers>
+
+        <Logger name="ee.ria.eidas.client" level="${sys:eidas.client.log.level}" additivity="false">
+            <AppenderRef ref="default" />
+        </Logger>
+
+        <Root level="warn">
+            <AppenderRef ref="default" />
+        </Root>
+
+    </Loggers>
+</Configuration>
