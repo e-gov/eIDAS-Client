@@ -200,7 +200,7 @@ Logimiseks kasutatakse [Log4j2 raamistikku](https://logging.apache.org/log4j/2.x
 <a name="logimine_naidis"></a>
 ### 4.1. Logimise vaikekonfiguratsioon
 
-Rakenduses on kaasas [vaikeseadistusega konfiguratsioonifail](../eidas-client-webapp/src/main/resources/log4j2.xml), mis määrab logimise vaikeväljundiks süsteemi konsooli ning eIDAS-kliendi pakettides aset leidvate sündmuste logimise tasemeks `INFO`. Kõik muud sündmused logitakse tasemel `WARN`.
+Rakenduses on kaasas [vaikeseadistusega konfiguratsioonifail](../eidas-client-webapp/src/main/resources/log4j2.xml), mis logib kohaliku failisüsteemi `/var/log/eidas` kausta failid mustriga `eIDAS-Client-%d{yyyy-MM-dd}`, näiteks `/var/log/eidas/eIDAS-Client-2019-08-06.log`. Rakendus hoiab viimase 7 päeva logisid pakkimata kujul. eIDAS-kliendi pakettides aset leidvate sündmuste logimise tasemeks `INFO`, kõik muud sündmused logitakse tasemel `WARN`.
 Vaikeseadistuses väljastatakse logikirjed JSON kujul, iga logikirje lõpetab reavahetuse sümbol `\n`.
 
 Tabel 4.1.1 - Logikirje struktuur
@@ -214,8 +214,8 @@ Tabel 4.1.1 - Logikirje struktuur
 | **sessionId** | Päringu `X-Correlation-ID` päise väärtus, selle puudumisel sessiooni ID-st genereeritud **sha256** räsi base64 kujul. Väärtustamata, kui logisündmus ei ole väljastatud päringu käigus. | Ei |
 | **logger** | Logija nimi. | Jah |
 | **thread** | Lõime nimi. | Jah |
-| **message** | Logisõnum. | Jah |
-| **throwable** | Vea _stack trace_. | Ei |
+| **message** | Logisõnum varjestatuna JSON-_escaping_'uga.| Jah |
+| **throwable** | Vea _stack trace_ varjestatuna JSON-_escaping_'uga. | Ei |
 
 Näide:
 
@@ -232,7 +232,7 @@ Tabel 4.2.1 - Vaikekonfiguratsioonifaili seadistatavad parameetrid
 
 | Parameeter        | Kirjeldus | Vaikeväärtus |
 | :---------------- | :---------- | :----------------|
-| `eidas.client.log.pattern` | Logisündmuse muster. | `{"date":"%d{yyyy-MM-dd'T'HH:mm:ss,SSSZ}", "level":"%level"%notEmpty{, "request":"%X{request}"}%notEmpty{, "requestId":"%X{requestId}"}%notEmpty{, "sessionId":"%X{sessionId}"}, "logger":"%logger", "thread":"%thread", "message":"%msg"%notEmpty{, "throwable":"%throwable"}}%n` |
+| `eidas.client.log.pattern` | Logisündmuse muster. | `{"date":"%d{yyyy-MM-dd'T'HH:mm:ss,SSSZ}", "level":"%level"%notEmpty{, "request":"%X{request}"}%notEmpty{, "requestId":"%X{requestId}"}%notEmpty{, "sessionId":"%X{sessionId}"}, "logger":"%logger", "thread":"%thread", "message":"%enc{%msg}{JSON}"notEmpty{, "throwable":"%enc{%throwable}{JSON}"}}%n` |
 | `eidas.client.log.level` | eIDAS-kliendi-spetsiifiliste sündmuste logimise tase. Üks järgnevatest väärtustest: `ERROR`, `WARN`, `INFO`, `DEBUG`, `TRACE` | `info` |
 
 Nende parameetrite vaikeväärtusi on võimalik muuta rakenduse käivitamisel etteantavate süsteemiparameetrite abil (vt. [Paigaldamine](Configuration.md#war_deployment) punkt 3), näiteks:
