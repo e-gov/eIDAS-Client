@@ -95,7 +95,7 @@ public class EidasClientProperties {
     private int acceptedClockSkew = DEFAULT_ACCEPTED_CLOCK_SKEW;
 
     @NotNull
-    private int responseMessageLifeTime = DEFAULT_RESPONSE_MESSAGE_LIFETIME;
+    private int responseMessageLifetime = DEFAULT_RESPONSE_MESSAGE_LIFETIME;
 
     private boolean hazelcastEnabled = false;
 

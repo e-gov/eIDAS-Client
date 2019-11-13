@@ -186,7 +186,7 @@ public class AuthResponseService {
 
         MessageLifetimeSecurityHandler lifetimeSecurityHandler = new MessageLifetimeSecurityHandler();
         lifetimeSecurityHandler.setClockSkew(eidasClientProperties.getAcceptedClockSkew() * 1000L);
-        lifetimeSecurityHandler.setMessageLifetime(eidasClientProperties.getResponseMessageLifeTime() * 1000L);
+        lifetimeSecurityHandler.setMessageLifetime(eidasClientProperties.getResponseMessageLifetime() * 1000L);
         lifetimeSecurityHandler.setRequiredRule(true);
 
         ReceivedEndpointSecurityHandler receivedEndpointSecurityHandler = new ReceivedEndpointSecurityHandler();

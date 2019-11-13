@@ -10,10 +10,7 @@ import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.WebDataBinder;
-import org.springframework.web.bind.annotation.InitBinder;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -40,7 +37,7 @@ public class AuthenticationController {
         binder.registerCustomEditor(String.class, new StringTrimmerEditor(true));
     }
 
-    @RequestMapping(value = ENDPOINT_AUTHENTICATION_LOGIN, method = GET)
+    @GetMapping(value = ENDPOINT_AUTHENTICATION_LOGIN)
     public void authenticate(HttpServletResponse response,
             @RequestParam("Country") String country,
             @RequestParam(value = "LoA", required=false) AssuranceLevel loa,
@@ -49,7 +46,7 @@ public class AuthenticationController {
         authInitiationService.authenticate(response, country, loa, relayState, eidasAttributes);
     }
 
-    @RequestMapping(value = ENDPOINT_AUTHENTICATION_RETURN_URL, method = POST)
+    @PostMapping(value = ENDPOINT_AUTHENTICATION_RETURN_URL)
     @ResponseBody
     public AuthenticationResult getAuthenticationResult(HttpServletRequest req) throws MissingServletRequestParameterException {
         return authResponseService.getAuthenticationResult(req);

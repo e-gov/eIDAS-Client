@@ -1,5 +1,6 @@
 package ee.ria.eidas.client.webapp.status;
 
+
 import com.hazelcast.cluster.ClusterState;
 import com.hazelcast.core.HazelcastInstance;
 import ee.ria.eidas.client.config.EidasClientProperties;
@@ -8,11 +9,12 @@ import org.apache.http.HttpStatus;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.client.utils.HttpClientUtils;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.actuate.endpoint.AbstractEndpoint;
+import org.springframework.boot.actuate.autoconfigure.endpoint.condition.ConditionalOnAvailableEndpoint;
+import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
+import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
 import org.springframework.boot.actuate.health.Status;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.info.BuildProperties;
@@ -20,17 +22,16 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.time.Instant;
 import java.util.*;
 
 @Slf4j
 @Component
-@ConfigurationProperties(
-        prefix = "endpoints.heartbeat"
-)
-public class HeartbeatEndpoint extends AbstractEndpoint<Map<String, Object>> {
+@ConditionalOnAvailableEndpoint(endpoint = HeartbeatEndpoint.class)
+@Endpoint(id = "heartbeat", enableByDefault = false)
+@ConfigurationProperties(prefix = "management.endpoint.heartbeat")
+public class HeartbeatEndpoint {
 
     public static final String RESPONSE_PARAM_NAME = "name";
     public static final String RESPONSE_PARAM_VERSION = "version";
@@ -57,10 +58,6 @@ public class HeartbeatEndpoint extends AbstractEndpoint<Map<String, Object>> {
     @Autowired
     private EidasClientProperties properties;
 
-    public HeartbeatEndpoint() {
-        super("heartbeat", false);
-    }
-
     @PostConstruct
     public void setUp() {
         setApplicationBuildProperties(context);
@@ -79,13 +76,8 @@ public class HeartbeatEndpoint extends AbstractEndpoint<Map<String, Object>> {
                 .build();
     }
 
-    @PreDestroy
-    public void preDestroy() {
-        HttpClientUtils.closeQuietly(httpClient);
-    }
-
-    @Override
-    public Map<String, Object> invoke() {
+    @ReadOperation( produces = {"application/json"} )
+    public Map<String, Object> getHealthInfo() {
         Map<String, Object> response = new LinkedHashMap<>();
 
         response.put(RESPONSE_PARAM_NAME, formatValue(appName));
@@ -140,7 +132,7 @@ public class HeartbeatEndpoint extends AbstractEndpoint<Map<String, Object>> {
 
         appName = buildProperties.getName();
         appVersion = buildProperties.getVersion();
-        buildTime = getDateAsInstant(buildProperties.getTime());
+        buildTime = buildProperties.getTime();
     }
 
     private boolean isIdpMetadataEndpointReachableAndOk() {
@@ -155,10 +147,6 @@ public class HeartbeatEndpoint extends AbstractEndpoint<Map<String, Object>> {
 
     private static Instant getCurrentTime() {
         return Instant.now();
-    }
-
-    private static Instant getDateAsInstant(Date date) {
-        return (date != null) ? date.toInstant() : null;
     }
 
     private static Object formatTime(Instant instant) {

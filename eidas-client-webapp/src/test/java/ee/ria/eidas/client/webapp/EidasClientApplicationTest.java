@@ -3,9 +3,6 @@ package ee.ria.eidas.client.webapp;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-import com.jayway.restassured.RestAssured;
-import com.jayway.restassured.config.XmlConfig;
-import com.jayway.restassured.response.ResponseBodyExtractionOptions;
 import ee.ria.eidas.client.AuthInitiationService;
 import ee.ria.eidas.client.authnrequest.AssuranceLevel;
 import ee.ria.eidas.client.authnrequest.EidasAttribute;
@@ -15,6 +12,9 @@ import ee.ria.eidas.client.session.RequestSessionService;
 import ee.ria.eidas.client.session.UnencodedRequestSession;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
 import ee.ria.eidas.client.utils.XmlUtils;
+import io.restassured.RestAssured;
+import io.restassured.config.XmlConfig;
+import io.restassured.response.ResponseBodyExtractionOptions;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.junit.AfterClass;
@@ -29,8 +29,8 @@ import org.opensaml.saml.saml2.metadata.EntityDescriptor;
 import org.opensaml.security.credential.Credential;
 import org.opensaml.xmlsec.signature.support.SignatureValidator;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.context.embedded.LocalServerPort;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.boot.web.server.LocalServerPort;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
@@ -42,8 +42,8 @@ import java.util.stream.Collectors;
 
 import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
-import static com.jayway.restassured.RestAssured.given;
-import static com.jayway.restassured.matcher.RestAssuredMatchers.matchesXsd;
+import static io.restassured.RestAssured.given;
+import static io.restassured.internal.matcher.xml.XmlXsdMatcher.matchesXsd;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.core.IsEqual.equalTo;
@@ -477,7 +477,7 @@ public abstract class EidasClientApplicationTest {
     @Test
     public void returnUrl_shouldFail_whenRequestSessionHasExpired() {
         ResponseBuilder responseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
-        DateTime issueInstant = new DateTime().minusSeconds(eidasClientProperties.getResponseMessageLifeTime()).minusSeconds(eidasClientProperties.getAcceptedClockSkew()).minusSeconds(1);
+        DateTime issueInstant = new DateTime().minusSeconds(eidasClientProperties.getResponseMessageLifetime()).minusSeconds(eidasClientProperties.getAcceptedClockSkew()).minusSeconds(1);
         saveNewRequestSession(responseBuilder.DEFAULT_IN_RESPONSE_TO, issueInstant, AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
         Response response = responseBuilder.buildResponse("http://localhost:7771/EidasNode/ConnectorResponderMetadata");
 
@@ -497,7 +497,7 @@ public abstract class EidasClientApplicationTest {
     public void returnUrl_shouldFail_whenResponseIssueInstantHasExpired() {
         ResponseBuilder responseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
         saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
-        DateTime pastTime = new DateTime().minusSeconds(eidasClientProperties.getResponseMessageLifeTime()).minusSeconds(eidasClientProperties.getAcceptedClockSkew()).minusSeconds(1);
+        DateTime pastTime = new DateTime().minusSeconds(eidasClientProperties.getResponseMessageLifetime()).minusSeconds(eidasClientProperties.getAcceptedClockSkew()).minusSeconds(1);
         Response response = responseBuilder.buildResponse("http://localhost:7771/EidasNode/ConnectorResponderMetadata",
                 Collections.singletonMap(ResponseBuilder.InputType.ISSUE_INSTANT, Optional.of(pastTime)));
 
@@ -517,7 +517,7 @@ public abstract class EidasClientApplicationTest {
     public void returnUrl_shouldFail_whenResponseIssueInstantIsInTheFuture() {
         ResponseBuilder responseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
         saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
-        DateTime futureTime = new DateTime().plusSeconds(1).plusSeconds(eidasClientProperties.getResponseMessageLifeTime()).plusSeconds(eidasClientProperties.getAcceptedClockSkew());
+        DateTime futureTime = new DateTime().plusSeconds(1).plusSeconds(eidasClientProperties.getResponseMessageLifetime()).plusSeconds(eidasClientProperties.getAcceptedClockSkew());
         Response response = responseBuilder.buildResponse("http://localhost:7771/EidasNode/ConnectorResponderMetadata",
                 Collections.singletonMap(ResponseBuilder.InputType.ISSUE_INSTANT, Optional.of(futureTime)));
 

@@ -20,7 +20,7 @@ import java.util.Map;
 
 import static ee.ria.eidas.client.session.HazelcastRequestSessionServiceImpl.UNANSWERED_REQUESTS_MAP;
 
-@ConditionalOnProperty("eidas.client.hazelcastEnabled")
+@ConditionalOnProperty("eidas.client.hazelcast-enabled")
 @EnableConfigurationProperties({
         EidasClientProperties.class
 })

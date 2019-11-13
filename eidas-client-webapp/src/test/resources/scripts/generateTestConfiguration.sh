@@ -56,30 +56,32 @@ echo "---------- [ Generating a sample $confFileName]"
 remove_file_if_exists $confFileName
 
 echo "eidas.client.keystore = file:`pwd`/$keystoreFileName">>$confFileName
-echo "eidas.client.keystorePass = $password">>$confFileName
+echo "eidas.client.keystore-pass = $password">>$confFileName
 echo "">>$confFileName
 
-echo "eidas.client.metadataSigningKeyId = metadata">>$confFileName
-echo "eidas.client.metadataSigningKeyPass = $password">>$confFileName
-echo "eidas.client.metadataSignatureAlgorithm = http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha512">>$confFileName
+echo "eidas.client.metadata-signing-key-id = metadata">>$confFileName
+echo "eidas.client.metadata-signing-key-pass = $password">>$confFileName
+echo "eidas.client.metadata-signature-algorithm = http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha512">>$confFileName
 echo "">>$confFileName
 
-echo "eidas.client.requestSigningKeyId = requestsigning">>$confFileName
-echo "eidas.client.requestSigningKeyPass = $password">>$confFileName
-echo "eidas.client.requestSignatureAlgorithm = http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha512">>$confFileName
+echo "eidas.client.request-signing-key-id = requestsigning">>$confFileName
+echo "eidas.client.request-signing-key-pass = $password">>$confFileName
+echo "eidas.client.request-signature-algorithm = http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha512">>$confFileName
 echo "">>$confFileName
 
-echo "eidas.client.responseDecryptionKeyId = responseencryption">>$confFileName
-echo "eidas.client.responseDecryptionKeyPass = $password">>$confFileName
+echo "eidas.client.response-decryption-key-id = responseencryption">>$confFileName
+echo "eidas.client.response-decryption-key-pass = $password">>$confFileName
 echo "">>$confFileName
 
-echo "eidas.client.providerName = DEMO SP">>$confFileName
-echo "eidas.client.idpMetadataUrl = https://eidastest.eesti.ee/EidasNode/ConnectorResponderMetadata">>$confFileName
-echo "eidas.client.spEntityId = $2/metadata">>$confFileName
-echo "eidas.client.callbackUrl = $2/returnUrl">>$confFileName
+echo "eidas.client.provider-name = DEMO SP">>$confFileName
+echo "eidas.client.idp-metadata-url = https://eidastest.eesti.ee/EidasNode/ConnectorResponderMetadata">>$confFileName
+echo "eidas.client.sp-entity-id = $2/metadata">>$confFileName
+echo "eidas.client.callback-url = $2/returnUrl">>$confFileName
 echo "">>$confFileName
 
-echo "eidas.client.idpMetadataSigningCertificateKeyId = idpmetadata">>$confFileName
+echo "eidas.client.available-countries = EE,CA">>$confFileName
+
+echo "eidas.client.idp-metadata-signing-certificate-key-id = idpmetadata">>$confFileName
 
 echo "Please review the generated sample configuration: `readlink -f $confFileName`"
 

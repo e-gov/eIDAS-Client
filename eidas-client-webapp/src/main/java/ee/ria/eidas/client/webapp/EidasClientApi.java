@@ -8,8 +8,9 @@ public class EidasClientApi {
     public static final String ENDPOINT_AUTHENTICATION_LOGIN = "/login";
     public static final String ENDPOINT_AUTHENTICATION_RETURN_URL = "/returnUrl";
 
+    private EidasClientApi() { throw new IllegalStateException("Utility class"); }
 
-    public static enum Endpoint {
+    public enum Endpoint {
 
         METADATA(ENDPOINT_METADATA_METADATA, Type.METADATA),
         SUPPORTED_COUNTRIES(ENDPOINT_METADATA_SUPPORTED_COUNTRIES, Type.METADATA),
@@ -17,7 +18,7 @@ public class EidasClientApi {
         LOGIN(ENDPOINT_AUTHENTICATION_LOGIN, Type.AUTHENTICATION),
         RETURN_URL(ENDPOINT_AUTHENTICATION_RETURN_URL, Type.AUTHENTICATION);
 
-        public static enum Type {
+        public enum Type {
             METADATA, AUTHENTICATION;
         }
 

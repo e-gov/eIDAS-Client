@@ -1,7 +1,6 @@
 package ee.ria.eidas.client.webapp.security;
 
 import ee.ria.eidas.client.webapp.EidasClientApi;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
@@ -16,14 +15,11 @@ import java.util.stream.Collectors;
 @Configuration
 public class SecurityConfiguration {
 
-    @Autowired
-    private Environment environment;
-
     @Bean
-    @ConditionalOnProperty("security.allowedAuthenticationPort")
-    public FilterRegistrationBean authenticationPortFilter() {
+    @ConditionalOnProperty("security.allowed-authentication-port")
+    public FilterRegistrationBean authenticationPortFilter(Environment environment) {
         final int allowedPort = Integer.parseInt(
-                environment.getProperty("security.allowedAuthenticationPort")
+                environment.getProperty("security.allowed-authentication-port")
         );
         if (allowedPort < 1 || allowedPort > 65535) {
             throw new IllegalStateException("Illegal port number " + allowedPort);
