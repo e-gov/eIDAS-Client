@@ -324,6 +324,6 @@ Hazelcasti monitooringuks on võimalik kasutada Hazelcasti enda [health otspunkt
 
 Lisaks on võimalik detailsemat infot saada [diagnostika logist](https://docs.hazelcast.org/docs/3.12/manual/html-single/index.html#diagnostics) ja kontrollida klastrit detailsemalt, kui sisse lülitada [JMX pordi kasutus](https://docs.hazelcast.org/docs/3.11/manual/html-single/index.html#monitoring-with-jmx).
 
-eIDAS-Client'i pakub ka `/hazelcast` otspunkti (vaikimimsi välja lülitatud) minimaalse kasutusstatistikaga.
+eIDAS-Client'i pakub ka `/hazelcast` otspunkti (vaikimisi välja lülitatud) minimaalse kasutusstatistikaga.
 
 
