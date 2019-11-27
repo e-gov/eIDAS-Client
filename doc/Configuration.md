@@ -129,6 +129,7 @@ Tabel 2.3.4 - turvaseadistused
 | Parameeter        | Kohustuslik | Kirjeldus, näide |
 | :---------------- | :---------- | :----------------|
 | `security.allowed-authentication-port` | Ei | Olemasolu korral piirab ligipääsu autentimisotspunktidele (`/login` ja `/returnUrl`) vaid määratud pordi kaudu, misjuhul nimetatud otspunktide poole pöördumisel muude portide kaudu tagastatakse `403 Forbidden` ja [veakirjeldus JSON objektina](Service-API.md#veakasitlus). Lubatud väärtused: täisarv vahemikus 1 - 65535. |
+| `security.disabled-http-methods` | Ei | Komaga eraldatud nimekiri HTTP meetoditest. Olemasolu korral piirab ligipääsu HTTP meetoditele (nimekirjas toodud meetodi kasutuse korral tagastatakse HTTP 405). Kui määramata, siis vaikimisi keelatud HTTP meetodite nimekirja kuuluvad: HEAD, PUT, PATCH, DELETE, OPTIONS, TRACE. Lubatud väärtused: GET, POST, HEAD, PUT, PATCH, DELETE, OPTIONS, TRACE |
 
 Tabel 2.3.5 - heartbeat otspunkti seadistus
 

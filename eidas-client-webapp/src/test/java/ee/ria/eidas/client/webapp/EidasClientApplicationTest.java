@@ -14,7 +14,9 @@ import ee.ria.eidas.client.util.OpenSAMLUtils;
 import ee.ria.eidas.client.utils.XmlUtils;
 import io.restassured.RestAssured;
 import io.restassured.config.XmlConfig;
+import io.restassured.http.Method;
 import io.restassured.response.ResponseBodyExtractionOptions;
+import io.restassured.response.ValidatableResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.junit.AfterClass;
@@ -44,6 +46,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static io.restassured.RestAssured.given;
 import static io.restassured.internal.matcher.xml.XmlXsdMatcher.matchesXsd;
+import static java.util.Arrays.asList;
 import static org.hamcrest.Matchers.empty;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.core.IsEqual.equalTo;
@@ -572,15 +575,39 @@ public abstract class EidasClientApplicationTest {
     }
 
     @Test
-    public void returnUrl_shouldFail_whenInvalidMethod() {
-        given()
-                .port(port)
-        .when()
-                .put("/returnUrl")
-        .then()
-                .statusCode(405)
-                .body("error", equalTo("Method Not Allowed"))
-                .body("message", equalTo("Request method 'PUT' not supported"));
+    public void url_shouldFailWithHttp405WhenInvalidMethod() {
+
+        Method[] methods = {
+                Method.OPTIONS,
+                Method.DELETE,
+                Method.PUT,
+                Method.PATCH,
+                Method.HEAD,
+                Method.TRACE};
+
+        veriftMethodsNotAllowed("/metadata", methods);
+        veriftMethodsNotAllowed("/returnUrl", methods);
+        veriftMethodsNotAllowed("/login", methods);
+        veriftMethodsNotAllowed("/heartbeat", methods);
+    }
+
+    private void veriftMethodsNotAllowed(String path, Method... methods) {
+        for (Method method: methods) {
+
+            ValidatableResponse response =
+                    given()
+                        .port(port)
+                    .when()
+                        .request(method, path)
+                    .then()
+                        .statusCode(405);
+
+            // No response body expected with TRACE and HEAD
+            if (!asList(Method.TRACE, Method.HEAD).contains(method)) {
+                response.body("error", equalTo("Method Not Allowed"));
+                response.body("message", equalTo("Request method '" + method.name() + "' not supported"));
+            }
+        }
     }
 
     protected void saveNewRequestSession(String requestID, DateTime issueInstant, AssuranceLevel loa, List<EidasAttribute> requestedAttributes) {

@@ -16,7 +16,15 @@ import static org.hamcrest.core.IsEqual.equalTo;
 @SpringBootTest(
         properties= "spring.main.allow-bean-definition-overriding=true",
         webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@TestPropertySource(locations = "classpath:application-hazelcast-enabled.properties")
+@TestPropertySource(locations = "classpath:application.properties",
+        inheritProperties = false,
+        properties = {"eidas.client.hazelcast-enabled = true",
+                "eidas.client.hazelcast-config = classpath:hazelcast-default.xml",
+                "eidas.client.hazelcast-signing-key=JgeUmXWHRs1FClKuStKRNWvfNWfFHWGSR8jgN8_xEoBSGnkiHHgEEHMttYmMtzy88rnlO6yfmQpSAJ0yNA9NWw",
+                "eidas.client.hazelcast-signing-algorithm=HS512",
+                "eidas.client.hazelcast-encryption-key=K7KVMOrgRj7Pw5GDHdXjKQ==",
+                "eidas.client.hazelcast-encryption-alg=AES",
+                "management.endpoint.hazelcast.enabled=true"} )
 public class EidasClientApplicationHazelcastEnabledTest extends EidasClientApplicationTest {
 
     @Test
