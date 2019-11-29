@@ -9,8 +9,7 @@
 - [4. Logimine](#logimine)
   * [4.1 Logimise vaikekonfiguratsioon](#logimine_naidis)
   * [4.2 Vaikekonfiguratsiooni seadistamine](#logimine_naidis)
-  * [4.3 Välise log4j2.xml konfiguratsioonifaili kasutamine](#logimine_valine)
-  * [4.4 Syslog serverisse edastamine](#syslog)
+  * [4.3 Välise log4j2.xml konfiguratsioonifaili kasutamine](#logimine_valine)  
 - [5. Monitoorimine](#heartbeat)
 - [6. Hazelcast ja mitmes eksemplaris paigaldamine](#klasterdamine)
   * [6.1 Hazelcasti sisselülitamine](#hazelcast)
@@ -47,30 +46,30 @@ Järgnev on näidis minimaalsest vajaminevast konfiguratsioonifailist (viidetega
 ```
 # Keystore
 eidas.client.keystore = file:/opt/tomcat/samlKeystore-test.jks
-eidas.client.keystorePass = ...
+eidas.client.keystore-pass = ...
 
 # Key used for signing the SAML metadata
-eidas.client.metadataSigningKeyId = metadatasigning
-eidas.client.metadataSigningKeyPass = ...
-eidas.client.metadataSignatureAlgorithm = http://www.w3.org/2007/05/xmldsig-more#sha256-rsa-MGF1
+eidas.client.metadata-signing-key-id = metadatasigning
+eidas.client.metadata-signing-key-pass = ...
+eidas.client.metadata-signature-algorithm = http://www.w3.org/2007/05/xmldsig-more#sha256-rsa-MGF1
 
 # Key used for signing the SAML AuthnRequest
-eidas.client.requestSigningKeyId = requestsigning
-eidas.client.requestSigningKeyPass = ...
-eidas.client.requestSignatureAlgorithm = http://www.w3.org/2007/05/xmldsig-more#sha256-rsa-MGF1
+eidas.client.request-signing-key-id = requestsigning
+eidas.client.request-signing-key-pass = ...
+eidas.client.request-signature-algorithm = http://www.w3.org/2007/05/xmldsig-more#sha256-rsa-MGF1
 
 # Key used to decrypt the SAML Assertion in response
-eidas.client.responseDecryptionKeyId = responseencryption
-eidas.client.responseDecryptionKeyPass = ...
+eidas.client.response-decryption-key-id = responseencryption
+eidas.client.response-decryption-key-pass = ...
 
 # IDP metadata location
-eidas.client.idpMetadataUrl = http://eidas-node.dev:8080/EidasNode/ConnectorResponderMetadata
+eidas.client.idp-metadata-url = http://eidas-node.dev:8080/EidasNode/ConnectorResponderMetadata
 
-eidas.client.providerName = EIDAS KLIENT DEMO
-eidas.client.spEntityId = http://eidas-client.dev:8080/metadata
-eidas.client.callbackUrl = https://eidas-client.dev/returnUrl
+eidas.client.provider-name = EIDAS KLIENT DEMO
+eidas.client.sp-entity-id = http://eidas-client.dev:8080/metadata
+eidas.client.callback-url = https://eidas-client.dev/returnUrl
 
-eidas.client.availableCountries = EE,CA,CD
+eidas.client.available-countries = EE,CA,CD
 ```
 
 <a name="war_deployment"></a>
@@ -79,7 +78,7 @@ eidas.client.availableCountries = EE,CA,CD
 1. Järgi [**juhiseid**](../README.md) ning ehita kokku eIDAS-Client `war` fail koos näidis konfiguratsioonifailiga.
 2. Paigalda war fail rakendusserverisse. <br><br>NB! Soovituslik on paigaldada eIDAS-Client ainsa rakendusena rakendusserverisse (Tomcat puhul `ROOT` rakendusena)<br><br>
 3. Anna rakendusserverile ette eIDAS-Client **konfiguratsioonifaili asukoht**. Selleks lisa `tomcat/bin` kausta `setenv.sh` fail, milles viidatud Spring boot konfiguratsioonifaili asukoht:
-`export SPRING_CONFIG_LOCATION=/etc/eidas-client/application.properties`
+`export SPRING_CONFIG_ADDITIONAL_LOCATION=/etc/eidas-client/application.properties`
 
 
 
@@ -91,82 +90,83 @@ Tabel 2.3.1 - Teenusepakkuja metateabe seadistus
 | Parameeter        | Kohustuslik | Kirjeldus, näide |
 | :---------------- | :---------- | :----------------|
 | `eidas.client.keystore` | Jah | Võtmehoidla asukoha kirjeldus. Näide: `classpath:samlKeystore.jks`, kui fail loetakse classpathi kaudu või `file:/etc/eidas-client/samlKeystore.jks` kui loetakse otse failisüsteemist. Võtmehoidla peab olema JKS tüüpi. |
-| `eidas.client.keystorePass` | Jah | SAML võtmehoidla parool. |
-| `eidas.client.metadataSigningKeyId` | Jah | SAML metateabe allkirjastamisvõtme alias. |
-| `eidas.client.metadataSigningKeyPass` | Jah | SAML metateabe allkirjastamisvõtme parool. |
-| `eidas.client.metadataSignatureAlgorithm` | Ei | Metateabe allkirja algoritm. Lubatud väärtused vastavalt. Vaikimisi `http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha512`  |
-| `eidas.client.responseDecryptionKeyId` | Jah | SAML autentimisvastuse dekrepteerimisvõtme alias. |
-| `eidas.client.responseDecryptionKeyPass` | Jah | SAML autentimisvastuse dekrüpteerimisvõtme parool. |
-| `eidas.client.spEntityId` | Jah | URL, mis viitab teenusepakkuja metateabele. `/md:EntityDescriptor/@entityID` väärtus metateabes. Näiteks: https://hostname:8889/metadata |
-| `eidas.client.callbackUrl` | Jah | URL, mis viitab teenusepakkuja SAML`/md:EntityDescriptor/md:SPSSODescriptor/md:AssertionConsumerService/@Location` väärtus metateabes. |
-| `eidas.client.metadataValidityInDays` | Ei | Konnektorteeenuse metateabe kehtivusaeg päevades. Vaikimisi 1 päev. |
-| `eidas.client.spType` | Ei | Lubatud väärtused `public` ja `private`. EIDAS spetsiifiline parameeter metateabes `/md:EntityDescriptor/md:Extensions/eidas:SPType`. Vaikimisi `public`. |
+| `eidas.client.keystore-pass` | Jah | SAML võtmehoidla parool. |
+| `eidas.client.metadata-signing-key-id` | Jah | SAML metateabe allkirjastamisvõtme alias. |
+| `eidas.client.metadata-signing-key-pass` | Jah | SAML metateabe allkirjastamisvõtme parool. |
+| `eidas.client.metadata-signature-algorithm` | Ei | Metateabe allkirja algoritm. Lubatud väärtused vastavalt. Vaikimisi `http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha512`  |
+| `eidas.client.response-decryption-key-id` | Jah | SAML autentimisvastuse dekrepteerimisvõtme alias. |
+| `eidas.client.response-decryption-key-pass` | Jah | SAML autentimisvastuse dekrüpteerimisvõtme parool. |
+| `eidas.client.sp-entity-id` | Jah | URL, mis viitab teenusepakkuja metateabele. `/md:EntityDescriptor/@entityID` väärtus metateabes. Näiteks: https://hostname:8889/metadata |
+| `eidas.client.callback-url` | Jah | URL, mis viitab teenusepakkuja SAML`/md:EntityDescriptor/md:SPSSODescriptor/md:AssertionConsumerService/@Location` väärtus metateabes. |
+| `eidas.client.metadata-validity-in-days` | Ei | Konnektorteeenuse metateabe kehtivusaeg päevades. Vaikimisi 1 päev. |
+| `eidas.client.sp-type` | Ei | Lubatud väärtused `public` ja `private`. EIDAS spetsiifiline parameeter metateabes `/md:EntityDescriptor/md:Extensions/eidas:SPType`. Vaikimisi `public`. |
 
 
 Tabel 2.3.2 - Konnektorteenuse metateabe küsimise seadistus
 
 | Parameeter        | Kohustuslik | Kirjeldus, näide |
 | :---------------- | :---------- | :----------------|
-| `eidas.client.idpMetadataUrl`  | Jah | URL. Konnektorteenuse metateabe asukoht. https://eidastest.eesti.ee/EidasNode/ConnectorResponderMetadata |
-| `eidas.client.idpMetadataSigningCertificateKeyId` | Ei | Konnektorteeenuse metateabe allkirjastamiseks kasutatud sertifikaadi alias võtmehoidlas. Vaikimisi alias: `metadata`. |
+| `eidas.client.idp-metadata-url`  | Jah | URL. Konnektorteenuse metateabe asukoht. https://eidastest.eesti.ee/EidasNode/ConnectorResponderMetadata |
+| `eidas.client.idp-metadata-signing-certificate-key-id` | Ei | Konnektorteeenuse metateabe allkirjastamiseks kasutatud sertifikaadi alias võtmehoidlas. Vaikimisi alias: `metadata`. |
 
 Tabel 2.3.3 - Saadetava AuthnRequesti ja SAML vastuse seadistus
 
 | Parameeter        | Kohustuslik | Kirjeldus, näide |
 | :---------------- | :---------- | :----------------|
-| `eidas.client.providerName` | Jah | Teenusepakkuja lühinimetus. `/saml2p:AuthnRequest/@ProviderName` väärtus. |
-| `eidas.client.requestSigningKeyId` | Jah | SAML autentimispäringu allkirjastamisvõtme alias. |
-| `eidas.client.requestSigningKeyPass` | Jah | SAML autentimispäringu allkirjastamisvõtme parool. |
-| `eidas.client.acceptedClockSkew` | Ei | IDP ja SP süsteemide vaheline maksimaalselt aktsepteeritav kellaaegade erinevus sekundites. Vaikimisi 2. |
-| `eidas.client.maximumAuthenticationLifetime` | Ei | Autentimispäringu eluiga sekundites. Vaikimisi 900. |
-| `eidas.client.responseMessageLifeTime` | Ei | SAML vastuse eluiga sekundites. Vaikimisi 900. |
-| `eidas.client.requestSignatureAlgorithm` | Ei | Autentimispäringu allkirja algoritm. Vaikimisi `http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha512` |
-| `eidas.client.availableCountries` | Ei | Lubatud riigikoodid. |
-| `eidas.client.defaultLoa` | Ei | EIDAS tagatistase juhul kui kasutaja tagatistaseme ise määramata. Lubatud väärtused: 'LOW', 'SUBSTANTIAL', 'HIGH'. Vaikimisi 'SUBSTANTIAL'. |
-| `eidas.client.allowedEidasAttributes` | Ei | Komaga eraldatud lubatud EidasAttribute väärtuste nimekiri. Vaikimisi väärtus on nimekiri kõigist võimalikest EidasAttribute enum väärtustest. |
+| `eidas.client.provider-name` | Jah | Teenusepakkuja lühinimetus. `/saml2p:AuthnRequest/@ProviderName` väärtus. |
+| `eidas.client.request-signing-key-id` | Jah | SAML autentimispäringu allkirjastamisvõtme alias. |
+| `eidas.client.request-signing-key-pass` | Jah | SAML autentimispäringu allkirjastamisvõtme parool. |
+| `eidas.client.accepted-clock-skew` | Ei | IDP ja SP süsteemide vaheline maksimaalselt aktsepteeritav kellaaegade erinevus sekundites. Vaikimisi 2. |
+| `eidas.client.maximum-authentication-lifetime` | Ei | Autentimispäringu eluiga sekundites. Vaikimisi 900. |
+| `eidas.client.response-message-lifetime` | Ei | SAML vastuse eluiga sekundites. Vaikimisi 900. |
+| `eidas.client.request-signature-algorithm` | Ei | Autentimispäringu allkirja algoritm. Vaikimisi `http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha512` |
+| `eidas.client.available-countries` | Ei | Lubatud riigikoodid. |
+| `eidas.client.default-loa` | Ei | EIDAS tagatistase juhul kui kasutaja tagatistaseme ise määramata. Lubatud väärtused: 'LOW', 'SUBSTANTIAL', 'HIGH'. Vaikimisi 'SUBSTANTIAL'. |
+| `eidas.client.allowed-eidas-attributes` | Ei | Komaga eraldatud lubatud EidasAttribute väärtuste nimekiri. Vaikimisi väärtus on nimekiri kõigist võimalikest EidasAttribute enum väärtustest. |
 
 Tabel 2.3.4 - turvaseadistused
 
 | Parameeter        | Kohustuslik | Kirjeldus, näide |
 | :---------------- | :---------- | :----------------|
-| `security.allowedAuthenticationPort` | Ei | Olemasolu korral piirab ligipääsu autentimisotspunktidele (`/login` ja `/returnUrl`) vaid määratud pordi kaudu, misjuhul nimetatud otspunktide poole pöördumisel muude portide kaudu tagastatakse `403 Forbidden` ja [veakirjeldus JSON objektina](Service-API.md#veakasitlus). Lubatud väärtused: täisarv vahemikus 1 - 65535. |
+| `security.allowed-authentication-port` | Ei | Olemasolu korral piirab ligipääsu autentimisotspunktidele (`/login` ja `/returnUrl`) vaid määratud pordi kaudu, misjuhul nimetatud otspunktide poole pöördumisel muude portide kaudu tagastatakse `403 Forbidden` ja [veakirjeldus JSON objektina](Service-API.md#veakasitlus). Lubatud väärtused: täisarv vahemikus 1 - 65535. |
+| `security.disabled-http-methods` | Ei | Komaga eraldatud nimekiri HTTP meetoditest. Olemasolu korral piirab ligipääsu HTTP meetoditele (nimekirjas toodud meetodi kasutuse korral tagastatakse HTTP 405). Kui määramata, siis vaikimisi keelatud HTTP meetodite nimekirja kuuluvad: HEAD, PUT, PATCH, DELETE, OPTIONS, TRACE. Lubatud väärtused: GET, POST, HEAD, PUT, PATCH, DELETE, OPTIONS, TRACE |
 
 Tabel 2.3.5 - heartbeat otspunkti seadistus
 
 | Parameeter        | Kohustuslik | Kirjeldus, näide |
 | :---------------- | :---------- | :----------------|
-| `endpoints.heartbeat.timeout`  | Ei | Sõltuvate süsteemide kontrollimisel tehtava päringu puhul maksimaalne vastuse ooteag sekundites. Vaikimisi 3 sekundit. |
+| `management.endpoint.heartbeat.timeout`  | Ei | Sõltuvate süsteemide kontrollimisel tehtava päringu puhul maksimaalne vastuse ooteag sekundites. Vaikimisi 3 sekundit. |
 
 <a name="conf_hazelcast"></a>
 Tabel 2.3.6 - Hazelcast seadistus
 
 | Parameeter        | Kohustuslik | Kirjeldus, näide |
 | :---------------- | :---------- | :----------------|
-| `eidas.client.hazelcastEnabled`  | Ei | Hazelcasti toe aktiveerimine. |
-| `eidas.client.hazelcastConfig`  | Ei <sup>1</sup> | <p>Viide Hazelcasti seadistusfailile. </p><p>Näide: `classpath:hazelcast.xml`, kui fail loetakse classpathi kaudu või `file:/etc/eidas-client/hazelcast.xml` kui loetakse otse failisüsteemist.</p> |
-| `eidas.client.hazelcastSigningKey`  | Ei <sup>1</sup> | <p>HMAC võti base64 kodeeritud kujul (räsitabeli sisu allkirjastamiseks). Võtme pikkus sõltub allkirjastamise algoritmi valikust.</p> <p>Vaikimisi kasutatava HMAC512 puhul peab kasutama 512 bitist juhuarvu. </p><p>NB! Näide 512 bitise võtme genereerimisest openssl'ga: `openssl rand -base64 64`</p>|
-| `eidas.client.hazelcastSigningAlgorithm`  | Ei | Allkirjastamisalgoritm (`HS512`, `HS384`, `HS256`). Vaikimisi `HS512`. |
-| `eidas.client.hazelcastEncryptionKey`  | Ei <sup>1</sup> | <p>Krüpteerimisvõti base64 kodeeritud kujul (räsitabeli sisu krüpteerimisel kasutatav sümmeetriline võti). </p><p>Vaikimisi kasutatava `AES` algoritmi puhul peab võti olema alati 128 bitti</p><p>Näide 128 bitise võtme genereerimisest openssl'ga `openssl rand -base64 16` </p>|
-| `eeidas.client.hazelcastEncryptionAlg`  | Ei | Krüpteerimisalgoritm vastavalt standardsele [Java Krüptograafiliste Algoritmide nimistule](https://docs.oracle.com/javase/8/docs/technotes/guides/security/StandardNames.html#Cipher). Vaikimisi `AES`. |
+| `eidas.client.hazelcast-enabled`  | Ei | Hazelcasti toe aktiveerimine. |
+| `eidas.client.hazelcast-config`  | Ei <sup>1</sup> | <p>Viide Hazelcasti seadistusfailile. </p><p>Näide: `classpath:hazelcast.xml`, kui fail loetakse classpathi kaudu või `file:/etc/eidas-client/hazelcast.xml` kui loetakse otse failisüsteemist.</p> |
+| `eidas.client.hazelcast-signing-key`  | Ei <sup>1</sup> | <p>HMAC võti base64 kodeeritud kujul (räsitabeli sisu allkirjastamiseks). Võtme pikkus sõltub allkirjastamise algoritmi valikust.</p> <p>Vaikimisi kasutatava HMAC512 puhul peab kasutama 512 bitist juhuarvu. </p><p>NB! Näide 512 bitise võtme genereerimisest openssl'ga: `openssl rand -base64 64`</p>|
+| `eidas.client.hazelcast-signing-algorithm`  | Ei | Allkirjastamisalgoritm (`HS512`, `HS384`, `HS256`). Vaikimisi `HS512`. |
+| `eidas.client.hazelcast-encryption-key`  | Ei <sup>1</sup> | <p>Krüpteerimisvõti base64 kodeeritud kujul (räsitabeli sisu krüpteerimisel kasutatav sümmeetriline võti). </p><p>Vaikimisi kasutatava `AES` algoritmi puhul peab võti olema alati 128 bitti</p><p>Näide 128 bitise võtme genereerimisest openssl'ga `openssl rand -base64 16` </p>|
+| `eeidas.client.hazelcast-encryption-alg`  | Ei | Krüpteerimisalgoritm vastavalt standardsele [Java Krüptograafiliste Algoritmide nimistule](https://docs.oracle.com/javase/8/docs/technotes/guides/security/StandardNames.html#Cipher). Vaikimisi `AES`. |
 
-<sup>1</sup> Kohustuslik juhul kui `eidas.client.hazelcastEnabled` on määratud.
+<sup>1</sup> Kohustuslik juhul kui `eidas.client.hazelcast-enabled` on määratud.
 
 
 Näide konfiguratsioonist:
 ```
-eidas.client.hazelcastEnabled = true
-eidas.client.hazelcastConfig = file:/etc/eidas-client/hazelcast.xml
-eidas.client.hazelcastSigningKey=JgeUmXWHRs1FClKuStKRNWvfNWfFHWGSR8jgN8_xEoBSGnkiHHgEEHMttYmMtzy88rnlO6yfmQpSAJ0yNA9NWw
-eidas.client.hazelcastSigningAlgorithm=HS512
-eidas.client.hazelcastEncryptionKey=K7KVMOrgRj7Pw5GDHdXjKQ==
-eidas.client.hazelcastEncryptionAlg=AES
+eidas.client.hazelcast-enabled = true
+eidas.client.hazelcast-config = file:/etc/eidas-client/hazelcast.xml
+eidas.client.hazelcast-signing-key=JgeUmXWHRs1FClKuStKRNWvfNWfFHWGSR8jgN8_xEoBSGnkiHHgEEHMttYmMtzy88rnlO6yfmQpSAJ0yNA9NWw
+eidas.client.hazelcast-signing-algorithm=HS512
+eidas.client.hazelcast-encryption-key=K7KVMOrgRj7Pw5GDHdXjKQ==
+eidas.client.hazelcast-encryption-alg=AES
 ```
 
 Tabel 2.3.7 - Hazelcast kasutusstatistika otspunkt
 
 | Parameeter        | Kohustuslik | Kirjeldus, näide |
 | :---------------- | :---------- | :----------------|
-| `endpoints.hazelcast.enabled`  | Ei | Võimalikud väärtused: `true`, `false`. Lülitab sisse `/hazelcast` otspunkti. Vaikimisi `false`. |
+| `management.endpoint.hazelcast.enabled`  | Ei | Võimalikud väärtused: `true`, `false`. Lülitab sisse `/hazelcast` otspunkti. Vaikimisi `false`. |
 
 
 <a name="votmed"></a>
@@ -259,23 +259,14 @@ Vajadusel on võimalik vaikekonfiguratsioonifaili asemel oma konfiguratsioonifai
 export JAVA_OPTS="-Dlogging.config=/etc/eidas-client/log4j2.xml"
 ```
 
-<a name="syslog"></a>
-### 4.4 Syslog serveri kasutuselevõtt
-
-Vaikekonfiguratsioonis sisalduv näidisseadistus võimaldab logi saata ka kesksesse syslog serverisse, mis toetab [RFC-5424 sõnumi formaati](https://tools.ietf.org/html/rfc5424.html#section-6.2.1) ning TLS-TCP protokolli.
-
-Syslog protokolli sõnumiformaati on kitsendatud selliselt, et `facility` kood oleks alati `local1(17)` ja syslog prioriteet vea korral `error(3)` ja muudel juhtudel `notice(5)`.
-
-NB! Logide kesksesse syslog serverisse saatmine ei ole vaikimisi sisselülitatud ning vajab lisaseadistust vastavalt konkreetse keskse syslog serveri parameetritele (serveri asukoht, port ja TLS kanali võtmed tuleb seadistada otse `log4j2.xml` failis.
-
 <a name="heartbeat"></a>
 ## 5. Monitoorimine - rakenduse oleku pärimine
 
-Rakenduse oleku info on kättesaadav otspunktilt **/heartbeat** või **/heartbeat.json**.
+Rakenduse oleku info on kättesaadav otspunktilt **/heartbeat**.
 
 Rakenduse oleku info kuvamiseks kasutatakse Spring Boot Actuator raamistikku. Vaikeseadistuses on kõik otspunktid, välja arvatud **/heartbeat** otspunkt, välja lülitatud.
 
-Lisaotspunkte on võimalik vajadusel seadistada vastavalt juhendile: <https://docs.spring.io/spring-boot/docs/1.5.10.RELEASE/reference/html/production-ready-endpoints.html> (NB! rakendust war failina eraldiseisvasse Tomcat rakendusserverisse paigaldades on otspunktide seadistus piiratud lisa otspunktide sisse- ja väljalülitamisega).
+Lisaotspunkte on võimalik vajadusel seadistada vastavalt juhendile: <https://docs.spring.io/spring-boot/docs/2.2.1.RELEASE/reference/htmlsingle/#production-ready-endpoints-enabling-endpoints> (NB! rakendust war failina eraldiseisvasse Tomcat rakendusserverisse paigaldades on otspunktide seadistus piiratud lisa otspunktide sisse- ja väljalülitamisega).
 
 
 
@@ -330,10 +321,10 @@ Algoritmide seadistamise osas vt. [seadistusparaameetreid](#conf_hazelcast).
 <a name="hazelcast_monitooring"></a>
 ### 6.4 Monitooring ja kasutusstatisika
 
-Hazelcasti monitooringuks on võimalik kasutada Hazelcasti enda [health otspunkti](https://docs.hazelcast.org/docs/3.11/manual/html-single/index.html#health-check) (vaikimisi väljalülitatud).
+Hazelcasti monitooringuks on võimalik kasutada Hazelcasti enda [health otspunkti](https://docs.hazelcast.org/docs/3.12/manual/html-single/index.html#health-check) (vaikimisi väljalülitatud).
 
-Lisaks on võimalik detailsemat infot saada [diagnostika logist](https://docs.hazelcast.org/docs/3.11/manual/html-single/index.html#diagnostics) ja kontrollida klastrit detailsemalt, kui sisse lülitada [JMX pordi kasutus](https://docs.hazelcast.org/docs/3.11/manual/html-single/index.html#monitoring-with-jmx).
+Lisaks on võimalik detailsemat infot saada [diagnostika logist](https://docs.hazelcast.org/docs/3.12/manual/html-single/index.html#diagnostics) ja kontrollida klastrit detailsemalt, kui sisse lülitada [JMX pordi kasutus](https://docs.hazelcast.org/docs/3.11/manual/html-single/index.html#monitoring-with-jmx).
 
-eIDAS-Client'i pakub ka `/hazelcast` otspunkti (vaikimimsi välja lülitatud) minimaalse kasutusstatistikaga.
+eIDAS-Client'i pakub ka `/hazelcast` otspunkti (vaikimisi välja lülitatud) minimaalse kasutusstatistikaga.
 
 

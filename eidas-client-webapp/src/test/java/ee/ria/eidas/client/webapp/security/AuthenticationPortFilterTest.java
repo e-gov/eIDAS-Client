@@ -40,7 +40,7 @@ public class AuthenticationPortFilterTest {
 
         this.filter.doFilter(request, response, filterChain);
 
-        Mockito.verifyZeroInteractions(response);
+        Mockito.verifyNoInteractions(response);
         Mockito.verify(filterChain, Mockito.times(1))
                 .doFilter(request, response);
     }
@@ -56,7 +56,7 @@ public class AuthenticationPortFilterTest {
 
         this.filter.doFilter(request, response, filterChain);
 
-        Mockito.verifyZeroInteractions(filterChain);
+        Mockito.verifyNoInteractions(filterChain);
         verifyErroneousResponse(response, portNumber);
     }
 

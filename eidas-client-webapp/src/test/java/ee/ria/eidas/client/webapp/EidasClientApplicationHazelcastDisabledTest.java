@@ -1,6 +1,6 @@
 package ee.ria.eidas.client.webapp;
 
-import com.jayway.restassured.http.ContentType;
+import io.restassured.http.ContentType;
 import net.shibboleth.utilities.java.support.resolver.CriteriaSet;
 import net.shibboleth.utilities.java.support.resolver.Criterion;
 import net.shibboleth.utilities.java.support.resolver.ResolverException;
@@ -19,13 +19,15 @@ import java.security.KeyStore;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.jayway.restassured.RestAssured.given;
+import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.IsEqual.equalTo;
 
 @RunWith(SpringRunner.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+        properties= "spring.main.allow-bean-definition-overriding=true",
+        webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class EidasClientApplicationHazelcastDisabledTest extends EidasClientApplicationTest {
 
     @TestConfiguration
