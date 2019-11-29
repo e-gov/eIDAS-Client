@@ -5,29 +5,25 @@ import com.hazelcast.core.IMap;
 import com.hazelcast.monitor.LocalMapStats;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.actuate.endpoint.AbstractEndpoint;
+import org.springframework.boot.actuate.autoconfigure.endpoint.condition.ConditionalOnAvailableEndpoint;
+import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
+import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 
 import java.util.*;
 
-@Component
-@ConditionalOnProperty("eidas.client.hazelcastEnabled")
-@ConfigurationProperties(
-        prefix = "endpoints.hazelcast"
-)
 @Slf4j
-public class HazelcastEndpoint extends AbstractEndpoint<Map<String, Object>> {
+@ConditionalOnProperty("eidas.client.hazelcast-enabled")
+@ConditionalOnAvailableEndpoint(endpoint = HazelcastEndpoint.class)
+@Endpoint(id = "hazelcast", enableByDefault = false)
+@Component
+public class HazelcastEndpoint {
 
     @Autowired
     private HazelcastInstance hazelcastInstance;
 
-    public HazelcastEndpoint() {
-        super("hazelcast", false);
-    }
-
-    @Override
+    @ReadOperation( produces = {"application/json"} )
     public Map<String, Object> invoke() {
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("clusterState", hazelcastInstance.getCluster().getClusterState().name());
