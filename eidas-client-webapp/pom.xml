@@ -7,7 +7,7 @@
     <parent>
         <artifactId>eidas-client-parent</artifactId>
         <groupId>ee.ria.eidas</groupId>
-        <version>1.1.2</version>
+        <version>1.1.3</version>
     </parent>
 
     <artifactId>eidas-client-webapp</artifactId>
@@ -54,7 +54,7 @@
         <dependency>
             <groupId>com.github.tomakehurst</groupId>
             <artifactId>wiremock-standalone</artifactId>
-            <version>2.25.1</version>
+            <version>2.26.3</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -65,19 +65,19 @@
         <dependency>
             <groupId>io.rest-assured</groupId>
             <artifactId>rest-assured</artifactId>
-            <version>4.1.2</version>
+            <version>4.2.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>io.rest-assured</groupId>
             <artifactId>xml-path</artifactId>
-            <version>4.1.2</version>
+            <version>4.2.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>io.rest-assured</groupId>
             <artifactId>json-path</artifactId>
-            <version>4.1.2</version>
+            <version>4.2.0</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

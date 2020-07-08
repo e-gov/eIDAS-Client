@@ -147,7 +147,7 @@ Tabel 2.3.6 - Hazelcast seadistus
 | `eidas.client.hazelcast-signing-key`  | Ei <sup>1</sup> | <p>HMAC võti base64 kodeeritud kujul (räsitabeli sisu allkirjastamiseks). Võtme pikkus sõltub allkirjastamise algoritmi valikust.</p> <p>Vaikimisi kasutatava HMAC512 puhul peab kasutama 512 bitist juhuarvu. </p><p>NB! Näide 512 bitise võtme genereerimisest openssl'ga: `openssl rand -base64 64`</p>|
 | `eidas.client.hazelcast-signing-algorithm`  | Ei | Allkirjastamisalgoritm (`HS512`, `HS384`, `HS256`). Vaikimisi `HS512`. |
 | `eidas.client.hazelcast-encryption-key`  | Ei <sup>1</sup> | <p>Krüpteerimisvõti base64 kodeeritud kujul (räsitabeli sisu krüpteerimisel kasutatav sümmeetriline võti). </p><p>Vaikimisi kasutatava `AES` algoritmi puhul peab võti olema alati 128 bitti</p><p>Näide 128 bitise võtme genereerimisest openssl'ga `openssl rand -base64 16` </p>|
-| `eeidas.client.hazelcast-encryption-alg`  | Ei | Krüpteerimisalgoritm vastavalt standardsele [Java Krüptograafiliste Algoritmide nimistule](https://docs.oracle.com/javase/8/docs/technotes/guides/security/StandardNames.html#Cipher). Vaikimisi `AES`. |
+| `eidas.client.hazelcast-encryption-alg`  | Ei | Krüpteerimisalgoritm vastavalt standardsele [Java Krüptograafiliste Algoritmide nimistule](https://docs.oracle.com/javase/8/docs/technotes/guides/security/StandardNames.html#Cipher). Vaikimisi `AES`. |
 
 <sup>1</sup> Kohustuslik juhul kui `eidas.client.hazelcast-enabled` on määratud.
 
