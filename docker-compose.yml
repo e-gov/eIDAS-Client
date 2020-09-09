@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
 
-  eidas-metadata-mock:
+  eidas-client:
     container_name: eidas-client
     image: e-gov/eidas-client:latest
     build: .
