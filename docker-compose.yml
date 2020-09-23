@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+
+  eidas-client:
+    container_name: eidas-client
+    image: e-gov/eidas-client:latest
+    build: .
+    restart: always
+    ports:
+      - "8889:8889"
