@@ -17,6 +17,8 @@ import net.shibboleth.utilities.java.support.net.URIException;
 import net.shibboleth.utilities.java.support.resolver.CriteriaSet;
 import net.shibboleth.utilities.java.support.resolver.ResolverException;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.builder.ReflectionToStringBuilder;
+
 import org.joda.time.DateTime;
 import org.opensaml.core.criterion.EntityIdCriterion;
 import org.opensaml.core.xml.util.XMLObjectSupport;
@@ -80,6 +82,13 @@ public class AuthResponseService {
     public AuthenticationResult getAuthenticationResult(HttpServletRequest req) throws MissingServletRequestParameterException {
         try {
             Response samlResponse = getSamlResponse(req);
+
+            LOGGER.info("AuthnResponse ID: {}", samlResponse.getID());
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("AuthnResponse: {}", logAuthnResponse(samlResponse));
+
+            }
+
             validateDestinationAndLifetime(samlResponse, req);
             verifyResponseSignature(samlResponse);
             validateStatusCode(samlResponse);
@@ -91,6 +100,8 @@ public class AuthResponseService {
             verifyAssertionSignature(assertion);
             validateAssertion(assertion, requestSession);
 
+            LOGGER.info("Decrypted Assertion ID: {}", assertion.getID());
+
             if (LOGGER.isDebugEnabled())
                 LOGGER.debug("Decrypted Assertion: {}", OpenSAMLUtils.getXmlString(assertion));
 
@@ -98,6 +109,13 @@ public class AuthResponseService {
         } catch (InvalidRequestException exception) {
             throw new InvalidRequestException("Invalid SAMLResponse. " + exception.getMessage(), exception);
         }
+    }
+
+    private String logAuthnResponse(Response response) {
+        return "AuthnResponse{" +
+                "authnResponse=" + ReflectionToStringBuilder.toString(response) +
+                ", getAssertions=" + ReflectionToStringBuilder.toString(response.getAssertions()) +
+                ", getEncryptedAssertions=" + ReflectionToStringBuilder.toString(response.getEncryptedAssertions());
     }
 
     private Response getSamlResponse(HttpServletRequest request) throws MissingServletRequestParameterException {
@@ -154,12 +172,16 @@ public class AuthResponseService {
         StatusCode substatusCode = statusCode.getStatusCode();
         StatusMessage statusMessage = samlResponse.getStatus().getStatusMessage();
         if (StatusCode.SUCCESS.equals(statusCode.getValue())) {
+            LOGGER.info("AuthnResponse validation: {}", StatusCode.SUCCESS);
             return;
         }  else if (isStatusNoConsentGiven(statusCode, substatusCode, StatusCode.REQUESTER, StatusCode.REQUEST_DENIED)) {
+            LOGGER.info("AuthnResponse validation: {}", StatusCode.REQUEST_DENIED);
             throw new AuthenticationFailedException("No user consent received. User denied access.");
         }  else if (isStatusAuthenticationFailed(statusCode, substatusCode, StatusCode.RESPONDER, StatusCode.AUTHN_FAILED)) {
+            LOGGER.info("AuthnResponse validation: {}", StatusCode.AUTHN_FAILED);
             throw new AuthenticationFailedException("Authentication failed.");
         } else {
+            LOGGER.info("AuthnResponse validation: FAILURE");
             throw new EidasClientException("Eidas node responded with an error! statusCode = " + samlResponse.getStatus().getStatusCode().getValue()
                     + (substatusCode != null ? ", substatusCode = " + substatusCode.getValue() : "")
                     +  ", statusMessage = " + statusMessage.getMessage());

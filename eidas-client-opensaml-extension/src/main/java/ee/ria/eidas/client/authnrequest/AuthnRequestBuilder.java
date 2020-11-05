@@ -1,9 +1,14 @@
 package ee.ria.eidas.client.authnrequest;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.exception.EidasClientException;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
 import ee.ria.eidas.client.util.SAMLSigner;
+import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 import org.joda.time.DateTime;
 import org.opensaml.core.xml.io.MarshallingException;
 import org.opensaml.core.xml.schema.XSAny;
@@ -21,11 +26,16 @@ import org.opensaml.saml.saml2.metadata.SingleSignOnService;
 import org.opensaml.security.SecurityException;
 import org.opensaml.security.credential.Credential;
 import org.opensaml.xmlsec.signature.support.SignatureException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.xml.namespace.QName;
+import java.util.Arrays;
 import java.util.List;
 
 public class AuthnRequestBuilder {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(AuthnRequestBuilder.class);
 
     public static final String REQUESTED_ATTRIBUTE_NAME_FORMAT = "urn:oasis:names:tc:SAML:2.0:attrname-format:uri";
 
@@ -59,10 +69,23 @@ public class AuthnRequestBuilder {
 
             addSignature(authnRequest);
 
+            LOGGER.info("AuthnRequest building succeeded. Request ID: {}", authnRequest.getID());
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.info("AuthnRequest: {}", logAuthRequest(authnRequest));
+            }
+
             return authnRequest;
         } catch (Exception e) {
             throw new EidasClientException("Failed to create authnRequest: " + e.getMessage(), e);
         }
+    }
+
+    private String logAuthRequest(AuthnRequest authnRequest) {
+        return "AuthnRequest{" +
+                "authnRequest=" + ReflectionToStringBuilder.toString(authnRequest) +
+                ", getNamePolicyID=" + ReflectionToStringBuilder.toString(authnRequest.getNameIDPolicy()) +
+                ", getConditions=" + ReflectionToStringBuilder.toString(authnRequest.getConditions()) +
+                ", getRequestedAuthnContext=" + ReflectionToStringBuilder.toString(authnRequest.getRequestedAuthnContext());
     }
 
     private void addSignature(AuthnRequest authnRequest) throws SecurityException, MarshallingException, SignatureException {

@@ -69,11 +69,11 @@ public class AuthInitiationService {
     private List<EidasAttribute> determineEidasAttributes(String attributesSet) {
         List<EidasAttribute> eidasAttributes = parseEidasAttributes(attributesSet);
         if (CollectionUtils.isEmpty(eidasAttributes)) {
-            LOGGER.info("No eIDAS attributes presented, using default (natural person) set: {}", DEFAULT_REQUESTED_ATTRIBUTE_SET);
+            LOGGER.debug("No eIDAS attributes presented, using default (natural person) set: {}", DEFAULT_REQUESTED_ATTRIBUTE_SET);
             return new ArrayList<>(DEFAULT_REQUESTED_ATTRIBUTE_SET);
         }
         validateEidasAttributesAllowed(eidasAttributes);
-        LOGGER.info("Using following eIDAS attributes presented in the request: {}", eidasAttributes);
+        LOGGER.debug("Using following eIDAS attributes presented in the request: {}", eidasAttributes);
         return eidasAttributes;
     }
 

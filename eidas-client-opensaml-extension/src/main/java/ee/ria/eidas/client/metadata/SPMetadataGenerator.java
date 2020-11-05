@@ -5,6 +5,7 @@ import ee.ria.eidas.client.exception.EidasClientException;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
 import ee.ria.eidas.client.util.SAMLSigner;
 import org.apache.commons.lang.RandomStringUtils;
+import org.apache.commons.lang.builder.ReflectionToStringBuilder;
 import org.joda.time.DateTime;
 import org.opensaml.core.xml.schema.XSAny;
 import org.opensaml.core.xml.schema.impl.XSAnyBuilder;
@@ -12,6 +13,7 @@ import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.ext.saml2alg.DigestMethod;
 import org.opensaml.saml.ext.saml2alg.SigningMethod;
 import org.opensaml.saml.saml2.core.NameIDType;
+import org.opensaml.saml.saml2.core.Response;
 import org.opensaml.saml.saml2.metadata.*;
 import org.opensaml.security.SecurityException;
 import org.opensaml.security.credential.Credential;
@@ -20,6 +22,8 @@ import org.opensaml.xmlsec.config.impl.DefaultSecurityConfigurationBootstrap;
 import org.opensaml.xmlsec.keyinfo.KeyInfoGenerator;
 import org.opensaml.xmlsec.keyinfo.NamedKeyInfoGeneratorManager;
 import org.opensaml.xmlsec.signature.KeyInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -27,6 +31,8 @@ import java.util.LinkedList;
 import java.util.Set;
 
 public class SPMetadataGenerator {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(SPMetadataGenerator.class);
 
     protected int defaultACSIndex = 0;
 
@@ -46,10 +52,25 @@ public class SPMetadataGenerator {
         try {
             EntityDescriptor entityDescriptor = buildEntityDescriptor();
             new SAMLSigner(eidasClientProperties.getMetadataSignatureAlgorithm(), metadataSigningCredential).sign(entityDescriptor);
+            LOGGER.info("Successfully generated metadata. Metadata ID: {}", entityDescriptor.getID());
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Generated metadata: {}", logEntityDescriptor(entityDescriptor));
+            }
             return entityDescriptor;
         } catch (Exception e) {
             throw new EidasClientException("Error generating metadata", e);
         }
+    }
+
+    private String logEntityDescriptor(EntityDescriptor entityDescriptor) {
+        return "EntityDescriptor{" +
+                "entityDescriptor=" + ReflectionToStringBuilder.toString(entityDescriptor) +
+                ", getAdditionalMetadataLocations=" + ReflectionToStringBuilder.toString(entityDescriptor.getAdditionalMetadataLocations()) +
+                ", getAffiliationDescriptor=" + ReflectionToStringBuilder.toString(entityDescriptor.getAffiliationDescriptor()) +
+                ", getContactPersons=" + ReflectionToStringBuilder.toString(entityDescriptor.getContactPersons()) +
+                ", getExtensions=" + ReflectionToStringBuilder.toString(entityDescriptor.getExtensions()) +
+                ", getOrganization=" + ReflectionToStringBuilder.toString(entityDescriptor.getOrganization()) +
+                ", getRoleDescriptors=" + ReflectionToStringBuilder.toString(entityDescriptor.getRoleDescriptors());
     }
 
     private EntityDescriptor buildEntityDescriptor() {
