@@ -9,6 +9,7 @@ import ee.ria.eidas.client.exception.EidasClientException;
 import ee.ria.eidas.client.metadata.IDPMetadataResolver;
 import ee.ria.eidas.client.session.RequestSessionService;
 import net.shibboleth.utilities.java.support.codec.HTMLEncoder;
+import net.shibboleth.utilities.java.support.resolver.ResolverException;
 import org.bouncycastle.util.encoders.Base64;
 import org.junit.Before;
 import org.junit.Test;
@@ -30,10 +31,13 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.xml.sax.SAXException;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -110,13 +114,13 @@ public class AuthInitiationServiceTest {
     }
 
     @Test(expected = EidasClientException.class)
-    public void invalidRelayState_throwsException() {
+    public void invalidRelayState_throwsException() throws ParserConfigurationException, SAXException, IOException, ResolverException {
         MockHttpServletResponse httpResponse = new MockHttpServletResponse();
         authenticationService.authenticate(httpResponse, "EE", AssuranceLevel.LOW, "ä", null);
     }
 
     @Test(expected = EidasClientException.class)
-    public void invalidCountry_throwsException() {
+    public void invalidCountry_throwsException() throws ParserConfigurationException, SAXException, IOException, ResolverException {
         MockHttpServletResponse httpResponse = new MockHttpServletResponse();
         authenticationService.authenticate(httpResponse, "NEVERLAND", AssuranceLevel.LOW, "test", null);
     }

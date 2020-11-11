@@ -13,6 +13,7 @@ import ee.ria.eidas.client.session.RequestSessionService;
 import ee.ria.eidas.client.session.UnencodedRequestSession;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
 import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
+import net.shibboleth.utilities.java.support.resolver.ResolverException;
 import org.apache.commons.collections.CollectionUtils;
 import org.opensaml.messaging.context.MessageContext;
 import org.opensaml.messaging.encoder.MessageEncodingException;
@@ -24,8 +25,11 @@ import org.opensaml.xmlsec.SignatureSigningParameters;
 import org.opensaml.xmlsec.context.SecurityParametersContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.xml.sax.SAXException;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.xml.parsers.ParserConfigurationException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -59,7 +63,7 @@ public class AuthInitiationService {
         this.idpMetadataResolver = idpMetadataResolver;
     }
 
-    public void authenticate(HttpServletResponse response, String country, AssuranceLevel loa, String relayState, String attributesSet) {
+    public void authenticate(HttpServletResponse response, String country, AssuranceLevel loa, String relayState, String attributesSet) throws IOException, SAXException, ParserConfigurationException, ResolverException {
         validateCountry(country);
         validateRelayState(relayState);
         List<EidasAttribute> eidasAttributes = determineEidasAttributes(attributesSet);
@@ -100,16 +104,16 @@ public class AuthInitiationService {
         }
     }
 
-    private void redirectUserForAuthentication(HttpServletResponse httpServletResponse, String country, AssuranceLevel loa, String relayState, List<EidasAttribute> eidasAttributes) {
+    private void redirectUserForAuthentication(HttpServletResponse httpServletResponse, String country, AssuranceLevel loa, String relayState, List<EidasAttribute> eidasAttributes) throws ResolverException {
         AuthnRequestBuilder authnRequestBuilder = new AuthnRequestBuilder(authnReqSigningCredential, eidasClientProperties, idpMetadataResolver.getSingeSignOnService());
         AuthnRequest authnRequest = authnRequestBuilder.buildAuthnRequest(loa, eidasAttributes);
-        saveRequestAsSession(authnRequest, eidasAttributes);
+        saveRequestAsSession(authnRequest, eidasAttributes, idpMetadataResolver.getSupportedCountries());
         redirectUserWithRequest(httpServletResponse, authnRequest, country, relayState);
     }
 
-    private void saveRequestAsSession(AuthnRequest authnRequest, List<EidasAttribute> eidasAttributes) {
+    private void saveRequestAsSession(AuthnRequest authnRequest, List<EidasAttribute> eidasAttributes, List<String> supportedCountries) {
         String loa = authnRequest.getRequestedAuthnContext().getAuthnContextClassRefs().get(0).getAuthnContextClassRef();
-        RequestSession requestSession = new UnencodedRequestSession(authnRequest.getID(), authnRequest.getIssueInstant(), AssuranceLevel.toEnum(loa), eidasAttributes);
+        RequestSession requestSession = new UnencodedRequestSession(authnRequest.getID(), authnRequest.getIssueInstant(), AssuranceLevel.toEnum(loa), eidasAttributes, supportedCountries);
         requestSessionService.saveRequestSession(requestSession.getRequestId(), requestSession);
     }
 
@@ -156,8 +160,8 @@ public class AuthInitiationService {
         }
     }
 
-    private void validateCountry(String country) {
-        List<String> validCountries = eidasClientProperties.getAvailableCountries();
+    private void validateCountry(String country) throws ResolverException {
+        List<String> validCountries = idpMetadataResolver.getSupportedCountries();
         if (!validCountries.stream().anyMatch(country::equalsIgnoreCase)) {
             throw new InvalidRequestException("Invalid country! Valid countries:" + validCountries);
         }

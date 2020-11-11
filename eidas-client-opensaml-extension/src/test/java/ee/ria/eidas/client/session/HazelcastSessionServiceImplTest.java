@@ -54,7 +54,7 @@ public class HazelcastSessionServiceImplTest {
     @Test
     public void getRequestSession_returnsSession_whenSavedBeforehand() {
         String requestID = UUID.randomUUID().toString();
-        UnencodedRequestSession originalRequestSession = new UnencodedRequestSession(requestID, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
+        UnencodedRequestSession originalRequestSession = new UnencodedRequestSession(requestID, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET, null);
         requestSessionService.saveRequestSession(requestID, originalRequestSession);
 
         // verify stored requestSession is serialized encrypted properly in Hazelcast
@@ -76,7 +76,7 @@ public class HazelcastSessionServiceImplTest {
     @Test
     public void getRequestSession_returnsTamperedSessionInvalidSerializedClass() {
         String requestID = UUID.randomUUID().toString();
-        UnencodedRequestSession originalRequestSession = new UnencodedRequestSession(requestID, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
+        UnencodedRequestSession originalRequestSession = new UnencodedRequestSession(requestID, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET, null);
         requestSessionService.saveRequestSession(requestID, originalRequestSession);
 
         IMap<String, String> map = this.hazelcastInstance.getMap(HazelcastRequestSessionServiceImpl.UNANSWERED_REQUESTS_MAP);
@@ -91,12 +91,12 @@ public class HazelcastSessionServiceImplTest {
     @Test
     public void getRequestSession_returnsTamperedSessionInvalidSignature() throws Exception {
         String requestID = UUID.randomUUID().toString();
-        UnencodedRequestSession originalRequestSession = new UnencodedRequestSession(requestID, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
+        UnencodedRequestSession originalRequestSession = new UnencodedRequestSession(requestID, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET, null);
         requestSessionService.saveRequestSession(requestID, originalRequestSession);
 
         IMap<String, RequestSession> map = this.hazelcastInstance.getMap(HazelcastRequestSessionServiceImpl.UNANSWERED_REQUESTS_MAP);
 
-        byte[] encodedObject = SerializationUtils.serializeAndEncodeObject( new HazelcastRequestSessionServiceImpl.DefaultCipherExecutor("C5N8eS_6iCo0ib9L", "TWXUmJHr8O9yxZmX1VS4xpZSg2U3bZQ7mCWVoZCKQAipbv1MbFF_xDkhQrfsG5Abh5o2xqTFTLSvYeUx9BfU5A", "AES", "HS512"), new UnencodedRequestSession(requestID, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET));
+        byte[] encodedObject = SerializationUtils.serializeAndEncodeObject( new HazelcastRequestSessionServiceImpl.DefaultCipherExecutor("C5N8eS_6iCo0ib9L", "TWXUmJHr8O9yxZmX1VS4xpZSg2U3bZQ7mCWVoZCKQAipbv1MbFF_xDkhQrfsG5Abh5o2xqTFTLSvYeUx9BfU5A", "AES", "HS512"), new UnencodedRequestSession(requestID, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET, null));
         RequestSession newSession = new EncodedRequestSession(HazelcastRequestSessionServiceImpl.sha512(originalRequestSession.getRequestId()), ByteSource.wrap(encodedObject).read());
         map.put(HazelcastRequestSessionServiceImpl.sha512(originalRequestSession.getRequestId()), newSession);
 
@@ -125,7 +125,7 @@ public class HazelcastSessionServiceImplTest {
         expectedEx.expectMessage("A request with an ID: _4ededd23fb88e6964df71b8bdb1c706f already exists!");
 
         String requestID = "_4ededd23fb88e6964df71b8bdb1c706f";
-        UnencodedRequestSession requestSession = new UnencodedRequestSession(requestID, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
+        UnencodedRequestSession requestSession = new UnencodedRequestSession(requestID, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET, null);
         requestSessionService.saveRequestSession(requestID, requestSession);
         requestSessionService.saveRequestSession(requestID, requestSession);
     }
@@ -133,7 +133,7 @@ public class HazelcastSessionServiceImplTest {
     @Test
     public void getRequestSession_returnsNull_whenSessionIsRemovedBeforehand() {
         String requestID = "_4ededd23fb88e6964df71b8bdb1c706f";
-        UnencodedRequestSession requestSession = new UnencodedRequestSession(requestID, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
+        UnencodedRequestSession requestSession = new UnencodedRequestSession(requestID, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET, null);
         requestSessionService.saveRequestSession(requestID, requestSession);
         requestSessionService.getAndRemoveRequestSession(requestID);
 
