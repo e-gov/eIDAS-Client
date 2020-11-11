@@ -104,16 +104,16 @@ public class AuthInitiationService {
         }
     }
 
-    private void redirectUserForAuthentication(HttpServletResponse httpServletResponse, String country, AssuranceLevel loa, String relayState, List<EidasAttribute> eidasAttributes) throws ResolverException {
+    private void redirectUserForAuthentication(HttpServletResponse httpServletResponse, String country, AssuranceLevel loa, String relayState, List<EidasAttribute> eidasAttributes) {
         AuthnRequestBuilder authnRequestBuilder = new AuthnRequestBuilder(authnReqSigningCredential, eidasClientProperties, idpMetadataResolver.getSingeSignOnService());
         AuthnRequest authnRequest = authnRequestBuilder.buildAuthnRequest(loa, eidasAttributes);
-        saveRequestAsSession(authnRequest, eidasAttributes, idpMetadataResolver.getSupportedCountries());
+        saveRequestAsSession(authnRequest, eidasAttributes);
         redirectUserWithRequest(httpServletResponse, authnRequest, country, relayState);
     }
 
-    private void saveRequestAsSession(AuthnRequest authnRequest, List<EidasAttribute> eidasAttributes, List<String> supportedCountries) {
+    private void saveRequestAsSession(AuthnRequest authnRequest, List<EidasAttribute> eidasAttributes) {
         String loa = authnRequest.getRequestedAuthnContext().getAuthnContextClassRefs().get(0).getAuthnContextClassRef();
-        RequestSession requestSession = new UnencodedRequestSession(authnRequest.getID(), authnRequest.getIssueInstant(), AssuranceLevel.toEnum(loa), eidasAttributes, supportedCountries);
+        RequestSession requestSession = new UnencodedRequestSession(authnRequest.getID(), authnRequest.getIssueInstant(), AssuranceLevel.toEnum(loa), eidasAttributes);
         requestSessionService.saveRequestSession(requestSession.getRequestId(), requestSession);
     }
 

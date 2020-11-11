@@ -78,8 +78,6 @@ public class AuthResponseServiceTest {
 
     private ResponseBuilder mockResponseBuilder;
 
-    private static final List<String> SUPPORTED_COUNTRIES = Arrays.asList("CA", "EE");
-
     @TestConfiguration
     @Import(EidasClientConfiguration.class)
     public static class TestConf {
@@ -107,7 +105,7 @@ public class AuthResponseServiceTest {
         mockResponseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
 
         requestSessionService.getAndRemoveRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO);
-        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET, SUPPORTED_COUNTRIES);
+        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
     }
 
     @Test
@@ -123,7 +121,7 @@ public class AuthResponseServiceTest {
         expectedEx.expectMessage("Invalid SAMLResponse. AuthnContextClassRef is not greater or equal to the request level of assurance!");
 
         requestSessionService.getAndRemoveRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO);
-        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.SUBSTANTIAL, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET, SUPPORTED_COUNTRIES);
+        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.SUBSTANTIAL, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
         httpRequest = buildMockHttpServletRequest("SAMLResponse", mockResponseBuilder.buildResponse("classpath:idp-metadata.xml"));
         AuthenticationResult result = authResponseService.getAuthenticationResult(httpRequest);
         fail("Should not reach this!");
@@ -138,7 +136,7 @@ public class AuthResponseServiceTest {
         List<EidasAttribute> requestedAttributes = new ArrayList<>(AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
         requestedAttributes.addAll(Arrays.asList(EidasAttribute.LEGAL_NAME, EidasAttribute.LEGAL_PERSON_IDENTIFIER, EidasAttribute.LEI));
         requestSessionService.getAndRemoveRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO);
-        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.LOW, requestedAttributes, SUPPORTED_COUNTRIES);
+        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.LOW, requestedAttributes);
 
         AttributeStatement attributeStatement = new AttributeStatementBuilder().buildObject();
         attributeStatement.getAttributes().add(mockResponseBuilder.buildAttribute("FirstName", "http://eidas.europa.eu/attributes/naturalperson/CurrentGivenName", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri", "eidas-natural:CurrentGivenNameType", "Alexander", "Αλέξανδρος"));
@@ -385,8 +383,8 @@ public class AuthResponseServiceTest {
         return httpRequest;
     }
 
-    private void saveNewRequestSession(String requestID, DateTime issueIntant, AssuranceLevel loa, List<EidasAttribute> requestedAttributes, List<String> supportedCountries) {
-        UnencodedRequestSession requestSession = new UnencodedRequestSession(requestID, issueIntant, loa, requestedAttributes, supportedCountries);
+    private void saveNewRequestSession(String requestID, DateTime issueIntant, AssuranceLevel loa, List<EidasAttribute> requestedAttributes) {
+        UnencodedRequestSession requestSession = new UnencodedRequestSession(requestID, issueIntant, loa, requestedAttributes);
         requestSessionService.saveRequestSession(requestID, requestSession);
     }
 

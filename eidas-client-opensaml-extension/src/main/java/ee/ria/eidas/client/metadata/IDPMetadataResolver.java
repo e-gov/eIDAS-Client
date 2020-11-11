@@ -1,5 +1,6 @@
 package ee.ria.eidas.client.metadata;
 
+import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.config.OpenSAMLConfiguration;
 import ee.ria.eidas.client.exception.EidasClientException;
 import net.shibboleth.ext.spring.resource.ResourceHelper;
@@ -29,6 +30,7 @@ import org.opensaml.xmlsec.signature.impl.X509CertificateImpl;
 import org.opensaml.xmlsec.signature.support.impl.ExplicitKeySignatureTrustEngine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.ResourceLoader;
 
@@ -52,6 +54,9 @@ public class IDPMetadataResolver {
     private AbstractReloadingMetadataResolver idpMetadataProvider;
     private ExplicitKeySignatureTrustEngine metadataSignatureTrustEngine;
     private ParserPool parserPool;
+
+    @Autowired
+    private EidasClientProperties eidasClientProperties;
 
     public IDPMetadataResolver(String url, ExplicitKeySignatureTrustEngine metadataSignatureTrustEngine) {
         this.url = url;
@@ -114,6 +119,7 @@ public class IDPMetadataResolver {
                 if (entityDescriptor == null) {
                     throw new EidasClientException("Could not find a valid EntityDescriptor in your IDP metadata! ");
                 }
+
                 for (SingleSignOnService ssoService : entityDescriptor.getIDPSSODescriptor(SAMLConstants.SAML20P_NS).getSingleSignOnServices()) {
                     if (ssoService.getBinding().equals(SAMLConstants.SAML2_POST_BINDING_URI)) {
                         return ssoService;
@@ -131,7 +137,8 @@ public class IDPMetadataResolver {
         CriteriaSet criteriaSet = new CriteriaSet(new EntityIdCriterion(url));
         EntityDescriptor entityDescriptor = metadataResolver.resolveSingle(criteriaSet);
         if (entityDescriptor == null) {
-            throw new EidasClientException("Could not find a valid EntityDescriptor in your IDP metadata! ");
+            logger.error("Could not find a valid EntityDescriptor in your IDP metadata! Using supported countries from configuration.");
+            return getSupportedCountriesFromConfiguration();
         }
 
         if (entityDescriptor.getExtensions().hasChildren()) {
@@ -146,6 +153,11 @@ public class IDPMetadataResolver {
             }
         }
 
+        if (supportedCountries.isEmpty()) {
+            logger.error("Unable to get supported countries from metadata. Using supported countries from configuration.");
+            return getSupportedCountriesFromConfiguration();
+        }
+
         return supportedCountries;
     }
 
@@ -154,6 +166,10 @@ public class IDPMetadataResolver {
         X509Credential switchCred = CredentialSupport.getSimpleCredential(cert, null);
         StaticCredentialResolver switchCredResolver = new StaticCredentialResolver(switchCred);
         return new ExplicitKeySignatureTrustEngine(switchCredResolver, DefaultSecurityConfigurationBootstrap.buildBasicInlineKeyInfoCredentialResolver());
+    }
+
+    private List<String> getSupportedCountriesFromConfiguration() {
+        return eidasClientProperties.getAvailableCountries();
     }
 
     private X509Certificate getResponseSigningCertificate(IDPMetadataResolver idpMetadataResolver) {

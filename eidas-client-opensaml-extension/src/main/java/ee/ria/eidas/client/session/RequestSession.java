@@ -15,6 +15,4 @@ public interface RequestSession extends Serializable, Comparable<RequestSession>
     AssuranceLevel getLoa();
 
     List<EidasAttribute> getRequestedAttributes();
-
-    List<String> getSupportedCountries();
 }

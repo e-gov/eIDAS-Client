@@ -3,6 +3,7 @@ package ee.ria.eidas.client.metadata;
 import ee.ria.eidas.client.config.EidasClientConfiguration;
 import ee.ria.eidas.client.exception.EidasClientException;
 import net.shibboleth.utilities.java.support.resolver.CriteriaSet;
+import net.shibboleth.utilities.java.support.resolver.ResolverException;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -16,6 +17,11 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
+import static org.junit.Assert.assertEquals;
+
 @TestPropertySource(locations = "classpath:application-test.properties")
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = EidasClientConfiguration.class)
@@ -27,13 +33,16 @@ public class IDPMetadataResolverTest {
     @Autowired
     private ExplicitKeySignatureTrustEngine idpMetadataSignatureTrustEngine;
 
+    @Autowired
+    private IDPMetadataResolver idpMetadataResolver;
+
     @Test
     public void resolveSuccessfullyFromClasspath() throws Exception {
         IDPMetadataResolver idpMetadataResolver = new IDPMetadataResolver("classpath:idp-metadata.xml", idpMetadataSignatureTrustEngine);
         MetadataResolver metadataResolver = idpMetadataResolver.resolve();
         Assert.assertNotNull(metadataResolver);
         Assert.assertTrue(metadataResolver.isRequireValidMetadata());
-        Assert.assertEquals("classpath:idp-metadata.xml", metadataResolver.resolveSingle(new CriteriaSet(new EntityIdCriterion("classpath:idp-metadata.xml"))).getEntityID());
+        assertEquals("classpath:idp-metadata.xml", metadataResolver.resolveSingle(new CriteriaSet(new EntityIdCriterion("classpath:idp-metadata.xml"))).getEntityID());
     }
 
     @Test
@@ -82,6 +91,11 @@ public class IDPMetadataResolverTest {
         expectedEx.expectMessage("Error initializing IDP Metadata provider.");
 
         assertResolveFails("classpath:idp-metadata-xxe.xml");
+    }
+
+    @Test
+    public void getSupportedCountriesSuccessfullyFromConfigurationIfNoneSpecifiedInMetadata() throws ResolverException {
+        assertEquals(new ArrayList<>(Arrays.asList("EE", "CA")), idpMetadataResolver.getSupportedCountries());
     }
 
     private void assertResolveFails(String url) {

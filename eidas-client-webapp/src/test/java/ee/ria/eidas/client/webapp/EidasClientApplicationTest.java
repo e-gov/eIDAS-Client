@@ -71,8 +71,6 @@ public abstract class EidasClientApplicationTest {
 
     private final static WireMockServer wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig().port(7771));
 
-    private static final List<String> SUPPORTED_COUNTRIES = Arrays.asList("CA", "EE");
-
     @LocalServerPort
     int port;
 
@@ -99,7 +97,7 @@ public abstract class EidasClientApplicationTest {
     @Test
     public void returnUrl_shouldSucceed_whenValidSAMLResponseWithNaturalPersonMinimalAttributeSet() {
         ResponseBuilder responseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
-        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET, SUPPORTED_COUNTRIES);
+        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
 
         given()
                 .port(port)
@@ -289,7 +287,7 @@ public abstract class EidasClientApplicationTest {
     @Test
     public void returnUrl_shouldSucceed_whenValidSAMLResponseWithAllAttributesPresent() {
         ResponseBuilder responseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
-        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET, SUPPORTED_COUNTRIES);
+        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
         AttributeStatement attributeStatement = new AttributeStatementBuilder().buildObject();
 
         attributeStatement.getAttributes().add(responseBuilder.buildAttribute("FirstName", "http://eidas.europa.eu/attributes/naturalperson/CurrentGivenName", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri", "eidas-natural:CurrentGivenNameType", "Alexander", "Αλέξανδρος"));
@@ -375,7 +373,7 @@ public abstract class EidasClientApplicationTest {
     @Test
     public void returnUrl_shouldFail_whenInternalError() {
         ResponseBuilder responseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
-        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET, SUPPORTED_COUNTRIES);
+        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
         Mockito.when(responseAssertionDecryptionCredential.getPrivateKey()).thenThrow(new RuntimeException("Ooops! An internal error occurred!"));
 
         given()
@@ -394,7 +392,7 @@ public abstract class EidasClientApplicationTest {
     @Test
     public void returnUrl_shouldFail_whenSAMLResponseParamMissing() {
         ResponseBuilder responseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
-        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET, SUPPORTED_COUNTRIES);
+        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
 
         given()
                 .port(port)
@@ -411,7 +409,7 @@ public abstract class EidasClientApplicationTest {
 
     @Test
     public void returnUrl_shouldFail_whenSAMLResponseParamEmpty() {
-        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET, SUPPORTED_COUNTRIES);
+        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
 
         given()
                 .port(port)
@@ -483,7 +481,7 @@ public abstract class EidasClientApplicationTest {
     public void returnUrl_shouldFail_whenRequestSessionHasExpired() {
         ResponseBuilder responseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
         DateTime issueInstant = new DateTime().minusSeconds(eidasClientProperties.getResponseMessageLifetime()).minusSeconds(eidasClientProperties.getAcceptedClockSkew()).minusSeconds(1);
-        saveNewRequestSession(responseBuilder.DEFAULT_IN_RESPONSE_TO, issueInstant, AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET, SUPPORTED_COUNTRIES);
+        saveNewRequestSession(responseBuilder.DEFAULT_IN_RESPONSE_TO, issueInstant, AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
         Response response = responseBuilder.buildResponse("http://localhost:7771/EidasNode/ConnectorResponderMetadata");
 
         given()
@@ -501,7 +499,7 @@ public abstract class EidasClientApplicationTest {
     @Test
     public void returnUrl_shouldFail_whenResponseIssueInstantHasExpired() {
         ResponseBuilder responseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
-        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET, SUPPORTED_COUNTRIES);
+        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
         DateTime pastTime = new DateTime().minusSeconds(eidasClientProperties.getResponseMessageLifetime()).minusSeconds(eidasClientProperties.getAcceptedClockSkew()).minusSeconds(1);
         Response response = responseBuilder.buildResponse("http://localhost:7771/EidasNode/ConnectorResponderMetadata",
                 Collections.singletonMap(ResponseBuilder.InputType.ISSUE_INSTANT, Optional.of(pastTime)));
@@ -521,7 +519,7 @@ public abstract class EidasClientApplicationTest {
     @Test
     public void returnUrl_shouldFail_whenResponseIssueInstantIsInTheFuture() {
         ResponseBuilder responseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
-        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET, SUPPORTED_COUNTRIES);
+        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
         DateTime futureTime = new DateTime().plusSeconds(1).plusSeconds(eidasClientProperties.getResponseMessageLifetime()).plusSeconds(eidasClientProperties.getAcceptedClockSkew());
         Response response = responseBuilder.buildResponse("http://localhost:7771/EidasNode/ConnectorResponderMetadata",
                 Collections.singletonMap(ResponseBuilder.InputType.ISSUE_INSTANT, Optional.of(futureTime)));
@@ -541,7 +539,7 @@ public abstract class EidasClientApplicationTest {
     @Test
     public void returnUrl_shouldFail_whenResponseInResponseToIsInvalid() {
         ResponseBuilder responseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
-        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET, SUPPORTED_COUNTRIES);
+        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
         Response response = responseBuilder.buildResponse("http://localhost:7771/EidasNode/ConnectorResponderMetadata",
                 Collections.singletonMap(ResponseBuilder.InputType.IN_RESPONSE_TO, Optional.of("invalid-inResponseTo")));
 
@@ -560,7 +558,7 @@ public abstract class EidasClientApplicationTest {
     @Test
     public void returnUrl_shouldFail_whenAssertionInResponseToIsInvalid() {
         ResponseBuilder responseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
-        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET, SUPPORTED_COUNTRIES);
+        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
         Response response = responseBuilder.buildResponse("http://localhost:7771/EidasNode/ConnectorResponderMetadata",
                 Collections.singletonMap(ResponseBuilder.InputType.ASSERTION_IN_RESPONSE_TO, Optional.of("invalid-inResponseTo")));
 
@@ -612,8 +610,8 @@ public abstract class EidasClientApplicationTest {
         }
     }
 
-    protected void saveNewRequestSession(String requestID, DateTime issueInstant, AssuranceLevel loa, List<EidasAttribute> requestedAttributes, List<String> supportedCountries) {
-        UnencodedRequestSession requestSession = new UnencodedRequestSession(requestID, issueInstant, loa, requestedAttributes, supportedCountries);
+    protected void saveNewRequestSession(String requestID, DateTime issueInstant, AssuranceLevel loa, List<EidasAttribute> requestedAttributes) {
+        UnencodedRequestSession requestSession = new UnencodedRequestSession(requestID, issueInstant, loa, requestedAttributes);
         requestSessionService.saveRequestSession(requestID, requestSession);
     }
 
