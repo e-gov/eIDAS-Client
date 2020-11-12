@@ -1,5 +1,9 @@
 package ee.ria.eidas.client.metadata;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.LoggingEvent;
+import ch.qos.logback.core.Appender;
 import ee.ria.eidas.client.authnrequest.SPType;
 import ee.ria.eidas.client.config.EidasClientConfiguration;
 import ee.ria.eidas.client.config.EidasClientProperties;
@@ -9,6 +13,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
 import org.opensaml.core.xml.XMLObject;
 import org.opensaml.saml.common.SAMLObjectContentReference;
 import org.opensaml.saml.common.xml.SAMLConstants;
@@ -17,14 +24,20 @@ import org.opensaml.saml.saml2.metadata.*;
 import org.opensaml.security.credential.Credential;
 import org.opensaml.security.credential.UsageType;
 import org.opensaml.xmlsec.signature.Signature;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.verify;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = EidasClientConfiguration.class)
@@ -45,15 +58,29 @@ public class SPMetadataGeneratorTest {
     @Autowired
     private Credential responseAssertionDecryptionCredential;
 
+    @Mock
+    private Appender mockedAppender;
+
+    @Captor
+    private ArgumentCaptor<LoggingEvent> loggingEventCaptor;
+
     @Before
     public void setUp() {
         metadataGenerator = new SPMetadataGenerator(properties, metadataSigningCredential, authnReqSigningCredential, responseAssertionDecryptionCredential);
+
+        Logger root = (Logger) LoggerFactory.getLogger(SPMetadataGenerator.class);
+        root.addAppender(mockedAppender);
+        root.setLevel(Level.DEBUG);
     }
 
     @Test
     public void generatesEntityDescriptor() {
         EntityDescriptor entityDescriptor = metadataGenerator.getMetadata();
         assertEntityDescriptor(entityDescriptor);
+
+        verifyLogs("Successfully generated metadata", Level.INFO);
+        verifyLogKeywords(new String[]{"entityDescriptor", "getAdditionalMetadataLocations", "getAffiliationDescriptor",
+                "getContactPersons", "getExtensions", "getOrganization", "getRoleDescriptors"}, Level.DEBUG);
     }
 
     private void assertEntityDescriptor(EntityDescriptor entityDescriptor) {
@@ -118,6 +145,24 @@ public class SPMetadataGeneratorTest {
         assertEquals(SAMLConstants.SAML2_POST_BINDING_URI, assertionConsumerService.getBinding());
         assertEquals(properties.getCallbackUrl(), assertionConsumerService.getLocation());
         assertEquals(new Integer(0), assertionConsumerService.getIndex());
+    }
+
+    private void verifyLogs(String logMessage, Level level) {
+        verify(mockedAppender, atLeastOnce()).doAppend(loggingEventCaptor.capture());
+        List<LoggingEvent> loggingEvents = loggingEventCaptor.getAllValues();
+
+        assertTrue(loggingEvents.stream().anyMatch(event ->
+                event.getFormattedMessage().contains(logMessage) && event.getLevel() == level
+        ));
+    }
+
+    private void verifyLogKeywords(String[] logKeywords, Level level) {
+        verify(mockedAppender, atLeastOnce()).doAppend(loggingEventCaptor.capture());
+        List<LoggingEvent> loggingEvents = loggingEventCaptor.getAllValues();
+
+        assertTrue(loggingEvents.stream().anyMatch(event -> Arrays.stream(logKeywords).allMatch(keyword ->
+                event.getFormattedMessage().contains(keyword) && event.getLevel() == level
+        )));
     }
 
 }

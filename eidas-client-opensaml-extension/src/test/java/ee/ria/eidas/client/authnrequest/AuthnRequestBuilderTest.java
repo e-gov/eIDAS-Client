@@ -1,5 +1,9 @@
 package ee.ria.eidas.client.authnrequest;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.LoggingEvent;
+import ch.qos.logback.core.Appender;
 import ee.ria.eidas.client.config.EidasClientConfiguration;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.metadata.IDPMetadataResolver;
@@ -9,6 +13,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
 import org.opensaml.core.xml.XMLObject;
 import org.opensaml.saml.common.SAMLObjectContentReference;
 import org.opensaml.saml.common.xml.SAMLConstants;
@@ -19,6 +26,7 @@ import org.opensaml.saml.saml2.core.NameIDType;
 import org.opensaml.saml.saml2.core.RequestedAuthnContext;
 import org.opensaml.security.credential.Credential;
 import org.opensaml.xmlsec.signature.Signature;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
@@ -41,6 +49,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.verify;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = EidasClientConfiguration.class)
@@ -58,9 +68,19 @@ public class AuthnRequestBuilderTest {
 
     private AuthnRequestBuilder requestBuilder;
 
+    @Mock
+    private Appender mockedAppender;
+
+    @Captor
+    private ArgumentCaptor<LoggingEvent> loggingEventCaptor;
+
     @Before
     public void setUp() {
         requestBuilder = new AuthnRequestBuilder(authnReqSigningCredential, properties, idpMetadataResolver.getSingeSignOnService());
+
+        Logger root = (Logger) LoggerFactory.getLogger(AuthnRequestBuilder.class);
+        root.addAppender(mockedAppender);
+        root.setLevel(Level.DEBUG);
     }
 
     @Test
@@ -73,6 +93,9 @@ public class AuthnRequestBuilderTest {
         InputStream authnRequestInputStream = new ByteArrayInputStream(OpenSAMLUtils.getXmlString(authnRequest).getBytes());
         InputStream schemaInputStream = getClass().getResourceAsStream("/saml-schema-protocol-2.0");
         validateXMLAgainstSchema(authnRequestInputStream, schemaInputStream);
+
+        verifyLogs("AuthnRequest building succeeded", Level.INFO);
+        verifyLogKeywords(new String[]{"authnRequest", "getNamePolicyID", "getConditions", "getRequestedAuthnContext"}, Level.DEBUG);
     }
 
     @Test
@@ -85,6 +108,9 @@ public class AuthnRequestBuilderTest {
         InputStream authnRequestInputStream = new ByteArrayInputStream(OpenSAMLUtils.getXmlString(authnRequest).getBytes());
         InputStream schemaInputStream = getClass().getResourceAsStream("/saml-schema-protocol-2.0");
         validateXMLAgainstSchema(authnRequestInputStream, schemaInputStream);
+
+        verifyLogs("AuthnRequest building succeeded", Level.INFO);
+        verifyLogKeywords(new String[]{"authnRequest", "getNamePolicyID", "getConditions", "getRequestedAuthnContext"}, Level.DEBUG);
     }
 
     @Test
@@ -97,6 +123,9 @@ public class AuthnRequestBuilderTest {
         InputStream authnRequestInputStream = new ByteArrayInputStream(OpenSAMLUtils.getXmlString(authnRequest).getBytes());
         InputStream schemaInputStream = getClass().getResourceAsStream("/saml-schema-protocol-2.0");
         validateXMLAgainstSchema(authnRequestInputStream, schemaInputStream);
+
+        verifyLogs("AuthnRequest building succeeded", Level.INFO);
+        verifyLogKeywords(new String[]{"authnRequest", "getNamePolicyID", "getConditions", "getRequestedAuthnContext"}, Level.DEBUG);
     }
 
     private void assertAuthnRequest(AuthnRequest authnRequest, List<EidasAttribute> eidasAttributes) {
@@ -167,6 +196,24 @@ public class AuthnRequestBuilderTest {
             return false;
         }
         return true;
+    }
+
+    private void verifyLogs(String logMessage, Level level) {
+        verify(mockedAppender, atLeastOnce()).doAppend(loggingEventCaptor.capture());
+        List<LoggingEvent> loggingEvents = loggingEventCaptor.getAllValues();
+
+        assertTrue(loggingEvents.stream().anyMatch(event ->
+                event.getFormattedMessage().contains(logMessage) && event.getLevel() == level
+        ));
+    }
+
+    private void verifyLogKeywords(String[] logKeywords, Level level) {
+        verify(mockedAppender, atLeastOnce()).doAppend(loggingEventCaptor.capture());
+        List<LoggingEvent> loggingEvents = loggingEventCaptor.getAllValues();
+
+        assertTrue(loggingEvents.stream().anyMatch(event -> Arrays.stream(logKeywords).allMatch(keyword ->
+                event.getFormattedMessage().contains(keyword) && event.getLevel() == level
+        )));
     }
 
 }

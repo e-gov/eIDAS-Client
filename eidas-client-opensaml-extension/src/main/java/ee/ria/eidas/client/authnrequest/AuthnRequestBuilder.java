@@ -71,7 +71,7 @@ public class AuthnRequestBuilder {
 
             LOGGER.info("AuthnRequest building succeeded. Request ID: {}", authnRequest.getID());
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.info("AuthnRequest: {}", logAuthRequest(authnRequest));
+                LOGGER.debug("AuthnRequest: {}", logAuthRequest(authnRequest));
             }
 
             return authnRequest;

@@ -1,5 +1,9 @@
 package ee.ria.eidas.client;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.LoggingEvent;
+import ch.qos.logback.core.Appender;
 import ee.ria.eidas.client.authnrequest.AssuranceLevel;
 import ee.ria.eidas.client.authnrequest.AuthnRequestBuilder;
 import ee.ria.eidas.client.authnrequest.EidasAttribute;
@@ -13,6 +17,9 @@ import org.bouncycastle.util.encoders.Base64;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
 import org.opensaml.core.config.InitializationService;
 import org.opensaml.core.xml.XMLObject;
 import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
@@ -22,6 +29,7 @@ import org.opensaml.core.xml.schema.impl.XSAnyImpl;
 import org.opensaml.saml.saml2.core.AuthnRequest;
 import org.opensaml.saml.saml2.core.Extensions;
 import org.opensaml.security.credential.Credential;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletResponse;
@@ -42,6 +50,8 @@ import java.util.stream.Collectors;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.verify;
 
 @TestPropertySource(locations = "classpath:application-test.properties")
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -62,9 +72,20 @@ public class AuthInitiationServiceTest {
 
     private AuthInitiationService authenticationService;
 
+    @Mock
+    private Appender mockedAppender;
+
+    @Captor
+    private ArgumentCaptor<LoggingEvent> loggingEventCaptor;
+
+
     @Before
     public void setUp() {
         authenticationService = new AuthInitiationService(requestSessionService, authnReqSigningCredential, properties, idpMetadataResolver);
+
+        Logger root = (Logger) LoggerFactory.getLogger(AuthInitiationService.class);
+        root.addAppender(mockedAppender);
+        root.setLevel(Level.DEBUG);
     }
 
     @Test
@@ -81,6 +102,11 @@ public class AuthInitiationServiceTest {
         assertTrue(responseContent.contains("<input type=\"hidden\" name=\"RelayState\" value=\"test\"/>"));
 
         assertRequestedAttributesInSamlRequest(responseContent, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
+
+        verify(mockedAppender, atLeastOnce()).doAppend(loggingEventCaptor.capture());
+        LoggingEvent loggingEvent = loggingEventCaptor.getAllValues().get(0);
+        assertEquals("No eIDAS attributes presented, using default (natural person) set: [CURRENT_FAMILY_NAME, CURRENT_GIVEN_NAME, DATE_OF_BIRTH, PERSON_IDENTIFIER]", loggingEvent.getFormattedMessage());
+        assertEquals(Level.DEBUG, loggingEvent.getLevel());
     }
 
     @Test
