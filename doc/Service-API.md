@@ -13,6 +13,7 @@ Meetod | HTTP päring | Kirjeldus
 [**login**](Service-API.md#login) | **GET** /login | Moodustab ja tagastab ülepiirilise isikutuvastusprotsessi algatamise jaoks vajaliku [päringu](https://e-gov.github.io/eIDAS-Connector/Spetsifikatsioon#6-autentimisp%C3%A4ring) koos HTML ümbersuunamisvormiga.
 [**returnUrl**](Service-API.md#returnUrl) | **POST** /returnUrl | Ülepiirilise isikutuvastuse tulemuse kontroll. SAML vastuse valideerimine vastavalt [SAML 2 Web SSO profiilile](https://docs.oasis-open.org/security/saml/v2.0/saml-profiles-2.0-os.pdf) ja [konnektorteenuse spetsifikatsioonile](https://e-gov.github.io/eIDAS-Connector/Spetsifikatsioon#7-autentimisvastus). Kontrollide edukal läbimisel isikuandmete tagastamine.
 [**metadata**](Service-API.md#metadata) | **GET** /metadata | Tagastab eIDAS klient teenuse [SAML metaandmed](https://e-gov.github.io/eIDAS-Connector/Spetsifikatsioon#53-teenusepakkuja-metateave).
+[**supportedCountries**](Service-API.md#supportedCountries) | **GET** /supportedCountries | Tagastab eIDAS klient teenuse toetatud riigid.
 [**heartbeat**](Service-API.md#heartbeat) | **GET** /heartbeat või /heartbeat.json | Tagastab infot eIDAS klient teenuse versiooni ja oleku kohta.
 [**hazelcast**](Service-API.md#hazelcast) | **GET** /hazelcast või /hazelcast.json | Tagastab infot eIDAS klient teenuses jooksva Hazelcast klastri eksemplari kohta. **Vaikimisi välja lülitatud**.
 
@@ -255,6 +256,37 @@ urn:oasis:names:tc:SAML:1.1:nameid-format:unspecified
 		<md:AssertionConsumerService Binding="urn:oasis:names:tc:SAML:2.0:bindings:HTTP-POST" Location="https://localhost:8081/returnUrl" index="0"/>
 	</md:SPSSODescriptor>
 </md:EntityDescriptor>
+```
+
+**Vea korral** moodustatakse vastus vastavalt [**veakäsitlus**](Service-API.md#veakasitlus) peatükis toodule. Võimalikud veaolukorrad on toodud järgnevas tabelis:
+
+| HTTP staatuskood  | Vea lühikirjeldus | Viga selgitav tekst  |
+| :-------------: |:-------------| :-----|
+| 405 | Method Not Allowed | Request method [...] not supported |
+| 500 | Internal Server Error | Something went wrong internally. Please consult server logs for further details. |
+
+--------------------------------------------------
+
+<a name="supportedCountries"></a>
+## **supportedCountries**
+
+
+### Päring
+
+Parameetrid puuduvad.
+
+Näide:
+```bash
+curl 'https://localhost:8889/supportedCountries'
+```
+
+### Vastus
+
+**Eduka vastuse** korral tagastatakse HTTP staatuskood 200 ning toetatud riigid.
+
+Näide:
+```bash
+["EE", "LV", "LT"]
 ```
 
 **Vea korral** moodustatakse vastus vastavalt [**veakäsitlus**](Service-API.md#veakasitlus) peatükis toodule. Võimalikud veaolukorrad on toodud järgnevas tabelis:
