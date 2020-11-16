@@ -136,7 +136,7 @@ public class AuthResponseServiceTest {
         assertAuthenticationResult(result);
 
         verifyLogs("AuthnResponse ID", Level.INFO);
-        verifyLogKeywords(new String[]{"authnResponse", "getAssertions", "getEncryptedAssertions"}, Level.DEBUG);
+        verifyLogStartsWithXML("AuthnResponse: ", Level.DEBUG);
         verifyLogs("Decrypted Assertion ID", Level.INFO);
         verifyLogs("AuthnResponse validation: " + StatusCode.SUCCESS, Level.INFO);
     }
@@ -423,13 +423,13 @@ public class AuthResponseServiceTest {
         ));
     }
 
-    private void verifyLogKeywords(String[] logKeywords, Level level) {
+    private void verifyLogStartsWithXML(String logMessage, Level level) {
         verify(mockedAppender, atLeastOnce()).doAppend(loggingEventCaptor.capture());
         List<LoggingEvent> loggingEvents = loggingEventCaptor.getAllValues();
 
-        assertTrue(loggingEvents.stream().anyMatch(event -> Arrays.stream(logKeywords).allMatch(keyword ->
-                event.getFormattedMessage().contains(keyword) && event.getLevel() == level
-        )));
+        assertTrue(loggingEvents.stream().anyMatch(event ->
+                event.getFormattedMessage().startsWith(logMessage + "<") && event.getLevel() == level
+        ));
     }
 
 

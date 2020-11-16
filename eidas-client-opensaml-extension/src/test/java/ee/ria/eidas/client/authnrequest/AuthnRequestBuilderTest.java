@@ -95,7 +95,7 @@ public class AuthnRequestBuilderTest {
         validateXMLAgainstSchema(authnRequestInputStream, schemaInputStream);
 
         verifyLogs("AuthnRequest building succeeded", Level.INFO);
-        verifyLogKeywords(new String[]{"authnRequest", "getNamePolicyID", "getConditions", "getRequestedAuthnContext"}, Level.DEBUG);
+        verifyLogs("AuthnRequest: " + OpenSAMLUtils.getXmlString(authnRequest), Level.DEBUG);
     }
 
     @Test
@@ -110,7 +110,7 @@ public class AuthnRequestBuilderTest {
         validateXMLAgainstSchema(authnRequestInputStream, schemaInputStream);
 
         verifyLogs("AuthnRequest building succeeded", Level.INFO);
-        verifyLogKeywords(new String[]{"authnRequest", "getNamePolicyID", "getConditions", "getRequestedAuthnContext"}, Level.DEBUG);
+        verifyLogs("AuthnRequest: " + OpenSAMLUtils.getXmlString(authnRequest), Level.DEBUG);
     }
 
     @Test
@@ -124,8 +124,8 @@ public class AuthnRequestBuilderTest {
         InputStream schemaInputStream = getClass().getResourceAsStream("/saml-schema-protocol-2.0");
         validateXMLAgainstSchema(authnRequestInputStream, schemaInputStream);
 
-        verifyLogs("AuthnRequest building succeeded", Level.INFO);
-        verifyLogKeywords(new String[]{"authnRequest", "getNamePolicyID", "getConditions", "getRequestedAuthnContext"}, Level.DEBUG);
+        verifyLogs("AuthnRequest building succeeded. Request ID: " + authnRequest.getID(), Level.INFO);
+        verifyLogs("AuthnRequest: " + OpenSAMLUtils.getXmlString(authnRequest), Level.DEBUG);
     }
 
     private void assertAuthnRequest(AuthnRequest authnRequest, List<EidasAttribute> eidasAttributes) {
@@ -205,15 +205,6 @@ public class AuthnRequestBuilderTest {
         assertTrue(loggingEvents.stream().anyMatch(event ->
                 event.getFormattedMessage().contains(logMessage) && event.getLevel() == level
         ));
-    }
-
-    private void verifyLogKeywords(String[] logKeywords, Level level) {
-        verify(mockedAppender, atLeastOnce()).doAppend(loggingEventCaptor.capture());
-        List<LoggingEvent> loggingEvents = loggingEventCaptor.getAllValues();
-
-        assertTrue(loggingEvents.stream().anyMatch(event -> Arrays.stream(logKeywords).allMatch(keyword ->
-                event.getFormattedMessage().contains(keyword) && event.getLevel() == level
-        )));
     }
 
 }

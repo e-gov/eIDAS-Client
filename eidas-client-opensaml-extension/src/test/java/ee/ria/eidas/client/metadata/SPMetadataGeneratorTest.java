@@ -78,9 +78,8 @@ public class SPMetadataGeneratorTest {
         EntityDescriptor entityDescriptor = metadataGenerator.getMetadata();
         assertEntityDescriptor(entityDescriptor);
 
-        verifyLogs("Successfully generated metadata", Level.INFO);
-        verifyLogKeywords(new String[]{"entityDescriptor", "getAdditionalMetadataLocations", "getAffiliationDescriptor",
-                "getContactPersons", "getExtensions", "getOrganization", "getRoleDescriptors"}, Level.DEBUG);
+        verifyLogs("Successfully generated metadata. Metadata ID: " + entityDescriptor.getID(), Level.INFO);
+        verifyLogs("Generated metadata: " + OpenSAMLUtils.getXmlString(entityDescriptor), Level.DEBUG);
     }
 
     private void assertEntityDescriptor(EntityDescriptor entityDescriptor) {
@@ -154,15 +153,6 @@ public class SPMetadataGeneratorTest {
         assertTrue(loggingEvents.stream().anyMatch(event ->
                 event.getFormattedMessage().contains(logMessage) && event.getLevel() == level
         ));
-    }
-
-    private void verifyLogKeywords(String[] logKeywords, Level level) {
-        verify(mockedAppender, atLeastOnce()).doAppend(loggingEventCaptor.capture());
-        List<LoggingEvent> loggingEvents = loggingEventCaptor.getAllValues();
-
-        assertTrue(loggingEvents.stream().anyMatch(event -> Arrays.stream(logKeywords).allMatch(keyword ->
-                event.getFormattedMessage().contains(keyword) && event.getLevel() == level
-        )));
     }
 
 }

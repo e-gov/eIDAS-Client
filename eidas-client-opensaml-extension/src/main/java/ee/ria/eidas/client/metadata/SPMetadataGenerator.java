@@ -54,23 +54,12 @@ public class SPMetadataGenerator {
             new SAMLSigner(eidasClientProperties.getMetadataSignatureAlgorithm(), metadataSigningCredential).sign(entityDescriptor);
             LOGGER.info("Successfully generated metadata. Metadata ID: {}", entityDescriptor.getID());
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Generated metadata: {}", logEntityDescriptor(entityDescriptor));
+                LOGGER.debug("Generated metadata: {}", OpenSAMLUtils.getXmlString(entityDescriptor));
             }
             return entityDescriptor;
         } catch (Exception e) {
             throw new EidasClientException("Error generating metadata", e);
         }
-    }
-
-    private String logEntityDescriptor(EntityDescriptor entityDescriptor) {
-        return "EntityDescriptor{" +
-                "entityDescriptor=" + ReflectionToStringBuilder.toString(entityDescriptor) +
-                ", getAdditionalMetadataLocations=" + ReflectionToStringBuilder.toString(entityDescriptor.getAdditionalMetadataLocations()) +
-                ", getAffiliationDescriptor=" + ReflectionToStringBuilder.toString(entityDescriptor.getAffiliationDescriptor()) +
-                ", getContactPersons=" + ReflectionToStringBuilder.toString(entityDescriptor.getContactPersons()) +
-                ", getExtensions=" + ReflectionToStringBuilder.toString(entityDescriptor.getExtensions()) +
-                ", getOrganization=" + ReflectionToStringBuilder.toString(entityDescriptor.getOrganization()) +
-                ", getRoleDescriptors=" + ReflectionToStringBuilder.toString(entityDescriptor.getRoleDescriptors());
     }
 
     private EntityDescriptor buildEntityDescriptor() {

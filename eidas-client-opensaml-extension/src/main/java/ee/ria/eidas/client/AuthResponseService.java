@@ -85,7 +85,7 @@ public class AuthResponseService {
 
             LOGGER.info("AuthnResponse ID: {}", samlResponse.getID());
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("AuthnResponse: {}", logAuthnResponse(samlResponse));
+                LOGGER.debug("AuthnResponse: {}", OpenSAMLUtils.getXmlString(samlResponse));
 
             }
 
@@ -109,13 +109,6 @@ public class AuthResponseService {
         } catch (InvalidRequestException exception) {
             throw new InvalidRequestException("Invalid SAMLResponse. " + exception.getMessage(), exception);
         }
-    }
-
-    private String logAuthnResponse(Response response) {
-        return "AuthnResponse{" +
-                "authnResponse=" + ReflectionToStringBuilder.toString(response) +
-                ", getAssertions=" + ReflectionToStringBuilder.toString(response.getAssertions()) +
-                ", getEncryptedAssertions=" + ReflectionToStringBuilder.toString(response.getEncryptedAssertions());
     }
 
     private Response getSamlResponse(HttpServletRequest request) throws MissingServletRequestParameterException {

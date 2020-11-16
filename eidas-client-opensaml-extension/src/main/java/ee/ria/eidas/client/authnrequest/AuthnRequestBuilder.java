@@ -71,21 +71,13 @@ public class AuthnRequestBuilder {
 
             LOGGER.info("AuthnRequest building succeeded. Request ID: {}", authnRequest.getID());
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("AuthnRequest: {}", logAuthRequest(authnRequest));
+                LOGGER.debug("AuthnRequest: {}", OpenSAMLUtils.getXmlString(authnRequest));
             }
 
             return authnRequest;
         } catch (Exception e) {
             throw new EidasClientException("Failed to create authnRequest: " + e.getMessage(), e);
         }
-    }
-
-    private String logAuthRequest(AuthnRequest authnRequest) {
-        return "AuthnRequest{" +
-                "authnRequest=" + ReflectionToStringBuilder.toString(authnRequest) +
-                ", getNamePolicyID=" + ReflectionToStringBuilder.toString(authnRequest.getNameIDPolicy()) +
-                ", getConditions=" + ReflectionToStringBuilder.toString(authnRequest.getConditions()) +
-                ", getRequestedAuthnContext=" + ReflectionToStringBuilder.toString(authnRequest.getRequestedAuthnContext());
     }
 
     private void addSignature(AuthnRequest authnRequest) throws SecurityException, MarshallingException, SignatureException {
