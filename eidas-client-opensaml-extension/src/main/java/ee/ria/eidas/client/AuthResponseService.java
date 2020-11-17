@@ -1,15 +1,15 @@
 package ee.ria.eidas.client;
 
-import ee.ria.eidas.client.metadata.IDPMetadataResolver;
-import ee.ria.eidas.client.response.AssertionValidator;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.config.OpenSAMLConfiguration;
 import ee.ria.eidas.client.exception.AuthenticationFailedException;
 import ee.ria.eidas.client.exception.EidasClientException;
 import ee.ria.eidas.client.exception.InvalidRequestException;
+import ee.ria.eidas.client.metadata.IDPMetadataResolver;
+import ee.ria.eidas.client.response.AssertionValidator;
 import ee.ria.eidas.client.response.AuthenticationResult;
-import ee.ria.eidas.client.session.RequestSessionService;
 import ee.ria.eidas.client.session.RequestSession;
+import ee.ria.eidas.client.session.RequestSessionService;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
 import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
 import net.shibboleth.utilities.java.support.net.URIComparator;
@@ -17,8 +17,6 @@ import net.shibboleth.utilities.java.support.net.URIException;
 import net.shibboleth.utilities.java.support.resolver.CriteriaSet;
 import net.shibboleth.utilities.java.support.resolver.ResolverException;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.builder.ReflectionToStringBuilder;
-
 import org.joda.time.DateTime;
 import org.opensaml.core.criterion.EntityIdCriterion;
 import org.opensaml.core.xml.util.XMLObjectSupport;
