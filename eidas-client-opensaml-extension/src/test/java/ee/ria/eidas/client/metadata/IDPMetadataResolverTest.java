@@ -1,14 +1,19 @@
 package ee.ria.eidas.client.metadata;
 
 import ee.ria.eidas.client.config.EidasClientConfiguration;
+import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.exception.EidasClientException;
 import net.shibboleth.utilities.java.support.resolver.CriteriaSet;
-import net.shibboleth.utilities.java.support.resolver.ResolverException;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.MockitoAnnotations;
 import org.opensaml.core.criterion.EntityIdCriterion;
 import org.opensaml.saml.metadata.resolver.MetadataResolver;
 import org.opensaml.xmlsec.signature.support.impl.ExplicitKeySignatureTrustEngine;
@@ -19,6 +24,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 
 import static org.junit.Assert.assertEquals;
 
@@ -33,8 +39,18 @@ public class IDPMetadataResolverTest {
     @Autowired
     private ExplicitKeySignatureTrustEngine idpMetadataSignatureTrustEngine;
 
+    @Mock
     @Autowired
+    private EidasClientProperties eidasClientProperties;
+
+    @InjectMocks
     private IDPMetadataResolver idpMetadataResolver;
+
+    @Before
+    public void initMocks() {
+        idpMetadataResolver = new IDPMetadataResolver("classpath:idp-metadata.xml", idpMetadataSignatureTrustEngine);
+        MockitoAnnotations.initMocks(this);
+    }
 
     @Test
     public void resolveSuccessfullyFromClasspath() throws Exception {
@@ -94,7 +110,13 @@ public class IDPMetadataResolverTest {
     }
 
     @Test
-    public void getSupportedCountriesSuccessfullyFromConfigurationIfNoneSpecifiedInMetadata() throws ResolverException {
+    public void getSupportedCountriesSuccessfullyFromConfigurationIfEntityDescriptorMissing() {
+        assertEquals(new ArrayList<>(Collections.emptyList()), idpMetadataResolver.getSupportedCountries(null));
+    }
+
+    @Test
+    public void getSupportedCountriesSuccessfullyFromConfigurationIfNoneSpecifiedInMetadata() {
+        Mockito.when(eidasClientProperties.getAvailableCountries()).thenReturn(new ArrayList<>(Arrays.asList("EE", "CA")));
         assertEquals(new ArrayList<>(Arrays.asList("EE", "CA")), idpMetadataResolver.getSupportedCountries());
     }
 

@@ -131,15 +131,31 @@ public class IDPMetadataResolver {
             throw new EidasClientException("Could not find a valid SAML2 POST BINDING from IDP metadata!");
     }
 
-    public List<String> getSupportedCountries() throws ResolverException {
-        List<String> supportedCountries = new ArrayList<>();
-        AbstractReloadingMetadataResolver metadataResolver = this.resolve();
-        CriteriaSet criteriaSet = new CriteriaSet(new EntityIdCriterion(url));
-        EntityDescriptor entityDescriptor = metadataResolver.resolveSingle(criteriaSet);
-        if (entityDescriptor == null) {
-            logger.error("Could not find a valid EntityDescriptor in your IDP metadata! Using supported countries from configuration.");
-            return getSupportedCountriesFromConfiguration();
+    public List<String> getSupportedCountries() {
+        try {
+            AbstractReloadingMetadataResolver metadataResolver = this.resolve();
+            CriteriaSet criteriaSet = new CriteriaSet(new EntityIdCriterion(url));
+            EntityDescriptor entityDescriptor = metadataResolver.resolveSingle(criteriaSet);
+
+            List<String> supportedCountries = getSupportedCountries(entityDescriptor);
+
+            if (supportedCountries.isEmpty()) {
+                logger.error("Unable to get supported countries from metadata. Using supported countries from configuration.");
+                return getSupportedCountriesFromConfiguration();
+            }
+            return supportedCountries;
+        } catch (final ResolverException e) {
+            throw new EidasClientException("Error initializing IDP metadata", e);
         }
+    }
+
+    protected List<String> getSupportedCountries(EntityDescriptor entityDescriptor) {
+        if (entityDescriptor == null) {
+            logger.error("Could not find a valid EntityDescriptor in your IDP metadata!");
+            return new ArrayList<>();
+        }
+
+        List<String> supportedCountries = new ArrayList<>();
 
         if (entityDescriptor.getExtensions().hasChildren()) {
             for (XMLObject mainXmlObject : entityDescriptor.getExtensions().getOrderedChildren()) {
@@ -151,11 +167,6 @@ public class IDPMetadataResolver {
                     }
                 }
             }
-        }
-
-        if (supportedCountries.isEmpty()) {
-            logger.error("Unable to get supported countries from metadata. Using supported countries from configuration.");
-            return getSupportedCountriesFromConfiguration();
         }
 
         return supportedCountries;

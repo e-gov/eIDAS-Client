@@ -13,7 +13,6 @@ import ee.ria.eidas.client.session.RequestSessionService;
 import ee.ria.eidas.client.session.UnencodedRequestSession;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
 import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
-import net.shibboleth.utilities.java.support.resolver.ResolverException;
 import org.apache.commons.collections.CollectionUtils;
 import org.opensaml.messaging.context.MessageContext;
 import org.opensaml.messaging.encoder.MessageEncodingException;
@@ -25,11 +24,8 @@ import org.opensaml.xmlsec.SignatureSigningParameters;
 import org.opensaml.xmlsec.context.SecurityParametersContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.SAXException;
 
 import javax.servlet.http.HttpServletResponse;
-import javax.xml.parsers.ParserConfigurationException;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -63,7 +59,7 @@ public class AuthInitiationService {
         this.idpMetadataResolver = idpMetadataResolver;
     }
 
-    public void authenticate(HttpServletResponse response, String country, AssuranceLevel loa, String relayState, String attributesSet) throws IOException, SAXException, ParserConfigurationException, ResolverException {
+    public void authenticate(HttpServletResponse response, String country, AssuranceLevel loa, String relayState, String attributesSet) {
         validateCountry(country);
         validateRelayState(relayState);
         List<EidasAttribute> eidasAttributes = determineEidasAttributes(attributesSet);
@@ -160,7 +156,7 @@ public class AuthInitiationService {
         }
     }
 
-    private void validateCountry(String country) throws ResolverException {
+    private void validateCountry(String country) {
         List<String> validCountries = idpMetadataResolver.getSupportedCountries();
         if (!validCountries.stream().anyMatch(country::equalsIgnoreCase)) {
             throw new InvalidRequestException("Invalid country! Valid countries:" + validCountries);
