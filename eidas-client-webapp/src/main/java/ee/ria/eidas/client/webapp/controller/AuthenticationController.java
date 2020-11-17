@@ -5,25 +5,18 @@ import ee.ria.eidas.client.AuthResponseService;
 import ee.ria.eidas.client.authnrequest.AssuranceLevel;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.response.AuthenticationResult;
-import net.shibboleth.utilities.java.support.resolver.ResolverException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.propertyeditors.StringTrimmerEditor;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
-import org.xml.sax.SAXException;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import javax.xml.parsers.ParserConfigurationException;
-
-import java.io.IOException;
 
 import static ee.ria.eidas.client.webapp.EidasClientApi.ENDPOINT_AUTHENTICATION_LOGIN;
 import static ee.ria.eidas.client.webapp.EidasClientApi.ENDPOINT_AUTHENTICATION_RETURN_URL;
-import static org.springframework.web.bind.annotation.RequestMethod.GET;
-import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
 @Controller
 public class AuthenticationController {
@@ -47,7 +40,7 @@ public class AuthenticationController {
             @RequestParam("Country") String country,
             @RequestParam(value = "LoA", required=false) AssuranceLevel loa,
             @RequestParam(value = "RelayState", required=false) String relayState,
-            @RequestParam(value = "Attributes", required=false) String eidasAttributes) throws ParserConfigurationException, SAXException, IOException, ResolverException {
+            @RequestParam(value = "Attributes", required=false) String eidasAttributes) {
         authInitiationService.authenticate(response, country, loa, relayState, eidasAttributes);
     }
 
