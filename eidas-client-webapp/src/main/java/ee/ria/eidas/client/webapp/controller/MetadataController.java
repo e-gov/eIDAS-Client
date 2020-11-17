@@ -1,6 +1,8 @@
 package ee.ria.eidas.client.webapp.controller;
 
+import ee.ria.eidas.client.AuthInitiationService;
 import ee.ria.eidas.client.config.EidasClientProperties;
+import ee.ria.eidas.client.metadata.IDPMetadataResolver;
 import ee.ria.eidas.client.metadata.SPMetadataGenerator;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
 import org.opensaml.saml.saml2.metadata.EntityDescriptor;
@@ -24,6 +26,12 @@ public class MetadataController {
     @Autowired
     private SPMetadataGenerator metadataGenerator;
 
+    @Autowired
+    private AuthInitiationService authInitiationService;
+
+    @Autowired
+    private IDPMetadataResolver idpMetadataResolver;
+
     @GetMapping(value = ENDPOINT_METADATA_METADATA, produces = { "application/xml", "text/xml" }, consumes = MediaType.ALL_VALUE)
     public @ResponseBody String metadata() {
         EntityDescriptor entityDescriptor = metadataGenerator.getMetadata();
@@ -32,6 +40,6 @@ public class MetadataController {
 
     @GetMapping(value = ENDPOINT_METADATA_SUPPORTED_COUNTRIES, produces = { "application/json" }, consumes = MediaType.ALL_VALUE)
     public @ResponseBody List<String> countries() {
-        return eidasClientProperties.getAvailableCountries();
+        return idpMetadataResolver.getSupportedCountries();
     }
 }

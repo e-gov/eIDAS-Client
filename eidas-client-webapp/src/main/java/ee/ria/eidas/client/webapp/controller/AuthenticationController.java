@@ -17,8 +17,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import static ee.ria.eidas.client.webapp.EidasClientApi.ENDPOINT_AUTHENTICATION_LOGIN;
 import static ee.ria.eidas.client.webapp.EidasClientApi.ENDPOINT_AUTHENTICATION_RETURN_URL;
-import static org.springframework.web.bind.annotation.RequestMethod.GET;
-import static org.springframework.web.bind.annotation.RequestMethod.POST;
 
 @Controller
 public class AuthenticationController {

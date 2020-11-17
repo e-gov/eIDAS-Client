@@ -157,7 +157,7 @@ public class AuthInitiationService {
     }
 
     private void validateCountry(String country) {
-        List<String> validCountries = eidasClientProperties.getAvailableCountries();
+        List<String> validCountries = idpMetadataResolver.getSupportedCountries();
         if (!validCountries.stream().anyMatch(country::equalsIgnoreCase)) {
             throw new InvalidRequestException("Invalid country! Valid countries:" + validCountries);
         }
