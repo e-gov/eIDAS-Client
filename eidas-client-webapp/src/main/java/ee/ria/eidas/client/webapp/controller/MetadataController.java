@@ -5,7 +5,6 @@ import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.metadata.IDPMetadataResolver;
 import ee.ria.eidas.client.metadata.SPMetadataGenerator;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
-import net.shibboleth.utilities.java.support.resolver.ResolverException;
 import org.opensaml.saml.saml2.metadata.EntityDescriptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -40,7 +39,7 @@ public class MetadataController {
     }
 
     @GetMapping(value = ENDPOINT_METADATA_SUPPORTED_COUNTRIES, produces = { "application/json" }, consumes = MediaType.ALL_VALUE)
-    public @ResponseBody List<String> countries() throws ResolverException {
+    public @ResponseBody List<String> countries() {
         return idpMetadataResolver.getSupportedCountries();
     }
 }
