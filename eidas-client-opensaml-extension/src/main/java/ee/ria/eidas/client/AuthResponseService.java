@@ -1,15 +1,15 @@
 package ee.ria.eidas.client;
 
-import ee.ria.eidas.client.metadata.IDPMetadataResolver;
-import ee.ria.eidas.client.response.AssertionValidator;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.config.OpenSAMLConfiguration;
 import ee.ria.eidas.client.exception.AuthenticationFailedException;
 import ee.ria.eidas.client.exception.EidasClientException;
 import ee.ria.eidas.client.exception.InvalidRequestException;
+import ee.ria.eidas.client.metadata.IDPMetadataResolver;
+import ee.ria.eidas.client.response.AssertionValidator;
 import ee.ria.eidas.client.response.AuthenticationResult;
-import ee.ria.eidas.client.session.RequestSessionService;
 import ee.ria.eidas.client.session.RequestSession;
+import ee.ria.eidas.client.session.RequestSessionService;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
 import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
 import net.shibboleth.utilities.java.support.net.URIComparator;
@@ -80,6 +80,13 @@ public class AuthResponseService {
     public AuthenticationResult getAuthenticationResult(HttpServletRequest req) throws MissingServletRequestParameterException {
         try {
             Response samlResponse = getSamlResponse(req);
+
+            LOGGER.info("AuthnResponse ID: {}", samlResponse.getID());
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("AuthnResponse: {}", OpenSAMLUtils.getXmlString(samlResponse));
+
+            }
+
             validateDestinationAndLifetime(samlResponse, req);
             verifyResponseSignature(samlResponse);
             validateStatusCode(samlResponse);
@@ -90,6 +97,8 @@ public class AuthResponseService {
             Assertion assertion = decryptAssertion(encryptedAssertion);
             verifyAssertionSignature(assertion);
             validateAssertion(assertion, requestSession);
+
+            LOGGER.info("Decrypted Assertion ID: {}", assertion.getID());
 
             if (LOGGER.isDebugEnabled())
                 LOGGER.debug("Decrypted Assertion: {}", OpenSAMLUtils.getXmlString(assertion));
@@ -154,12 +163,16 @@ public class AuthResponseService {
         StatusCode substatusCode = statusCode.getStatusCode();
         StatusMessage statusMessage = samlResponse.getStatus().getStatusMessage();
         if (StatusCode.SUCCESS.equals(statusCode.getValue())) {
+            LOGGER.info("AuthnResponse validation: {}", StatusCode.SUCCESS);
             return;
         }  else if (isStatusNoConsentGiven(statusCode, substatusCode, StatusCode.REQUESTER, StatusCode.REQUEST_DENIED)) {
+            LOGGER.info("AuthnResponse validation: {}", StatusCode.REQUEST_DENIED);
             throw new AuthenticationFailedException("No user consent received. User denied access.");
         }  else if (isStatusAuthenticationFailed(statusCode, substatusCode, StatusCode.RESPONDER, StatusCode.AUTHN_FAILED)) {
+            LOGGER.info("AuthnResponse validation: {}", StatusCode.AUTHN_FAILED);
             throw new AuthenticationFailedException("Authentication failed.");
         } else {
+            LOGGER.info("AuthnResponse validation: FAILURE");
             throw new EidasClientException("Eidas node responded with an error! statusCode = " + samlResponse.getStatus().getStatusCode().getValue()
                     + (substatusCode != null ? ", substatusCode = " + substatusCode.getValue() : "")
                     +  ", statusMessage = " + statusMessage.getMessage());

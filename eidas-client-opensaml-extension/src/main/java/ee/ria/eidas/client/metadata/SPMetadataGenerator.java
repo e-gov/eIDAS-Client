@@ -20,6 +20,8 @@ import org.opensaml.xmlsec.config.impl.DefaultSecurityConfigurationBootstrap;
 import org.opensaml.xmlsec.keyinfo.KeyInfoGenerator;
 import org.opensaml.xmlsec.keyinfo.NamedKeyInfoGeneratorManager;
 import org.opensaml.xmlsec.signature.KeyInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
@@ -27,6 +29,8 @@ import java.util.LinkedList;
 import java.util.Set;
 
 public class SPMetadataGenerator {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(SPMetadataGenerator.class);
 
     protected int defaultACSIndex = 0;
 
@@ -46,6 +50,10 @@ public class SPMetadataGenerator {
         try {
             EntityDescriptor entityDescriptor = buildEntityDescriptor();
             new SAMLSigner(eidasClientProperties.getMetadataSignatureAlgorithm(), metadataSigningCredential).sign(entityDescriptor);
+            LOGGER.info("Successfully generated metadata. Metadata ID: {}", entityDescriptor.getID());
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("Generated metadata: {}", OpenSAMLUtils.getXmlString(entityDescriptor));
+            }
             return entityDescriptor;
         } catch (Exception e) {
             throw new EidasClientException("Error generating metadata", e);

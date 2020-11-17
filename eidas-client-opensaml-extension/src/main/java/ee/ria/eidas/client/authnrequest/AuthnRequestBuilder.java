@@ -21,11 +21,15 @@ import org.opensaml.saml.saml2.metadata.SingleSignOnService;
 import org.opensaml.security.SecurityException;
 import org.opensaml.security.credential.Credential;
 import org.opensaml.xmlsec.signature.support.SignatureException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.xml.namespace.QName;
 import java.util.List;
 
 public class AuthnRequestBuilder {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(AuthnRequestBuilder.class);
 
     public static final String REQUESTED_ATTRIBUTE_NAME_FORMAT = "urn:oasis:names:tc:SAML:2.0:attrname-format:uri";
 
@@ -58,6 +62,11 @@ public class AuthnRequestBuilder {
             authnRequest.setExtensions(buildExtensions(eidasAttributes));
 
             addSignature(authnRequest);
+
+            LOGGER.info("AuthnRequest building succeeded. Request ID: {}", authnRequest.getID());
+            if (LOGGER.isDebugEnabled()) {
+                LOGGER.debug("AuthnRequest: {}", OpenSAMLUtils.getXmlString(authnRequest));
+            }
 
             return authnRequest;
         } catch (Exception e) {

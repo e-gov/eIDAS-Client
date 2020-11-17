@@ -1,17 +1,21 @@
 package ee.ria.eidas.client;
 
+import ch.qos.logback.classic.Level;
+import ch.qos.logback.classic.Logger;
+import ch.qos.logback.classic.spi.LoggingEvent;
+import ch.qos.logback.core.Appender;
 import ee.ria.eidas.client.authnrequest.AssuranceLevel;
 import ee.ria.eidas.client.authnrequest.EidasAttribute;
 import ee.ria.eidas.client.config.EidasClientConfiguration;
 import ee.ria.eidas.client.config.EidasClientProperties;
-import ee.ria.eidas.client.exception.EidasClientException;
 import ee.ria.eidas.client.exception.AuthenticationFailedException;
+import ee.ria.eidas.client.exception.EidasClientException;
 import ee.ria.eidas.client.exception.InvalidRequestException;
 import ee.ria.eidas.client.fixtures.ResponseBuilder;
 import ee.ria.eidas.client.metadata.IDPMetadataResolver;
 import ee.ria.eidas.client.response.AuthenticationResult;
-import ee.ria.eidas.client.session.UnencodedRequestSession;
 import ee.ria.eidas.client.session.RequestSessionService;
+import ee.ria.eidas.client.session.UnencodedRequestSession;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
 import net.shibboleth.utilities.java.support.resolver.CriteriaSet;
 import net.shibboleth.utilities.java.support.resolver.Criterion;
@@ -22,11 +26,15 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.junit.runner.RunWith;
+import org.mockito.ArgumentCaptor;
+import org.mockito.Captor;
+import org.mockito.Mock;
 import org.opensaml.core.criterion.EntityIdCriterion;
 import org.opensaml.saml.saml2.core.*;
 import org.opensaml.saml.saml2.core.impl.AttributeStatementBuilder;
 import org.opensaml.security.credential.Credential;
 import org.opensaml.security.credential.impl.KeyStoreCredentialResolver;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -43,7 +51,10 @@ import java.security.KeyStore;
 import java.util.*;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.verify;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = AuthResponseServiceTest.TestConf.class)
@@ -78,6 +89,12 @@ public class AuthResponseServiceTest {
 
     private ResponseBuilder mockResponseBuilder;
 
+    @Mock
+    private Appender mockedAppender;
+
+    @Captor
+    private ArgumentCaptor<LoggingEvent> loggingEventCaptor;
+
     @TestConfiguration
     @Import(EidasClientConfiguration.class)
     public static class TestConf {
@@ -106,6 +123,10 @@ public class AuthResponseServiceTest {
 
         requestSessionService.getAndRemoveRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO);
         saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
+
+        Logger root = (Logger) LoggerFactory.getLogger(AuthResponseService.class);
+        root.addAppender(mockedAppender);
+        root.setLevel(Level.DEBUG);
     }
 
     @Test
@@ -113,6 +134,11 @@ public class AuthResponseServiceTest {
         httpRequest = buildMockHttpServletRequest("SAMLResponse", mockResponseBuilder.buildResponse("classpath:idp-metadata.xml"));
         AuthenticationResult result = authResponseService.getAuthenticationResult(httpRequest);
         assertAuthenticationResult(result);
+
+        verifyLogs("AuthnResponse ID", Level.INFO);
+        verifyLogStartsWithXML("AuthnResponse: ", Level.DEBUG);
+        verifyLogs("Decrypted Assertion ID", Level.INFO);
+        verifyLogs("AuthnResponse validation: " + StatusCode.SUCCESS, Level.INFO);
     }
 
     @Test
@@ -387,5 +413,24 @@ public class AuthResponseServiceTest {
         UnencodedRequestSession requestSession = new UnencodedRequestSession(requestID, issueIntant, loa, requestedAttributes);
         requestSessionService.saveRequestSession(requestID, requestSession);
     }
+
+    private void verifyLogs(String logMessage, Level level) {
+        verify(mockedAppender, atLeastOnce()).doAppend(loggingEventCaptor.capture());
+        List<LoggingEvent> loggingEvents = loggingEventCaptor.getAllValues();
+
+        assertTrue(loggingEvents.stream().anyMatch(event ->
+            event.getFormattedMessage().contains(logMessage) && event.getLevel() == level
+        ));
+    }
+
+    private void verifyLogStartsWithXML(String logMessage, Level level) {
+        verify(mockedAppender, atLeastOnce()).doAppend(loggingEventCaptor.capture());
+        List<LoggingEvent> loggingEvents = loggingEventCaptor.getAllValues();
+
+        assertTrue(loggingEvents.stream().anyMatch(event ->
+                event.getFormattedMessage().startsWith(logMessage + "<") && event.getLevel() == level
+        ));
+    }
+
 
 }
