@@ -159,9 +159,11 @@ public class IDPMetadataResolver {
 
         if (entityDescriptor.getExtensions().hasChildren()) {
             for (XMLObject mainXmlObject : entityDescriptor.getExtensions().getOrderedChildren()) {
-                if (mainXmlObject.hasChildren()) {
+                if (mainXmlObject.getElementQName().getLocalPart().equals("SupportedMemberStates") && mainXmlObject.hasChildren()) {
                     for (XMLObject xmlObject : mainXmlObject.getOrderedChildren()) {
-                        if (((XSAnyImpl) xmlObject).getTextContent() != null) {
+                        if (xmlObject instanceof XSAnyImpl &&
+                                xmlObject.getElementQName().getLocalPart().equals("MemberState") &&
+                                ((XSAnyImpl) xmlObject).getTextContent() != null) {
                             supportedCountries.add(((XSAnyImpl) xmlObject).getTextContent());
                         }
                     }
