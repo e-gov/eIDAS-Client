@@ -63,6 +63,14 @@
             <scope>provided</scope>
         </dependency>
 
+        <!-- Override dependencies -->
+        <dependency>
+            <groupId>com.hazelcast</groupId>
+            <artifactId>hazelcast</artifactId>
+            <version>3.12.11</version>
+        </dependency>
+
+
         <!-- test dependencies -->
         <dependency>
             <groupId>ee.ria.eidas</groupId>
