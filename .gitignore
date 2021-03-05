@@ -3,4 +3,4 @@ conf
 .idea
 *.iml
 **/.DS_Store
-
+settings.xml
