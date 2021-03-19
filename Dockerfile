@@ -1,4 +1,5 @@
-FROM maven:3.6.3-jdk-8-slim as builder
+ARG DOCKERHUB_MIRROR=
+FROM ${DOCKERHUB_MIRROR}library/maven:3.6.3-jdk-8-slim as builder
 WORKDIR application
 COPY ./settings.xml settings.xml
 COPY ./pom.xml ./pom.xml
@@ -12,7 +13,7 @@ COPY ./eidas-client-webapp ./eidas-client-webapp
 RUN mvn -s settings.xml clean package -DskipTests=true -Djacoco.skip=true -P jar
 RUN java -Djarmode=layertools -jar eidas-client-webapp/target/*.jar extract
 
-FROM maven:3.6.3-jdk-8-slim
+FROM ${DOCKERHUB_MIRROR}library/maven:3.6.3-jdk-8-slim
 WORKDIR /application
 COPY --from=builder application/dependencies/ ./
 COPY --from=builder application/spring-boot-loader/ ./
