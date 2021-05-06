@@ -1,4 +1,5 @@
-<img src='doc/img/ee_cef_0.png' style="width:400px"></img>
+<img src='doc/img/ee_cef_0.png' style="width:400px">
+<img src='doc/img/eu_regional_development_fund_horizontal.jpg' style="width:400px>
 
 # eIDAS-Client
 
