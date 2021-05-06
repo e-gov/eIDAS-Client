@@ -43,7 +43,10 @@ public class ControllerExceptionHandler {
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public Map handleAuthenticationFailure(AuthenticationFailedException exception) {
         LOGGER.error("Authentication failed!", exception);
-        return getMap(HttpStatus.UNAUTHORIZED, exception.getMessage());
+        if (exception.getSubStatus() != null)
+            return getMap(HttpStatus.UNAUTHORIZED, exception.getMessage(), exception.getStatus(), exception.getSubStatus());
+        else
+            return getMap(HttpStatus.UNAUTHORIZED, exception.getMessage(), exception.getStatus());
     }
 
     @ExceptionHandler
@@ -66,6 +69,23 @@ public class ControllerExceptionHandler {
         return Collections.unmodifiableMap(Stream.of(
                 new SimpleEntry<>("message", message),
                 new SimpleEntry<>("error", badRequest.getReasonPhrase()))
+                .collect(Collectors.toMap(SimpleEntry::getKey, SimpleEntry::getValue)));
+    }
+
+    private Map<String, String> getMap(HttpStatus badRequest, String message, String status) {
+        return Collections.unmodifiableMap(Stream.of(
+                new SimpleEntry<>("message", message),
+                new SimpleEntry<>("error", badRequest.getReasonPhrase()),
+                new SimpleEntry<>("status", status))
+                .collect(Collectors.toMap(SimpleEntry::getKey, SimpleEntry::getValue)));
+    }
+
+    private Map<String, String> getMap(HttpStatus badRequest, String message, String status, String subStatus) {
+        return Collections.unmodifiableMap(Stream.of(
+                new SimpleEntry<>("message", message),
+                new SimpleEntry<>("error", badRequest.getReasonPhrase()),
+                new SimpleEntry<>("status", status),
+                new SimpleEntry<>("subStatus", subStatus))
                 .collect(Collectors.toMap(SimpleEntry::getKey, SimpleEntry::getValue)));
     }
 }
