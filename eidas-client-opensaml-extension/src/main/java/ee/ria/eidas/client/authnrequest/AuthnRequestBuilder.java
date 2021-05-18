@@ -1,9 +1,12 @@
 package ee.ria.eidas.client.authnrequest;
 
 import ee.ria.eidas.client.config.EidasClientProperties;
+import ee.ria.eidas.client.config.EidasCredentialsConfiguration.FailedCredentialEvent;
 import ee.ria.eidas.client.exception.EidasClientException;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
 import ee.ria.eidas.client.util.SAMLSigner;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
 import org.opensaml.core.xml.io.MarshallingException;
 import org.opensaml.core.xml.schema.XSAny;
@@ -21,29 +24,24 @@ import org.opensaml.saml.saml2.metadata.SingleSignOnService;
 import org.opensaml.security.SecurityException;
 import org.opensaml.security.credential.Credential;
 import org.opensaml.xmlsec.signature.support.SignatureException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 
 import javax.xml.namespace.QName;
 import java.util.List;
 
+@Slf4j
+@RequiredArgsConstructor
 public class AuthnRequestBuilder {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(AuthnRequestBuilder.class);
 
     public static final String REQUESTED_ATTRIBUTE_NAME_FORMAT = "urn:oasis:names:tc:SAML:2.0:attrname-format:uri";
 
-    private Credential authnReqSigningCredential;
+    private final Credential authnReqSigningCredential;
 
-    private EidasClientProperties eidasClientProperties;
+    private final EidasClientProperties eidasClientProperties;
 
-    private SingleSignOnService singleSignOnService;
+    private final SingleSignOnService singleSignOnService;
 
-    public AuthnRequestBuilder(Credential authnReqSigningCredential, EidasClientProperties eidasClientProperties, SingleSignOnService singleSignOnService) {
-        this.authnReqSigningCredential = authnReqSigningCredential;
-        this.eidasClientProperties = eidasClientProperties;
-        this.singleSignOnService = singleSignOnService;
-    }
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     public AuthnRequest buildAuthnRequest(AssuranceLevel loa, List<EidasAttribute> eidasAttributes) {
         try {
@@ -63,13 +61,14 @@ public class AuthnRequestBuilder {
 
             addSignature(authnRequest);
 
-            LOGGER.info("AuthnRequest building succeeded. Request ID: {}", authnRequest.getID());
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("AuthnRequest: {}", OpenSAMLUtils.getXmlString(authnRequest));
+            log.info("AuthnRequest building succeeded. Request ID: {}", authnRequest.getID());
+            if (log.isDebugEnabled()) {
+                log.debug("AuthnRequest: {}", OpenSAMLUtils.getXmlString(authnRequest));
             }
 
             return authnRequest;
         } catch (Exception e) {
+            applicationEventPublisher.publishEvent(new FailedCredentialEvent(authnReqSigningCredential));
             throw new EidasClientException("Failed to create authnRequest: " + e.getMessage(), e);
         }
     }

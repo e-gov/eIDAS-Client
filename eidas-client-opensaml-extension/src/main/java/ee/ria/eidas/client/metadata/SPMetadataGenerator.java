@@ -1,9 +1,12 @@
 package ee.ria.eidas.client.metadata;
 
 import ee.ria.eidas.client.config.EidasClientProperties;
+import ee.ria.eidas.client.config.EidasCredentialsConfiguration.FailedCredentialEvent;
 import ee.ria.eidas.client.exception.EidasClientException;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
 import ee.ria.eidas.client.util.SAMLSigner;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.RandomStringUtils;
 import org.joda.time.DateTime;
 import org.opensaml.core.xml.schema.XSAny;
@@ -20,42 +23,40 @@ import org.opensaml.xmlsec.config.impl.DefaultSecurityConfigurationBootstrap;
 import org.opensaml.xmlsec.keyinfo.KeyInfoGenerator;
 import org.opensaml.xmlsec.keyinfo.NamedKeyInfoGeneratorManager;
 import org.opensaml.xmlsec.signature.KeyInfo;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.Set;
 
+@Slf4j
+@RequiredArgsConstructor
 public class SPMetadataGenerator {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SPMetadataGenerator.class);
+    private final EidasClientProperties eidasClientProperties;
+
+    private final Credential metadataSigningCredential;
+
+    private final Credential authnRequestSignCredential;
+
+    private final Credential responseAssertionDecryptionCredential;
+
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     protected int defaultACSIndex = 0;
-
-    private EidasClientProperties eidasClientProperties;
-    private Credential metadataSigningCredential;
-    private Credential authnRequestSignCredential;
-    private Credential responseAssertionDecryptionCredential;
-
-    public SPMetadataGenerator(EidasClientProperties eidasClientProperties, Credential metadataSigningCredential, Credential authnRequestSignCredential, Credential responseAssertionDecryptionCredential) {
-        this.eidasClientProperties = eidasClientProperties;
-        this.metadataSigningCredential = metadataSigningCredential;
-        this.authnRequestSignCredential = authnRequestSignCredential;
-        this.responseAssertionDecryptionCredential = responseAssertionDecryptionCredential;
-    }
 
     public EntityDescriptor getMetadata() {
         try {
             EntityDescriptor entityDescriptor = buildEntityDescriptor();
             new SAMLSigner(eidasClientProperties.getMetadataSignatureAlgorithm(), metadataSigningCredential).sign(entityDescriptor);
-            LOGGER.info("Successfully generated metadata. Metadata ID: {}", entityDescriptor.getID());
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("Generated metadata: {}", OpenSAMLUtils.getXmlString(entityDescriptor));
+            log.info("Successfully generated metadata. Metadata ID: {}", entityDescriptor.getID());
+            if (log.isDebugEnabled()) {
+                log.debug("Generated metadata: {}", OpenSAMLUtils.getXmlString(entityDescriptor));
             }
             return entityDescriptor;
         } catch (Exception e) {
+            applicationEventPublisher.publishEvent(new FailedCredentialEvent(metadataSigningCredential));
             throw new EidasClientException("Error generating metadata", e);
         }
     }
@@ -158,6 +159,4 @@ public class SPMetadataGenerator {
         NamedKeyInfoGeneratorManager generatorManager = DefaultSecurityConfigurationBootstrap.buildBasicKeyInfoGeneratorManager();
         return generatorManager.getDefaultManager().getFactory(credential).newInstance();
     }
-
-
 }

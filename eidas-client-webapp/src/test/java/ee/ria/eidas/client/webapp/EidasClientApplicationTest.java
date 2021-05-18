@@ -5,14 +5,18 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
 import com.sun.org.apache.xerces.internal.dom.DOMInputImpl;
 import ee.ria.eidas.client.AuthInitiationService;
+import ee.ria.eidas.client.AuthResponseService;
 import ee.ria.eidas.client.authnrequest.AssuranceLevel;
 import ee.ria.eidas.client.authnrequest.EidasAttribute;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.fixtures.ResponseBuilder;
+import ee.ria.eidas.client.metadata.IDPMetadataResolver;
+import ee.ria.eidas.client.metadata.SPMetadataGenerator;
 import ee.ria.eidas.client.session.RequestSessionService;
 import ee.ria.eidas.client.session.UnencodedRequestSession;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
 import ee.ria.eidas.client.utils.XmlUtils;
+import ee.ria.eidas.client.webapp.status.CredentialsHealthIndicator;
 import io.restassured.RestAssured;
 import io.restassured.config.XmlConfig;
 import io.restassured.http.Method;
@@ -30,10 +34,13 @@ import org.opensaml.saml.saml2.core.Response;
 import org.opensaml.saml.saml2.core.impl.AttributeStatementBuilder;
 import org.opensaml.saml.saml2.metadata.EntityDescriptor;
 import org.opensaml.security.credential.Credential;
+import org.opensaml.security.x509.BasicX509Credential;
 import org.opensaml.xmlsec.signature.support.SignatureValidator;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.boot.web.server.LocalServerPort;
+import org.springframework.context.ApplicationEventPublisher;
 import org.w3c.dom.ls.LSInput;
 import org.w3c.dom.ls.LSResourceResolver;
 
@@ -59,19 +66,43 @@ import static org.hamcrest.core.IsEqual.equalTo;
 public abstract class EidasClientApplicationTest {
 
     @Autowired
-    Credential metadataSigningCredential;
+    EidasClientProperties eidasClientProperties;
 
-    @SpyBean(name = "responseAssertionDecryptionCredential")
-    Credential responseAssertionDecryptionCredential;
+    @SpyBean
+    EidasClientProperties.HsmProperties hsmProperties;
+
+    @SpyBean
+    CredentialsHealthIndicator credentialsHealthIndicator;
+
+    @SpyBean
+    @Qualifier("metadataSigningCredential")
+    BasicX509Credential metadataSigningCredential;
+
+    @SpyBean
+    @Qualifier("authnReqSigningCredential")
+    BasicX509Credential authnReqSigningCredential;
+
+    @SpyBean
+    @Qualifier("responseAssertionDecryptionCredential")
+    BasicX509Credential responseAssertionDecryptionCredential;
 
     @Autowired
-    Credential eidasNodeSigningCredential;
+    SPMetadataGenerator spMetadataGenerator;
+
+    @Autowired
+    AuthResponseService authResponseService;
 
     @Autowired
     RequestSessionService requestSessionService;
 
     @Autowired
-    EidasClientProperties eidasClientProperties;
+    IDPMetadataResolver idpMetadataResolver;
+
+    @Autowired
+    Credential eidasNodeSigningCredential;
+
+    @Autowired
+    ApplicationEventPublisher applicationEventPublisher;
 
     private final static WireMockServer wireMockServer = new WireMockServer(WireMockConfiguration.wireMockConfig().port(7771));
 

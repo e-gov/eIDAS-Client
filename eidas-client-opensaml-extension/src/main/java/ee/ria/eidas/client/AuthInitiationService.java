@@ -12,6 +12,8 @@ import ee.ria.eidas.client.session.RequestSession;
 import ee.ria.eidas.client.session.RequestSessionService;
 import ee.ria.eidas.client.session.UnencodedRequestSession;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
 import org.apache.commons.collections.CollectionUtils;
 import org.opensaml.messaging.context.MessageContext;
@@ -22,42 +24,36 @@ import org.opensaml.saml.saml2.core.AuthnRequest;
 import org.opensaml.security.credential.Credential;
 import org.opensaml.xmlsec.SignatureSigningParameters;
 import org.opensaml.xmlsec.context.SecurityParametersContext;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+import static ee.ria.eidas.client.authnrequest.EidasAttribute.*;
+import static java.util.Arrays.asList;
+import static java.util.Collections.unmodifiableList;
+
+@Slf4j
+@RequiredArgsConstructor
 public class AuthInitiationService {
-
-    public static final List<EidasAttribute> DEFAULT_REQUESTED_ATTRIBUTE_SET = Collections.unmodifiableList(Arrays.asList(EidasAttribute.CURRENT_FAMILY_NAME, EidasAttribute.CURRENT_GIVEN_NAME, EidasAttribute.DATE_OF_BIRTH, EidasAttribute.PERSON_IDENTIFIER));
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(AuthInitiationService.class);
+    public static final List<EidasAttribute> DEFAULT_REQUESTED_ATTRIBUTE_SET = unmodifiableList(asList(CURRENT_FAMILY_NAME, CURRENT_GIVEN_NAME, DATE_OF_BIRTH, PERSON_IDENTIFIER));
 
     private static final String RELAYSTATE_VALIDATION_REGEXP = "^[a-zA-Z0-9-_]{0,80}$";
 
-    private RequestSessionService requestSessionService;
+    private final RequestSessionService requestSessionService;
 
-    private Credential authnReqSigningCredential;
+    private final Credential authnReqSigningCredential;
 
-    private EidasClientProperties eidasClientProperties;
+    private final EidasClientProperties eidasClientProperties;
 
-    private IDPMetadataResolver idpMetadataResolver;
+    private final IDPMetadataResolver idpMetadataResolver;
 
-
-
-    public AuthInitiationService(RequestSessionService requestSessionService, Credential authnReqSigningCredential, EidasClientProperties eidasClientProperties, IDPMetadataResolver idpMetadataResolver) {
-        this.requestSessionService = requestSessionService;
-        this.authnReqSigningCredential = authnReqSigningCredential;
-        this.eidasClientProperties = eidasClientProperties;
-        this.idpMetadataResolver = idpMetadataResolver;
-    }
+    private final ApplicationEventPublisher applicationEventPublisher;
 
     public void authenticate(HttpServletResponse response, String country, AssuranceLevel loa, String relayState, String attributesSet) {
         validateCountry(country);
@@ -69,11 +65,11 @@ public class AuthInitiationService {
     private List<EidasAttribute> determineEidasAttributes(String attributesSet) {
         List<EidasAttribute> eidasAttributes = parseEidasAttributes(attributesSet);
         if (CollectionUtils.isEmpty(eidasAttributes)) {
-            LOGGER.debug("No eIDAS attributes presented, using default (natural person) set: {}", DEFAULT_REQUESTED_ATTRIBUTE_SET);
+            log.debug("No eIDAS attributes presented, using default (natural person) set: {}", DEFAULT_REQUESTED_ATTRIBUTE_SET);
             return new ArrayList<>(DEFAULT_REQUESTED_ATTRIBUTE_SET);
         }
         validateEidasAttributesAllowed(eidasAttributes);
-        LOGGER.debug("Using following eIDAS attributes presented in the request: {}", eidasAttributes);
+        log.debug("Using following eIDAS attributes presented in the request: {}", eidasAttributes);
         return eidasAttributes;
     }
 
@@ -101,7 +97,7 @@ public class AuthInitiationService {
     }
 
     private void redirectUserForAuthentication(HttpServletResponse httpServletResponse, String country, AssuranceLevel loa, String relayState, List<EidasAttribute> eidasAttributes) {
-        AuthnRequestBuilder authnRequestBuilder = new AuthnRequestBuilder(authnReqSigningCredential, eidasClientProperties, idpMetadataResolver.getSingeSignOnService());
+        AuthnRequestBuilder authnRequestBuilder = new AuthnRequestBuilder(authnReqSigningCredential, eidasClientProperties, idpMetadataResolver.getSingeSignOnService(), applicationEventPublisher);
         AuthnRequest authnRequest = authnRequestBuilder.buildAuthnRequest(loa, eidasAttributes);
         saveRequestAsSession(authnRequest, eidasAttributes);
         redirectUserWithRequest(httpServletResponse, authnRequest, country, relayState);
@@ -143,10 +139,10 @@ public class AuthInitiationService {
             throw new EidasClientException("Error initializing encoder", e);
         }
 
-        LOGGER.info("SAML request ID: " + authnRequest.getID());
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug("AuthnRequest: {}", OpenSAMLUtils.getXmlString(authnRequest));
-            LOGGER.debug("Redirecting to IDP");
+        log.info("SAML request ID: {}", authnRequest.getID());
+        if (log.isDebugEnabled()) {
+            log.debug("AuthnRequest: {}", OpenSAMLUtils.getXmlString(authnRequest));
+            log.debug("Redirecting to IDP");
         }
 
         try {
@@ -172,7 +168,6 @@ public class AuthInitiationService {
         if (!matcher.matches()) {
             throw new InvalidRequestException("Invalid RelayState! Must match the following regexp: " + RELAYSTATE_VALIDATION_REGEXP);
         }
-
     }
 
 }

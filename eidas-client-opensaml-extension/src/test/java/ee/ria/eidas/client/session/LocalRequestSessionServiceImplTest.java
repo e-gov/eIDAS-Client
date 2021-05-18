@@ -4,6 +4,7 @@ import ee.ria.eidas.client.AuthInitiationService;
 import ee.ria.eidas.client.authnrequest.AssuranceLevel;
 import ee.ria.eidas.client.config.EidasClientConfiguration;
 import ee.ria.eidas.client.config.EidasClientProperties;
+import ee.ria.eidas.client.config.EidasCredentialsConfiguration;
 import ee.ria.eidas.client.exception.EidasClientException;
 import org.joda.time.DateTime;
 import org.junit.Before;
@@ -20,7 +21,7 @@ import static junit.framework.TestCase.assertNotNull;
 import static junit.framework.TestCase.assertNull;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = EidasClientConfiguration.class)
+@ContextConfiguration(classes = { EidasClientConfiguration.class, EidasCredentialsConfiguration.class })
 @TestPropertySource(locations = "classpath:application-test.properties")
 public class LocalRequestSessionServiceImplTest {
 

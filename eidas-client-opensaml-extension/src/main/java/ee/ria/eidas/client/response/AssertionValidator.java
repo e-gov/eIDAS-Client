@@ -5,23 +5,25 @@ import ee.ria.eidas.client.authnrequest.EidasAttribute;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.exception.InvalidRequestException;
 import ee.ria.eidas.client.session.RequestSession;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
 import org.joda.time.DateTime;
 import org.opensaml.saml.saml2.core.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 public class AssertionValidator {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AssertionValidator.class);
-
     private int acceptedClockSkew;
+
     private String idpMetadataUrl;
+
     private String callbackUrl;
+
     private String spEntityID;
+
     private int maxAuthenticationLifetime;
 
     public AssertionValidator(EidasClientProperties properties) {
@@ -56,7 +58,7 @@ public class AssertionValidator {
             try {
                 attributes.add(EidasAttribute.fromString(attribute.getFriendlyName()));
             } catch (IllegalArgumentException e) {
-                LOGGER.warn("Assertion contains unrecognized attribute with FriendlyName: " + attribute.getFriendlyName());
+                log.warn("Assertion contains unrecognized attribute with FriendlyName: " + attribute.getFriendlyName());
             }
         }
         return attributes;
@@ -76,7 +78,7 @@ public class AssertionValidator {
         boolean isReturnedLoaValid = false;
         for (AssuranceLevel loa : AssuranceLevel.values()) {
             if (loa.getUri().equalsIgnoreCase(assertion.getAuthnStatements().get(0).getAuthnContext().getAuthnContextClassRef().getAuthnContextClassRef())
-                    &&  loa.getLevel() >= requestSession.getLoa().getLevel()) {
+                    && loa.getLevel() >= requestSession.getLoa().getLevel()) {
                 isReturnedLoaValid = true;
             }
         }
@@ -88,10 +90,10 @@ public class AssertionValidator {
     }
 
     private void validateEidasRestrictions(Assertion assertion) {
-        if (assertion.getAuthnStatements() == null || assertion.getAuthnStatements().size() != 1 ) {
+        if (assertion.getAuthnStatements() == null || assertion.getAuthnStatements().size() != 1) {
             throw new InvalidRequestException("Assertion must contain exactly 1 AuthnStatement!");
         }
-        if (assertion.getAttributeStatements() == null || assertion.getAttributeStatements().size() != 1 ) {
+        if (assertion.getAttributeStatements() == null || assertion.getAttributeStatements().size() != 1) {
             throw new InvalidRequestException("Assertion must contain exactly 1 AttributeStatement!");
         }
         if (assertion.getAuthnStatements().get(0).getAuthnContext() == null) {
@@ -133,7 +135,7 @@ public class AssertionValidator {
         if (nameID == null) {
             throw new InvalidRequestException("Assertion subject is missing nameID!");
         }
-        List<String> validNameIDFormats = Arrays.asList(NameIDType.UNSPECIFIED , NameIDType.TRANSIENT, NameIDType.PERSISTENT);
+        List<String> validNameIDFormats = Arrays.asList(NameIDType.UNSPECIFIED, NameIDType.TRANSIENT, NameIDType.PERSISTENT);
         if (!validNameIDFormats.contains(nameID.getFormat())) {
             throw new InvalidRequestException("Assertion's subject name ID format is not equal to one of the following: " + validNameIDFormats);
         }
@@ -201,7 +203,7 @@ public class AssertionValidator {
     }
 
     private void validateAudiences(List<Audience> audiences) {
-        if (audiences == null || audiences.size() < 1 ) {
+        if (audiences == null || audiences.size() < 1) {
             throw new InvalidRequestException("Assertion condition's AudienceRestriction must contain at least 1 Audience!");
         }
         for (Audience audience : audiences) {

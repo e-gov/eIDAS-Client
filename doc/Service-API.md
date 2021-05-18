@@ -302,7 +302,7 @@ Näide:
 <a name="heartbeat"></a>
 ## **heartbeat**
 
-Rakenduse töökorras olekut on võimalik pärida Spring Boot Actuator'i otspunkti **/heartbeat** või **/heartbeat.json** kaudu. 
+Rakenduse töökorras olekut on võimalik pärida Spring Boot Actuator'i otspunkti **/heartbeat** või **/heartbeat.json** kaudu. Soovi korral on võimalik lülitada sisse ka teisi Spring Boot Actuator'i indikaatoreid seadistades `management.health.defaults.enabled=true` (vt. <a href="https://docs.spring.io/spring-boot/docs/current/reference/html/application-properties.html">Common Application Properties</a>) või kasutada `heartbeat` otspunkti asemel actuatori anda otspunkti `health` seadistades `management.endpoints.web.exposure.include=health,hazelcast` 
 
 ### Päring
 
@@ -325,7 +325,7 @@ curl 'https://localhost:8889/heartbeat'
 | **currentTime** |	Jah | Päringu sooritamise aeg. Unix timestamp formaadis. |
 | **dependencies** |	Jah | Sisaldab nimekirja välistest süsteemidest, millest rakendus sõltub. Väliste süsteemide, millega on võimalik ühendust saada, `status` olekuna kuvatakse `UP`, mittevastavate süsteemide korral `DOWN`. Kui mõni väline süsteem, millest rakendus sõltub, on `DOWN`, siis on ka vastuse üldine `status` `DOWN`. |
 | **dependencies.status** |	Jah | Välise süsteemi status. Võimalikud väärtused: `UP`, `DOWN`  |
-| **dependencies.name** |	Jah | Välise süsteemi lühinimetus (näiteks: `eIDAS-Node`, `hazelcast`). |
+| **dependencies.name** |	Jah | Välise süsteemi lühinimetus (näiteks: `eIDAS-Node`, `hazelcast`, `credentials`). |
 
 Näide vastuse struktuurist:
 ```json
@@ -344,6 +344,10 @@ Näide vastuse struktuurist:
         {
             "status": "UP",
             "name": "hazelcast"
+        },
+        {
+            "status": "UP",
+            "name": "credentials"
         }
     ]
 }
@@ -356,7 +360,7 @@ Näide 1: edukas vastus
 curl http://localhost:8889/heartbeat.json
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
-100   195    0   195    0     0    112      0 --:--:--  0:00:01 --:--:--   112{"status":"UP","name":"eidas-client-webapp","version":"1.0.0-SNAPSHOT","buildTime":1528829409,"startTime":1528877695,"currentTime":1528877733,"dependencies":[{"status":"UP","name":"eIDAS-Node"}]}
+100   195    0   195    0     0    112      0 --:--:--  0:00:01 --:--:--   112{"status":"UP","name":"eidas-client-webapp","version":"1.0.0-SNAPSHOT","buildTime":1528829409,"startTime":1528877695,"currentTime":1528877733,"dependencies":[{"status":"UP","name":"eIDAS-Node"},{"status":"UP","name":"hazelcast"},{"status":"UP","name":"credentials"}]}
 ```
 
 **Mittetöökorras rakenduse korral** (näiteks, kui tööks vajalik sõltuvus ei ole kättesaadav), tagastatakse HTTP staatuskood 200 ning JSON vastus, milles `$.status` väärtus on `DOWN`
@@ -367,7 +371,7 @@ Näide 2: tööks vajalik sõltuvus ei ole kättesaadav
 $ curl http://localhost:8889/heartbeat.json
   % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                  Dload  Upload   Total   Spent    Left  Speed
-100   199    0   199    0     0     98      0 --:--:--  0:00:02 --:--:--    98{"status":"DOWN","name":"eidas-client-webapp","version":"1.0.0-SNAPSHOT","buildTime":1528829409,"startTime":1528877695,"currentTime":1528877831,"dependencies":[{"status":"DOWN","name":"eIDAS-Node"}]}
+100   199    0   199    0     0     98      0 --:--:--  0:00:02 --:--:--    98{"status":"DOWN","name":"eidas-client-webapp","version":"1.0.0-SNAPSHOT","buildTime":1528829409,"startTime":1528877695,"currentTime":1528877831,"dependencies":[{"status":"DOWN","name":"eIDAS-Node"},{"status":"UP","name":"hazelcast"},{"status":"UP","name":"credentials"}]}
 ```
 
 

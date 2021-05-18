@@ -16,7 +16,7 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 @TestPropertySource(locations= "classpath:application-test-hazelcast-disabled.properties")
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(
-        classes = {EidasClientConfiguration.class, HazelcastConfiguration.class},
+        classes = {EidasClientConfiguration.class, EidasCredentialsConfiguration.class, HazelcastConfiguration.class},
         initializers = ConfigFileApplicationContextInitializer.class)
 public class HazelcastDisabledConfigurationTest {
 

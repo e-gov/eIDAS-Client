@@ -1,6 +1,7 @@
 package ee.ria.eidas.client;
 
 import ee.ria.eidas.client.config.EidasClientProperties;
+import ee.ria.eidas.client.config.EidasCredentialsConfiguration.FailedCredentialEvent;
 import ee.ria.eidas.client.config.OpenSAMLConfiguration;
 import ee.ria.eidas.client.exception.AuthenticationFailedException;
 import ee.ria.eidas.client.exception.EidasClientException;
@@ -11,6 +12,8 @@ import ee.ria.eidas.client.response.AuthenticationResult;
 import ee.ria.eidas.client.session.RequestSession;
 import ee.ria.eidas.client.session.RequestSessionService;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
 import net.shibboleth.utilities.java.support.net.URIComparator;
 import net.shibboleth.utilities.java.support.net.URIException;
@@ -38,14 +41,13 @@ import org.opensaml.saml.security.impl.SAMLSignatureProfileValidator;
 import org.opensaml.security.credential.Credential;
 import org.opensaml.security.credential.UsageType;
 import org.opensaml.security.criteria.UsageCriterion;
-import org.opensaml.xmlsec.encryption.support.DecryptionException;
-import org.opensaml.xmlsec.encryption.support.InlineEncryptedKeyResolver;
-import org.opensaml.xmlsec.keyinfo.impl.StaticKeyInfoCredentialResolver;
+import org.opensaml.xmlsec.DecryptionParameters;
 import org.opensaml.xmlsec.signature.support.SignatureException;
 import org.opensaml.xmlsec.signature.support.SignatureValidator;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.web.bind.MissingServletRequestParameterException;
+import se.swedenconnect.opensaml.xmlsec.encryption.support.DecryptionUtils;
+import se.swedenconnect.opensaml.xmlsec.encryption.support.Pkcs11Decrypter;
 
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
@@ -55,36 +57,29 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 
+@Slf4j
+@RequiredArgsConstructor
 public class AuthResponseService {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(AuthResponseService.class);
+    private final RequestSessionService requestSessionService;
 
-    private RequestSessionService requestSessionService;
+    private final EidasClientProperties eidasClientProperties;
 
-    private EidasClientProperties eidasClientProperties;
+    private final IDPMetadataResolver idpMetadataResolver;
 
-    private IDPMetadataResolver idpMetadataResolver;
+    private final Credential spAssertionDecryptionCredential;
 
-    private Credential spAssertionDecryptionCredential;
+    private final ApplicationEventPublisher applicationEventPublisher;
 
-    private Schema samlSchema;
-
-    public AuthResponseService(RequestSessionService requestSessionService, EidasClientProperties eidasClientProperties, IDPMetadataResolver idpMetadataResolver, Credential spAssertionDecryptionCredential, Schema samlSchema) {
-        this.requestSessionService = requestSessionService;
-        this.eidasClientProperties = eidasClientProperties;
-        this.idpMetadataResolver = idpMetadataResolver;
-        this.spAssertionDecryptionCredential = spAssertionDecryptionCredential;
-        this.samlSchema = samlSchema;
-    }
+    private final Schema samlSchema;
 
     public AuthenticationResult getAuthenticationResult(HttpServletRequest req) throws MissingServletRequestParameterException {
         try {
             Response samlResponse = getSamlResponse(req);
 
-            LOGGER.info("AuthnResponse ID: {}", samlResponse.getID());
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug("AuthnResponse: {}", OpenSAMLUtils.getXmlString(samlResponse));
-
+            log.info("AuthnResponse ID: {}", samlResponse.getID());
+            if (log.isDebugEnabled()) {
+                log.debug("AuthnResponse: {}", OpenSAMLUtils.getXmlString(samlResponse));
             }
 
             validateDestinationAndLifetime(samlResponse, req);
@@ -98,10 +93,9 @@ public class AuthResponseService {
             verifyAssertionSignature(assertion);
             validateAssertion(assertion, requestSession);
 
-            LOGGER.info("Decrypted Assertion ID: {}", assertion.getID());
-
-            if (LOGGER.isDebugEnabled())
-                LOGGER.debug("Decrypted Assertion: {}", OpenSAMLUtils.getXmlString(assertion));
+            log.info("Decrypted Assertion ID: {}", assertion.getID());
+            if (log.isDebugEnabled())
+                log.debug("Decrypted Assertion: {}", OpenSAMLUtils.getXmlString(assertion));
 
             return new AuthenticationResult(assertion);
         } catch (InvalidRequestException exception) {
@@ -124,9 +118,9 @@ public class AuthResponseService {
             Response samlResponse = (Response) XMLObjectSupport.unmarshallFromInputStream(
                     OpenSAMLConfiguration.getParserPool(), new ByteArrayInputStream(decodedSamlResponse));
 
-            LOGGER.info("SAML response ID: " + samlResponse.getID());
-            if (LOGGER.isDebugEnabled())
-                LOGGER.debug(OpenSAMLUtils.getXmlString(samlResponse));
+            log.info("SAML response ID: " + samlResponse.getID());
+            if (log.isDebugEnabled())
+                log.debug(OpenSAMLUtils.getXmlString(samlResponse));
 
             return samlResponse;
         } catch (Exception e) {
@@ -152,7 +146,7 @@ public class AuthResponseService {
             Credential credential = idpMetadataResolver.responseSignatureTrustEngine().getCredentialResolver().resolveSingle(criteriaSet);
             SignatureValidator.validate(samlResponse.getSignature(), credential);
 
-            LOGGER.debug("SAML Response signature verified");
+            log.debug("SAML Response signature verified");
         } catch (SignatureException | ResolverException e) {
             throw new InvalidRequestException("Invalid response signature.");
         }
@@ -163,16 +157,16 @@ public class AuthResponseService {
         StatusCode substatusCode = statusCode.getStatusCode();
         StatusMessage statusMessage = samlResponse.getStatus().getStatusMessage();
         if (StatusCode.SUCCESS.equals(statusCode.getValue())) {
-            LOGGER.info("AuthnResponse validation: {}", StatusCode.SUCCESS);
+            log.info("AuthnResponse validation: {}", StatusCode.SUCCESS);
             return;
-        }  else if (isStatusNoConsentGiven(statusCode, substatusCode, StatusCode.REQUESTER, StatusCode.REQUEST_DENIED)) {
-            LOGGER.info("AuthnResponse validation: {}", StatusCode.REQUEST_DENIED);
+        } else if (isStatusNoConsentGiven(statusCode, substatusCode, StatusCode.REQUESTER, StatusCode.REQUEST_DENIED)) {
+            log.info("AuthnResponse validation: {}", StatusCode.REQUEST_DENIED);
             throw new AuthenticationFailedException("No user consent received. User denied access.", statusCode.getValue(), substatusCode.getValue());
-        }  else if (isStatusAuthenticationFailed(statusCode, substatusCode, StatusCode.RESPONDER, StatusCode.AUTHN_FAILED)) {
-            LOGGER.info("AuthnResponse validation: {}", StatusCode.AUTHN_FAILED);
+        } else if (isStatusAuthenticationFailed(statusCode, substatusCode, StatusCode.RESPONDER, StatusCode.AUTHN_FAILED)) {
+            log.info("AuthnResponse validation: {}", StatusCode.AUTHN_FAILED);
             throw new AuthenticationFailedException("Authentication failed.", statusCode.getValue(), substatusCode.getValue());
         } else {
-            LOGGER.info("AuthnResponse validation: FAILURE");
+            log.info("AuthnResponse validation: FAILURE");
             if (substatusCode == null)
                 throw new AuthenticationFailedException(statusMessage.getMessage(), statusCode.getValue());
             else
@@ -213,7 +207,7 @@ public class AuthResponseService {
         receivedEndpointSecurityHandler.setURIComparator(new URIComparator() {
             @Override
             public boolean compare(@Nullable String messageDestination, @Nullable String receiverEndpoint) throws URIException {
-                return messageDestination!= null && receiverEndpoint != null && messageDestination.equals(eidasClientProperties.getCallbackUrl());
+                return messageDestination != null && receiverEndpoint != null && messageDestination.equals(eidasClientProperties.getCallbackUrl());
             }
         });
 
@@ -257,14 +251,13 @@ public class AuthResponseService {
     }
 
     private Assertion decryptAssertion(EncryptedAssertion encryptedAssertion) {
-        StaticKeyInfoCredentialResolver keyInfoCredentialResolver = new StaticKeyInfoCredentialResolver(spAssertionDecryptionCredential);
-
-        Decrypter decrypter = new Decrypter(null, keyInfoCredentialResolver, new InlineEncryptedKeyResolver());
-        decrypter.setRootInNewDocument(true);
-
         try {
+            DecryptionParameters decryptionParameters = DecryptionUtils.createDecryptionParameters(spAssertionDecryptionCredential);
+            Decrypter decrypter = eidasClientProperties.getHsm().isEnabled() ? new Pkcs11Decrypter(decryptionParameters) : new Decrypter(decryptionParameters);
+            decrypter.setRootInNewDocument(true);
             return decrypter.decrypt(encryptedAssertion);
-        } catch (DecryptionException e) {
+        } catch (Exception e) {
+            applicationEventPublisher.publishEvent(new FailedCredentialEvent(spAssertionDecryptionCredential));
             throw new EidasClientException("Error decrypting assertion", e);
         }
     }
@@ -285,7 +278,7 @@ public class AuthResponseService {
             Credential credential = idpMetadataResolver.responseSignatureTrustEngine().getCredentialResolver().resolveSingle(criteriaSet);
             SignatureValidator.validate(assertion.getSignature(), credential);
 
-            LOGGER.debug("SAML Assertion signature verified");
+            log.debug("SAML Assertion signature verified");
         } catch (SignatureException | ResolverException e) {
             throw new EidasClientException("Signature verification failed!", e);
         }

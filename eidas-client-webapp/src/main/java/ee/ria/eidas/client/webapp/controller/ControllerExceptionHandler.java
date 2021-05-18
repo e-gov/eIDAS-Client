@@ -2,8 +2,7 @@ package ee.ria.eidas.client.webapp.controller;
 
 import ee.ria.eidas.client.exception.AuthenticationFailedException;
 import ee.ria.eidas.client.exception.InvalidRequestException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -19,16 +18,15 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@Slf4j
 @ControllerAdvice
 public class ControllerExceptionHandler {
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(ControllerExceptionHandler.class);
-
-    @ExceptionHandler ({InvalidRequestException.class, MissingServletRequestParameterException.class, MethodArgumentTypeMismatchException.class })
+    @ExceptionHandler({InvalidRequestException.class, MissingServletRequestParameterException.class, MethodArgumentTypeMismatchException.class})
     @ResponseBody
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public Map handleBadRequest(Exception exception) {
-        LOGGER.error("Bad request!", exception);
+        log.error("Bad request!", exception);
 
         if (exception instanceof MethodArgumentTypeMismatchException) {
             String name = ((MethodArgumentTypeMismatchException) exception).getName();
@@ -42,7 +40,7 @@ public class ControllerExceptionHandler {
     @ResponseBody
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public Map handleAuthenticationFailure(AuthenticationFailedException exception) {
-        LOGGER.error("Authentication failed!", exception);
+        log.error("Authentication failed!", exception);
         if (exception.getSubStatus() != null)
             return getMap(HttpStatus.UNAUTHORIZED, exception.getMessage(), exception.getStatus(), exception.getSubStatus());
         else
@@ -53,7 +51,7 @@ public class ControllerExceptionHandler {
     @ResponseBody
     @ResponseStatus(HttpStatus.METHOD_NOT_ALLOWED)
     public Map handleAuthenticationFailure(HttpRequestMethodNotSupportedException exception) {
-        LOGGER.error("Method not allowed!", exception);
+        log.error("Method not allowed!", exception);
         return getMap(HttpStatus.METHOD_NOT_ALLOWED, exception.getMessage());
     }
 
@@ -61,7 +59,7 @@ public class ControllerExceptionHandler {
     @ResponseBody
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public Map handleInternalError(Throwable exception) {
-        LOGGER.error("Internal server error!", exception);
+        log.error("Internal server error!", exception);
         return getMap(HttpStatus.INTERNAL_SERVER_ERROR, "Something went wrong internally. Please consult server logs for further details.");
     }
 

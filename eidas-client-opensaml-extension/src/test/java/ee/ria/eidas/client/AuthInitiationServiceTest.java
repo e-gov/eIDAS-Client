@@ -9,6 +9,7 @@ import ee.ria.eidas.client.authnrequest.AuthnRequestBuilder;
 import ee.ria.eidas.client.authnrequest.EidasAttribute;
 import ee.ria.eidas.client.config.EidasClientConfiguration;
 import ee.ria.eidas.client.config.EidasClientProperties;
+import ee.ria.eidas.client.config.EidasCredentialsConfiguration;
 import ee.ria.eidas.client.exception.EidasClientException;
 import ee.ria.eidas.client.metadata.IDPMetadataResolver;
 import ee.ria.eidas.client.session.RequestSessionService;
@@ -31,6 +32,7 @@ import org.opensaml.saml.saml2.core.Extensions;
 import org.opensaml.security.credential.Credential;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.test.context.ContextConfiguration;
@@ -55,7 +57,7 @@ import static org.mockito.Mockito.verify;
 
 @TestPropertySource(locations = "classpath:application-test.properties")
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = EidasClientConfiguration.class)
+@ContextConfiguration(classes = { EidasClientConfiguration.class, EidasCredentialsConfiguration.class })
 public class AuthInitiationServiceTest {
 
     @Autowired
@@ -70,6 +72,9 @@ public class AuthInitiationServiceTest {
     @Autowired
     private IDPMetadataResolver idpMetadataResolver;
 
+    @Autowired
+    private ApplicationEventPublisher applicationEventPublisher;
+
     private AuthInitiationService authenticationService;
 
     @Mock
@@ -81,7 +86,7 @@ public class AuthInitiationServiceTest {
 
     @Before
     public void setUp() {
-        authenticationService = new AuthInitiationService(requestSessionService, authnReqSigningCredential, properties, idpMetadataResolver);
+        authenticationService = new AuthInitiationService(requestSessionService, authnReqSigningCredential, properties, idpMetadataResolver, applicationEventPublisher);
 
         Logger root = (Logger) LoggerFactory.getLogger(AuthInitiationService.class);
         root.addAppender(mockedAppender);

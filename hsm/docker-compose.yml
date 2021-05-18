@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  eidas-client:
+    build: .
+    ports:
+        - "0.0.0.0:8889:8889"
+        - "0.0.0.0:8001:8001"
+    environment:
+      JAVA_OPTS: '
+          -Djavax.net.ssl.trustStore=/opt/credentials/tls-truststore.p12
+          -Djavax.net.ssl.trustStorePassword=changeit
+          -Djavax.net.ssl.trustStoreType=pkcs12
+          -Djava.security.debug=sunpkcs11
+          -Xdebug -Xnoagent -Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=8001'
+      SPRING_APPLICATION_JSON: '{
+          "server.ssl.enabled": "true",
+          "server.ssl.key-store": "file:/opt/credentials/tls-keystore.p12",
+          "server.ssl.key-store-password": "changeit",
+          "server.ssl.key-alias": "eidas-client",
+          "server.ssl.key-password": "changeit",
+          "server.ssl.key-store-type": "pkcs12",
+          "server.ssl.trust-store": "file:/opt/credentials/tls-truststore.p12",
+          "server.ssl.trust-store-password": "changeit",
+          "server.ssl.trust-store-type": "pkcs12",
+          "server.max-http-header-size": "131072",
+          "eidas.client.hsm.enabled": "true",
+          "eidas.client.hsm.library": "/usr/lib/softhsm/libsofthsm2.so",
+          "eidas.client.hsm.pin": "1234",
+          "eidas.client.hsm.certificates-from-hsm": "false",
+          "eidas.client.hsm.slot-list-index": "0",
+          "eidas.client.keystore": "file:/opt/credentials/saml-keystore.p12",
+          "eidas.client.keystore-pass": "changeit",
+          "eidas.client.metadata-validity-in-days": "365",
+          "eidas.client.metadata-signing-key-id": "metadata-sign-rsa",
+          "eidas.client.metadata-signing-key-pass": "changeit",
+          "eidas.client.metadata-signature-algorithm": "http://www.w3.org/2007/05/xmldsig-more#sha256-rsa-MGF1",
+          "eidas.client.request-signing-key-id": "authn-sign-rsa",
+          "eidas.client.request-signing-key-pass": "changeit",
+          "eidas.client.request-signature-algorithm": "http://www.w3.org/2007/05/xmldsig-more#sha256-rsa-MGF1",
+          "eidas.client.response-decryption-key-id": "response-decryption",
+          "eidas.client.response-decryption-key-pass": "changeit",
+          "eidas.client.idp-metadata-url": "https://eidas-specificconnector:8543/SpecificConnector/ConnectorResponderMetadata",
+          "eidas.client.idp-metadata-signing-certificate-key-id": "idp-metadata-signing-certificate",
+          "eidas.client.available-countries": "CA",
+          "eidas.client.default-loa": "SUBSTANTIAL",
+          "eidas.client.provider-name": "eidas-client",
+          "eidas.client.sp-entity-id": "https://eidas-client:8889/metadata",
+          "eidas.client.callback-url": "https://eidas-client:8889/auth/eidas/callback"
+        }'
