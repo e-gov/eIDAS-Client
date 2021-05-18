@@ -167,15 +167,16 @@ public class AuthResponseService {
             return;
         }  else if (isStatusNoConsentGiven(statusCode, substatusCode, StatusCode.REQUESTER, StatusCode.REQUEST_DENIED)) {
             LOGGER.info("AuthnResponse validation: {}", StatusCode.REQUEST_DENIED);
-            throw new AuthenticationFailedException("No user consent received. User denied access.");
+            throw new AuthenticationFailedException("No user consent received. User denied access.", statusCode.getValue(), substatusCode.getValue());
         }  else if (isStatusAuthenticationFailed(statusCode, substatusCode, StatusCode.RESPONDER, StatusCode.AUTHN_FAILED)) {
             LOGGER.info("AuthnResponse validation: {}", StatusCode.AUTHN_FAILED);
-            throw new AuthenticationFailedException("Authentication failed.");
+            throw new AuthenticationFailedException("Authentication failed.", statusCode.getValue(), substatusCode.getValue());
         } else {
             LOGGER.info("AuthnResponse validation: FAILURE");
-            throw new EidasClientException("Eidas node responded with an error! statusCode = " + samlResponse.getStatus().getStatusCode().getValue()
-                    + (substatusCode != null ? ", substatusCode = " + substatusCode.getValue() : "")
-                    +  ", statusMessage = " + statusMessage.getMessage());
+            if (substatusCode == null)
+                throw new AuthenticationFailedException(statusMessage.getMessage(), statusCode.getValue());
+            else
+                throw new AuthenticationFailedException(statusMessage.getMessage(), statusCode.getValue(), substatusCode.getValue());
         }
     }
 

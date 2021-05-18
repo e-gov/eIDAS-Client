@@ -357,8 +357,8 @@ public class AuthResponseServiceTest {
 
     @Test
     public void whenResponseStatusInvalidLoa_InternalErrorIsReturned() throws Exception {
-        expectedEx.expect(EidasClientException.class);
-        expectedEx.expectMessage("Eidas node responded with an error! statusCode = urn:oasis:names:tc:SAML:2.0:status:Responder, statusMessage = 202019 - Incorrect Level of Assurance in IdP response");
+        expectedEx.expect(AuthenticationFailedException.class);
+        expectedEx.expectMessage("202019 - Incorrect Level of Assurance in IdP response");
 
         Response response = mockResponseBuilder.buildResponse("classpath:idp-metadata.xml",
                 Collections.singletonMap(ResponseBuilder.InputType.STATUS, Optional.of(mockResponseBuilder.buildInvalidLoaStatus())));
@@ -370,8 +370,8 @@ public class AuthResponseServiceTest {
 
     @Test
     public void whenResponseStatusMissingMandatoryAttribute_InternalErrorIsReturned() throws Exception {
-        expectedEx.expect(EidasClientException.class);
-        expectedEx.expectMessage("Eidas node responded with an error! statusCode = urn:oasis:names:tc:SAML:2.0:status:Responder, statusMessage = 202010 - Mandatory Attribute not found.");
+        expectedEx.expect(AuthenticationFailedException.class);
+        expectedEx.expectMessage("202010 - Mandatory Attribute not found.");
 
         Response response = mockResponseBuilder.buildResponse("classpath:idp-metadata.xml",
                 Collections.singletonMap(ResponseBuilder.InputType.STATUS, Optional.of(mockResponseBuilder.buildMissingMandatoryAttributeStatus())));
