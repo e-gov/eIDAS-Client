@@ -3,6 +3,7 @@ package ee.ria.eidas.client.metadata;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.config.OpenSAMLConfiguration;
 import ee.ria.eidas.client.exception.EidasClientException;
+import lombok.extern.slf4j.Slf4j;
 import net.shibboleth.ext.spring.resource.ResourceHelper;
 import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
 import net.shibboleth.utilities.java.support.resolver.CriteriaSet;
@@ -28,8 +29,6 @@ import org.opensaml.security.x509.X509Credential;
 import org.opensaml.xmlsec.config.impl.DefaultSecurityConfigurationBootstrap;
 import org.opensaml.xmlsec.signature.impl.X509CertificateImpl;
 import org.opensaml.xmlsec.signature.support.impl.ExplicitKeySignatureTrustEngine;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.ResourceLoader;
@@ -39,20 +38,18 @@ import java.io.IOException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.StreamSupport;
 
+@Slf4j
 public class IDPMetadataResolver {
 
-    protected final Logger logger = LoggerFactory.getLogger(getClass());
-
     private String url;
+
     private AbstractReloadingMetadataResolver idpMetadataProvider;
+
     private ExplicitKeySignatureTrustEngine metadataSignatureTrustEngine;
+
     private ParserPool parserPool;
 
     @Autowired
@@ -106,29 +103,29 @@ public class IDPMetadataResolver {
                 CloseableHttpClient httpclient = HttpClients.createDefault();
                 return new HTTPMetadataResolver(httpclient, url);
             }
-        } catch (IOException|ResolverException e) {
+        } catch (IOException | ResolverException e) {
             throw new EidasClientException("Error resolving IDP Metadata", e);
         }
     }
 
     public SingleSignOnService getSingeSignOnService() {
         try {
-                AbstractReloadingMetadataResolver metadataResolver = this.resolve();
-                CriteriaSet criteriaSet = new CriteriaSet(new EntityIdCriterion(url));
-                EntityDescriptor entityDescriptor = metadataResolver.resolveSingle(criteriaSet);
-                if (entityDescriptor == null) {
-                    throw new EidasClientException("Could not find a valid EntityDescriptor in your IDP metadata! ");
-                }
-
-                for (SingleSignOnService ssoService : entityDescriptor.getIDPSSODescriptor(SAMLConstants.SAML20P_NS).getSingleSignOnServices()) {
-                    if (ssoService.getBinding().equals(SAMLConstants.SAML2_POST_BINDING_URI)) {
-                        return ssoService;
-                    }
-                }
-            } catch (final ResolverException e) {
-                throw new EidasClientException("Error initializing IDP metadata", e);
+            AbstractReloadingMetadataResolver metadataResolver = this.resolve();
+            CriteriaSet criteriaSet = new CriteriaSet(new EntityIdCriterion(url));
+            EntityDescriptor entityDescriptor = metadataResolver.resolveSingle(criteriaSet);
+            if (entityDescriptor == null) {
+                throw new EidasClientException("Could not find a valid EntityDescriptor in your IDP metadata! ");
             }
-            throw new EidasClientException("Could not find a valid SAML2 POST BINDING from IDP metadata!");
+
+            for (SingleSignOnService ssoService : entityDescriptor.getIDPSSODescriptor(SAMLConstants.SAML20P_NS).getSingleSignOnServices()) {
+                if (ssoService.getBinding().equals(SAMLConstants.SAML2_POST_BINDING_URI)) {
+                    return ssoService;
+                }
+            }
+        } catch (final ResolverException e) {
+            throw new EidasClientException("Error initializing IDP metadata", e);
+        }
+        throw new EidasClientException("Could not find a valid SAML2 POST BINDING from IDP metadata!");
     }
 
     public List<String> getSupportedCountries() {
@@ -140,7 +137,7 @@ public class IDPMetadataResolver {
             List<String> supportedCountries = getSupportedCountries(entityDescriptor);
 
             if (supportedCountries.isEmpty()) {
-                logger.error("Unable to get supported countries from metadata. Using supported countries from configuration.");
+                log.error("Unable to get supported countries from metadata. Using supported countries from configuration.");
                 return getSupportedCountriesFromConfiguration();
             }
             return supportedCountries;
@@ -151,7 +148,7 @@ public class IDPMetadataResolver {
 
     protected List<String> getSupportedCountries(EntityDescriptor entityDescriptor) {
         if (entityDescriptor == null) {
-            logger.error("Could not find a valid EntityDescriptor in your IDP metadata!");
+            log.error("Could not find a valid EntityDescriptor in your IDP metadata!");
             return new ArrayList<>();
         }
 

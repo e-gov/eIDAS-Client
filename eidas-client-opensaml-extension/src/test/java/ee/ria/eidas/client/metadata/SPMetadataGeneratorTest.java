@@ -7,6 +7,7 @@ import ch.qos.logback.core.Appender;
 import ee.ria.eidas.client.authnrequest.SPType;
 import ee.ria.eidas.client.config.EidasClientConfiguration;
 import ee.ria.eidas.client.config.EidasClientProperties;
+import ee.ria.eidas.client.config.EidasCredentialsConfiguration;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
 import org.joda.time.DateTime;
 import org.junit.Assert;
@@ -26,6 +27,7 @@ import org.opensaml.security.credential.UsageType;
 import org.opensaml.xmlsec.signature.Signature;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -39,7 +41,7 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = EidasClientConfiguration.class)
+@ContextConfiguration(classes = { EidasClientConfiguration.class, EidasCredentialsConfiguration.class })
 @TestPropertySource(locations = "classpath:application-test.properties")
 public class SPMetadataGeneratorTest {
 
@@ -57,6 +59,9 @@ public class SPMetadataGeneratorTest {
     @Autowired
     private Credential responseAssertionDecryptionCredential;
 
+    @Autowired
+    private ApplicationEventPublisher applicationEventPublisher;
+
     @Mock
     private Appender mockedAppender;
 
@@ -65,7 +70,7 @@ public class SPMetadataGeneratorTest {
 
     @Before
     public void setUp() {
-        metadataGenerator = new SPMetadataGenerator(properties, metadataSigningCredential, authnReqSigningCredential, responseAssertionDecryptionCredential);
+        metadataGenerator = new SPMetadataGenerator(properties, metadataSigningCredential, authnReqSigningCredential, responseAssertionDecryptionCredential, applicationEventPublisher);
 
         Logger root = (Logger) LoggerFactory.getLogger(SPMetadataGenerator.class);
         root.addAppender(mockedAppender);

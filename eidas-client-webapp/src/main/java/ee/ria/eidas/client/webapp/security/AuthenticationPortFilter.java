@@ -1,7 +1,6 @@
 package ee.ria.eidas.client.webapp.security;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 
 import javax.servlet.*;
@@ -15,9 +14,8 @@ import java.io.PrintWriter;
  * When incoming request's local port number is anything else but the allowed port number, then the further processing of the incoming request is stopped
  * and a 403 response, with a simple JSON object describing the error, is sent.
  */
+@Slf4j
 public class AuthenticationPortFilter implements Filter {
-
-    private static final Logger LOGGER = LoggerFactory.getLogger(AuthenticationPortFilter.class);
 
     private final int allowedPort;
 
@@ -46,7 +44,7 @@ public class AuthenticationPortFilter implements Filter {
     }
 
     private static void sendForbiddenResponse(final HttpServletResponse response, final String message) throws IOException {
-        LOGGER.error(message);
+        log.error(message);
 
         response.setStatus(HttpStatus.FORBIDDEN.value());
         response.setContentType("application/json;charset=UTF-8");

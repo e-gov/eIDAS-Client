@@ -2,6 +2,7 @@ package ee.ria.eidas.client.metadata;
 
 import ee.ria.eidas.client.config.EidasClientConfiguration;
 import ee.ria.eidas.client.config.EidasClientProperties;
+import ee.ria.eidas.client.config.EidasCredentialsConfiguration;
 import ee.ria.eidas.client.exception.EidasClientException;
 import net.shibboleth.utilities.java.support.resolver.CriteriaSet;
 import org.junit.Assert;
@@ -30,7 +31,7 @@ import static org.junit.Assert.assertEquals;
 
 @TestPropertySource(locations = "classpath:application-test.properties")
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = EidasClientConfiguration.class)
+@ContextConfiguration(classes = { EidasClientConfiguration.class, EidasCredentialsConfiguration.class })
 public class IDPMetadataResolverTest {
 
     @Rule

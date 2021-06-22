@@ -3,7 +3,8 @@ package ee.ria.eidas.client.config;
 import com.hazelcast.config.*;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
-import ee.ria.eidas.client.session.*;
+import ee.ria.eidas.client.session.HazelcastRequestSessionServiceImpl;
+import ee.ria.eidas.client.session.RequestSessionService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -14,7 +15,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 
 import java.net.URL;
-
 import java.util.HashMap;
 import java.util.Map;
 
@@ -34,7 +34,6 @@ public class HazelcastConfiguration {
     @Autowired
     private EidasClientProperties eidasClientProperties;
 
-    @Autowired
     @Bean
     public HazelcastInstance hazelcast() {
         return Hazelcast.newHazelcastInstance(getConfig());
@@ -66,7 +65,7 @@ public class HazelcastConfiguration {
 
 
     private Map<String, MapConfig> buildHazelcastMapConfigurations() {
-        Map<String, MapConfig> mapConfigs = new HashMap();
+        Map<String, MapConfig> mapConfigs = new HashMap<>();
         MapConfig mapConfig = this.createMapConfig();
         log.debug("Created Hazelcast map configuration");
         mapConfigs.put(UNANSWERED_REQUESTS_MAP, mapConfig);

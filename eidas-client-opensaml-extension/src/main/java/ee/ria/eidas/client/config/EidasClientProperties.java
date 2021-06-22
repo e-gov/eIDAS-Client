@@ -11,12 +11,16 @@ import org.springframework.validation.annotation.Validated;
 import javax.annotation.Nonnegative;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
+import javax.validation.constraints.PositiveOrZero;
 import java.util.Arrays;
 import java.util.List;
 
-@Validated
-@ConfigurationProperties(prefix = "eidas.client")
+import static java.lang.String.format;
+
 @Data
+@Validated
+@ValidHsmConfiguration
+@ConfigurationProperties(prefix = "eidas.client")
 public class EidasClientProperties {
 
     private static final int DEFAULT_MAXIMUM_AUTHENTICTION_LIFETIME = 900;
@@ -28,6 +32,8 @@ public class EidasClientProperties {
     public static final String DEFAULT_HAZELCAST_SIGNING_ALGORITHM = "HS512";
     public static final String DEFAULT_HAZELCAST_ENCRYPTION_ALGORITHM = "AES";
 
+    private HsmProperties hsm = new HsmProperties();
+
     @NotNull
     private String keystore;
 
@@ -37,7 +43,6 @@ public class EidasClientProperties {
     @NotNull
     private String metadataSigningKeyId;
 
-    @NotNull
     private String metadataSigningKeyPass;
 
     @NotNull
@@ -49,13 +54,11 @@ public class EidasClientProperties {
     @NotNull
     private String requestSigningKeyId;
 
-    @NotNull
     private String requestSigningKeyPass;
 
     @NotNull
     private String responseDecryptionKeyId;
 
-    @NotNull
     private String responseDecryptionKeyPass;
 
     @NotNull
@@ -113,11 +116,37 @@ public class EidasClientProperties {
 
     private int hazelcastStorageTimeout = 0;
 
-    @Pattern(regexp="^(HS512|HS384|HS256)$",message="Invalid signing algorithm! Must be one of the following values: HS512, HS384, HS256.")
+    @Pattern(regexp = "^(HS512|HS384|HS256)$", message = "Invalid signing algorithm! Must be one of the following values: HS512, HS384, HS256.")
     private String hazelcastSigningAlgorithm = DEFAULT_HAZELCAST_SIGNING_ALGORITHM;
 
     @NotNull
     private List<EidasAttribute> allowedEidasAttributes = DEFAULT_ALLOWED_EIDAS_ATTRIBUTES;
 
+    @Data
+    @Validated
+    @ConfigurationProperties(prefix = "eidas.client.hsm")
+    public static class HsmProperties {
+        private boolean enabled;
 
+        private boolean certificatesFromHsm;
+
+        private String pin;
+
+        private String library;
+
+        private String slot;
+
+        @PositiveOrZero
+        private Integer slotListIndex;
+
+        @Override
+        public String toString() {
+            if (slot != null) {
+                return format("name=eidas\nlibrary=%s\nslot=%s\n", library, slot);
+            } else {
+                return format("name=eidas\nlibrary=%s\nslotListIndex=%s\n", library, slotListIndex);
+            }
+        }
+    }
 }
+

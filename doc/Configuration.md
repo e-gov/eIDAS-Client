@@ -89,18 +89,33 @@ Tabel 2.3.1 - Teenusepakkuja metateabe seadistus
 
 | Parameeter        | Kohustuslik | Kirjeldus, näide |
 | :---------------- | :---------- | :----------------|
+| `eidas.client.hsm.enabled` | Ei | Füüsilise turvamooduli (Hardware Security Module) aktiveermise seadistus. Vaikimisi `false` |
+| `eidas.client.hsm.pin` | Jah<sup>1</sup> | Füüsilise turvamooduli ligipääsu parool. |
+| `eidas.client.hsm.library` | Jah <sup>1</sup> | Liidestava füüsilise turvamooduli juhtprogrammi asukoht. Näidisväärtus `/usr/lib/softhsm/libsofthsm2.so` kui testida SoftHSM või HSM tootja spetsiifiline teek  |
+| `eidas.client.hsm.slot` | Jah <sup>1,2</sup> | Füüsilise turvamooduli slotti identifikaator. Näidisväärtus `0` |
+| `eidas.client.hsm.slot-list-index` | Jah <sup>1,2</sup> | Füüsilise turvamooduli slotti järjekorra indeks. Näidisväärtus `0` |
+| `eidas.client.hsm.certificates-from-hsm` | Ei <sup>3</sup> | Märgib kas sertifikaadid on lisaks võtmetele leitavad füüsiliselt turvamoodulilt. Vaikimisi `false` |
 | `eidas.client.keystore` | Jah | Võtmehoidla asukoha kirjeldus. Näide: `classpath:samlKeystore.jks`, kui fail loetakse classpathi kaudu või `file:/etc/eidas-client/samlKeystore.jks` kui loetakse otse failisüsteemist. Võtmehoidla peab olema JKS tüüpi. |
 | `eidas.client.keystore-pass` | Jah | SAML võtmehoidla parool. |
-| `eidas.client.metadata-signing-key-id` | Jah | SAML metateabe allkirjastamisvõtme alias. |
-| `eidas.client.metadata-signing-key-pass` | Jah | SAML metateabe allkirjastamisvõtme parool. |
+| `eidas.client.metadata-signing-key-id` | Jah <sup>5</sup> | SAML metateabe allkirjastamisvõtme alias. |
+| `eidas.client.metadata-signing-key-pass` | Jah<sup>4</sup> | SAML metateabe allkirjastamisvõtme parool. |
 | `eidas.client.metadata-signature-algorithm` | Ei | Metateabe allkirja algoritm. Lubatud väärtused vastavalt. Vaikimisi `http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha512`  |
-| `eidas.client.response-decryption-key-id` | Jah | SAML autentimisvastuse dekrepteerimisvõtme alias. |
-| `eidas.client.response-decryption-key-pass` | Jah | SAML autentimisvastuse dekrüpteerimisvõtme parool. |
+| `eidas.client.response-decryption-key-id` | Jah <sup>5</sup> | SAML autentimisvastuse dekrepteerimisvõtme alias. |
+| `eidas.client.response-decryption-key-pass` | Jah <sup>4</sup> | SAML autentimisvastuse dekrüpteerimisvõtme parool. |
 | `eidas.client.sp-entity-id` | Jah | URL, mis viitab teenusepakkuja metateabele. `/md:EntityDescriptor/@entityID` väärtus metateabes. Näiteks: https://hostname:8889/metadata |
 | `eidas.client.callback-url` | Jah | URL, mis viitab teenusepakkuja SAML`/md:EntityDescriptor/md:SPSSODescriptor/md:AssertionConsumerService/@Location` väärtus metateabes. |
 | `eidas.client.metadata-validity-in-days` | Ei | Konnektorteeenuse metateabe kehtivusaeg päevades. Vaikimisi 1 päev. |
 | `eidas.client.sp-type` | Ei | Lubatud väärtused `public` ja `private`. EIDAS spetsiifiline parameeter metateabes `/md:EntityDescriptor/md:Extensions/eidas:SPType`. Vaikimisi `public`. |
 
+<sup>1</sup> Kohustuslik juhul kui `eidas.client.hsm.enabled=true`
+
+<sup>2</sup> Juhul kui `eidas.client.hsm.slot` on määratud, siis `eidas.client.hsm.slot-list-index` väärtust ignoreeritakse ja selle märkimine ei ole kohtustuslik.
+
+<sup>3</sup> Juhul kui `eidas.client.hsm.certificates-from-hsm=false`, siis peavad sertifikaadid olema leitavad sama aliase järgi tarkvaralisest võtmehoidjast `eidas.client.keystore`
+
+<sup>4</sup> Juhul kui `eidas.client.hsm.enabled=true`, siis antud seadistust ignoreeritakse.
+
+<sup>5</sup> Kehtib nii tarkvaralise kui riistvaralise võtmehoidla puhul.
 
 Tabel 2.3.2 - Konnektorteenuse metateabe küsimise seadistus
 
@@ -114,8 +129,8 @@ Tabel 2.3.3 - Saadetava AuthnRequesti ja SAML vastuse seadistus
 | Parameeter        | Kohustuslik | Kirjeldus, näide |
 | :---------------- | :---------- | :----------------|
 | `eidas.client.provider-name` | Jah | Teenusepakkuja lühinimetus. `/saml2p:AuthnRequest/@ProviderName` väärtus. |
-| `eidas.client.request-signing-key-id` | Jah | SAML autentimispäringu allkirjastamisvõtme alias. |
-| `eidas.client.request-signing-key-pass` | Jah | SAML autentimispäringu allkirjastamisvõtme parool. |
+| `eidas.client.request-signing-key-id` | Jah <sup>2</sup> | SAML autentimispäringu allkirjastamisvõtme alias. |
+| `eidas.client.request-signing-key-pass` | Jah <sup>1</sup> | SAML autentimispäringu allkirjastamisvõtme parool. |
 | `eidas.client.accepted-clock-skew` | Ei | IDP ja SP süsteemide vaheline maksimaalselt aktsepteeritav kellaaegade erinevus sekundites. Vaikimisi 2. |
 | `eidas.client.maximum-authentication-lifetime` | Ei | Autentimispäringu eluiga sekundites. Vaikimisi 900. |
 | `eidas.client.response-message-lifetime` | Ei | SAML vastuse eluiga sekundites. Vaikimisi 900. |
@@ -123,6 +138,10 @@ Tabel 2.3.3 - Saadetava AuthnRequesti ja SAML vastuse seadistus
 | `eidas.client.available-countries` | Ei | Lubatud riigikoodid. |
 | `eidas.client.default-loa` | Ei | EIDAS tagatistase juhul kui kasutaja tagatistaseme ise määramata. Lubatud väärtused: 'LOW', 'SUBSTANTIAL', 'HIGH'. Vaikimisi 'SUBSTANTIAL'. |
 | `eidas.client.allowed-eidas-attributes` | Ei | Komaga eraldatud lubatud EidasAttribute väärtuste nimekiri. Vaikimisi väärtus on nimekiri kõigist võimalikest EidasAttribute enum väärtustest. |
+
+<sup>1</sup> Juhul kui `eidas.client.hsm.enabled=true`, siis antud seadistust ignoreeritakse.
+
+<sup>2</sup> Kehtib nii tarkvaralise kui riistvaralise võtmehoidla puhul.
 
 Tabel 2.3.4 - turvaseadistused
 
@@ -136,6 +155,11 @@ Tabel 2.3.5 - heartbeat otspunkti seadistus
 | Parameeter        | Kohustuslik | Kirjeldus, näide |
 | :---------------- | :---------- | :----------------|
 | `management.endpoint.heartbeat.timeout`  | Ei | Sõltuvate süsteemide kontrollimisel tehtava päringu puhul maksimaalne vastuse ooteag sekundites. Vaikimisi 3 sekundit. |
+| `management.endpoint.heartbeat.credentials.test-interval`  | Ei<sup>1</sup> | Metateabe allkirjastamisel kasutatavate võtmete korrasoleku testimise intervall, juhul kui füüsiline turvamoodul on seadistatud.<sup>2</sup> Vaikimisi 60 sekundit. |
+
+<sup>1</sup> Kehtib ainult siis, kui `eidas.client.hsm.enabled=true`
+
+<sup>2</sup> Füüsilise turvamooduli võtmeid testitakse ainult juhul kui kutsutakse välja `heartbeat` otspunkti. Et vähendada füüsilise turvamooduli koormust on võimalik seadistada intervall `management.endpoint.heartbeat.credentials.test-interval`, mis määrab minimaalse aja kui testi saab käivitada. Kui intevall ei ole väljakutsumise hetkel möödas, tagastatakse eelmise testi tulemus väljaarvatud juhul, kui vahepeal on tekkinud viga võtmete kasutuses rakenduse poolt. Kui rakenduse töö käigus tekib viga võtmete kasutusel, siis igal pöördumisel `heartbeat` otspunktile testitakse võtmete korrasolekut olenemata, kas minimaalne testimise intervall on möödas või mitte. Kui võtmete korrasolek taastub jätkatakse kontrolli intervalli järgi.
 
 <a name="conf_hazelcast"></a>
 Tabel 2.3.6 - Hazelcast seadistus

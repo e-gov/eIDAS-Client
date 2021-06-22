@@ -6,6 +6,7 @@ import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
 import ee.ria.eidas.client.config.EidasClientConfiguration;
 import ee.ria.eidas.client.config.EidasClientProperties;
+import ee.ria.eidas.client.config.EidasCredentialsConfiguration;
 import ee.ria.eidas.client.metadata.IDPMetadataResolver;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
 import org.joda.time.DateTime;
@@ -28,6 +29,7 @@ import org.opensaml.security.credential.Credential;
 import org.opensaml.xmlsec.signature.Signature;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
@@ -53,7 +55,7 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.verify;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = EidasClientConfiguration.class)
+@ContextConfiguration(classes = { EidasClientConfiguration.class, EidasCredentialsConfiguration.class })
 @TestPropertySource(locations = "classpath:application-test.properties")
 public class AuthnRequestBuilderTest {
 
@@ -66,6 +68,9 @@ public class AuthnRequestBuilderTest {
     @Autowired
     private IDPMetadataResolver idpMetadataResolver;
 
+    @Autowired
+    private ApplicationEventPublisher applicationEventPublisher;
+
     private AuthnRequestBuilder requestBuilder;
 
     @Mock
@@ -76,7 +81,7 @@ public class AuthnRequestBuilderTest {
 
     @Before
     public void setUp() {
-        requestBuilder = new AuthnRequestBuilder(authnReqSigningCredential, properties, idpMetadataResolver.getSingeSignOnService());
+        requestBuilder = new AuthnRequestBuilder(authnReqSigningCredential, properties, idpMetadataResolver.getSingeSignOnService(), applicationEventPublisher);
 
         Logger root = (Logger) LoggerFactory.getLogger(AuthnRequestBuilder.class);
         root.addAppender(mockedAppender);

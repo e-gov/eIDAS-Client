@@ -8,8 +8,8 @@ import ee.ria.eidas.client.authnrequest.AssuranceLevel;
 import ee.ria.eidas.client.authnrequest.EidasAttribute;
 import ee.ria.eidas.client.config.EidasClientConfiguration;
 import ee.ria.eidas.client.config.EidasClientProperties;
+import ee.ria.eidas.client.config.EidasCredentialsConfiguration;
 import ee.ria.eidas.client.exception.AuthenticationFailedException;
-import ee.ria.eidas.client.exception.EidasClientException;
 import ee.ria.eidas.client.exception.InvalidRequestException;
 import ee.ria.eidas.client.fixtures.ResponseBuilder;
 import ee.ria.eidas.client.metadata.IDPMetadataResolver;
@@ -38,6 +38,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -83,6 +84,9 @@ public class AuthResponseServiceTest {
     @Qualifier("eidasNodeSigningCredential")
     private Credential eidasNodeSigningCredential;
 
+    @Autowired
+    private ApplicationEventPublisher applicationEventPublisher;
+
     private AuthResponseService authResponseService;
 
     private MockHttpServletRequest httpRequest;
@@ -96,17 +100,17 @@ public class AuthResponseServiceTest {
     private ArgumentCaptor<LoggingEvent> loggingEventCaptor;
 
     @TestConfiguration
-    @Import(EidasClientConfiguration.class)
+    @Import( { EidasClientConfiguration.class, EidasCredentialsConfiguration.class })
     public static class TestConf {
 
         @Autowired
-        KeyStore samlKeystore;
+        KeyStore softwareKeystore;
 
         @Bean
         public Credential eidasNodeSigningCredential() throws ResolverException {
             Map<String, String> passwordMap = new HashMap<>();
             passwordMap.put("stork", "changeit");
-            KeyStoreCredentialResolver resolver = new KeyStoreCredentialResolver(samlKeystore, passwordMap);
+            KeyStoreCredentialResolver resolver = new KeyStoreCredentialResolver(softwareKeystore, passwordMap);
 
             Criterion criterion = new EntityIdCriterion("stork");
             CriteriaSet criteriaSet = new CriteriaSet();
@@ -118,7 +122,7 @@ public class AuthResponseServiceTest {
 
     @Before
     public void setUp() {
-        authResponseService = new AuthResponseService(requestSessionService, properties, idpMetadataResolver, responseAssertionDecryptionCredential, samlSchema);
+        authResponseService = new AuthResponseService(requestSessionService, properties, idpMetadataResolver, responseAssertionDecryptionCredential, applicationEventPublisher, samlSchema);
         mockResponseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
 
         requestSessionService.getAndRemoveRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO);
@@ -400,7 +404,7 @@ public class AuthResponseServiceTest {
         return httpRequest;
     }
 
-    private MockHttpServletRequest buildMockHttpServletRequest(String paramName, Response response) throws Exception {
+    public static MockHttpServletRequest buildMockHttpServletRequest(String paramName, Response response) throws Exception {
         MockHttpServletRequest httpRequest = new MockHttpServletRequest();
         httpRequest.setParameter(paramName, Base64.getEncoder().encodeToString(OpenSAMLUtils.getXmlString(response).getBytes()));
         httpRequest.setServerName("localhost");

@@ -25,6 +25,7 @@
 
     <Loggers>
         <Logger name="ee.ria.eidas.client" level="${sys:eidas.client.log.level}" additivity="false">
+            <AppenderRef ref="default" />
             <AppenderRef ref="file"/>
         </Logger>
 
