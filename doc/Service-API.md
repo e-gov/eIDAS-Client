@@ -90,7 +90,7 @@ Näide:
 
 | HTTP staatuskood  | Vea lühikirjeldus | Viga selgitav tekst  |
 | :-------------: |:-------------| :-----|
-| 400 | Bad request | Required String parameter 'country' is not present |
+| 400 | Bad request | Required request parameter 'Country' for method parameter type String is not present |
 | 400 | Bad request  | Invalid country! Valid countries:[...] |
 | 400 | Bad request  | Invalid LoA! One of [...] expected. |
 | 400 | Bad request  | Invalid RelayState! Must match the following regexp: [...] |
@@ -172,7 +172,7 @@ Näide:
 
 | HTTP staatuskood  | Vea lühikirjeldus | Viga selgitav tekst  |
 | :-------------: |:-------------| :-----|
-| 400 | Bad request | Required String parameter 'SAMLResponse' is not present |
+| 400 | Bad request | Required request parameter 'SAMLResponse' for method parameter type String is not present |
 | 400 | Bad request  | Invalid SAMLResponse. [...] |
 | 403 | Forbidden | Endpoint not allowed to be accessed via port number [...] |
 | 405 | Method Not Allowed | Request method [...] not supported |
@@ -475,7 +475,7 @@ Näide:
 ```json
 {
    "error" : "Bad Request",
-   "message" : "Required String parameter 'country' is not present"
+   "message" : "Required request parameter 'Country' for method parameter type String is not present"
 }
 ```
 

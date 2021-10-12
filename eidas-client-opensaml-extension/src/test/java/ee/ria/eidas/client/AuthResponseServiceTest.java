@@ -315,7 +315,7 @@ public class AuthResponseServiceTest {
     @Test
     public void whenResponseDoesNotContainSAMLResponse_thenExceptionIsThrown() throws Exception {
         expectedEx.expect(MissingServletRequestParameterException.class);
-        expectedEx.expectMessage("Required String parameter 'SAMLResponse' is not present");
+        expectedEx.expectMessage("Required request parameter 'SAMLResponse' for method parameter type String is not present");
 
         httpRequest = buildMockHttpServletRequest("someParam", mockResponseBuilder.buildResponse("classpath:idp-metadata.xml"));
         authResponseService.getAuthenticationResult(httpRequest);

@@ -317,7 +317,7 @@ public abstract class EidasClientApplicationTest {
         .then()
                 .statusCode(400)
                 .body("error", equalTo("Bad Request"))
-                .body("message", equalTo("Required String parameter 'Country' is not present"));
+                .body("message", equalTo("Required request parameter 'Country' for method parameter type String is not present"));
     }
 
     @Test
@@ -440,7 +440,7 @@ public abstract class EidasClientApplicationTest {
         .then()
                 .statusCode(400)
                 .body("error", equalTo("Bad Request"))
-                .body("message", equalTo("Required String parameter 'SAMLResponse' is not present"));
+                .body("message", equalTo("Required request parameter 'SAMLResponse' for method parameter type String is not present"));
     }
 
     @Test
@@ -457,7 +457,7 @@ public abstract class EidasClientApplicationTest {
         .then()
                 .statusCode(400)
                 .body("error", equalTo("Bad Request"))
-                .body("message", equalTo("Required String parameter 'SAMLResponse' is not present"));
+                .body("message", equalTo("Required request parameter 'SAMLResponse' for method parameter type String is not present"));
     }
 
     @Test
