@@ -3,7 +3,7 @@ package ee.ria.eidas.client.session;
 import com.google.common.base.Throwables;
 import com.google.common.io.ByteSource;
 import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.core.IMap;
+import com.hazelcast.map.IMap;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.exception.EidasClientException;
 import ee.ria.eidas.client.util.SerializationUtils;

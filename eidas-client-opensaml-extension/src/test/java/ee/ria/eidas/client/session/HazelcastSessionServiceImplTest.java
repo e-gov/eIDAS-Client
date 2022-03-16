@@ -2,7 +2,7 @@ package ee.ria.eidas.client.session;
 
 import com.google.common.io.ByteSource;
 import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.core.IMap;
+import com.hazelcast.map.IMap;
 import ee.ria.eidas.client.AuthInitiationService;
 import ee.ria.eidas.client.authnrequest.AssuranceLevel;
 import ee.ria.eidas.client.config.EidasClientConfiguration;
@@ -27,7 +27,6 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import java.util.UUID;
 
 import static junit.framework.TestCase.assertEquals;
-import static junit.framework.TestCase.assertNotNull;
 import static junit.framework.TestCase.assertNull;
 
 @RunWith(SpringJUnit4ClassRunner.class)

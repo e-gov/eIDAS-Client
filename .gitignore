@@ -4,3 +4,6 @@ conf
 *.iml
 **/.DS_Store
 settings.xml
+
+### Maven ###
+.mvn/wrapper/maven-wrapper.jar

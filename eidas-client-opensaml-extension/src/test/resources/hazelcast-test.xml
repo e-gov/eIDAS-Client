@@ -2,10 +2,8 @@
 <hazelcast xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xmlns="http://www.hazelcast.com/schema/config"
            xsi:schemaLocation="http://www.hazelcast.com/schema/config
-                               https://hazelcast.com/schema/config/hazelcast-config-3.7.xsd">
-    <group>
-        <name>test</name>
-    </group>
+                               https://hazelcast.com/schema/config/hazelcast-config-5.1.xsd">
+    <cluster-name>test</cluster-name>
     <network>
         <port auto-increment="true">5702</port>
         <join>

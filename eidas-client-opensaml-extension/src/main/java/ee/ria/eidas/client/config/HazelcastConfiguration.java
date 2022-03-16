@@ -1,6 +1,11 @@
 package ee.ria.eidas.client.config;
 
-import com.hazelcast.config.*;
+import com.hazelcast.config.Config;
+import com.hazelcast.config.EvictionConfig;
+import com.hazelcast.config.EvictionPolicy;
+import com.hazelcast.config.MapConfig;
+import com.hazelcast.config.MaxSizePolicy;
+import com.hazelcast.config.XmlConfigBuilder;
 import com.hazelcast.core.Hazelcast;
 import com.hazelcast.core.HazelcastInstance;
 import ee.ria.eidas.client.session.HazelcastRequestSessionServiceImpl;
@@ -79,11 +84,10 @@ public class HazelcastConfiguration {
                 .setMaxIdleSeconds(eidasClientProperties.getHazelcastStorageTimeout())
                 .setBackupCount(1)
                 .setAsyncBackupCount(0)
-                .setEvictionPolicy(EvictionPolicy.valueOf(eidasClientProperties.getHazelcastEvictionPolicy()))
-                .setMaxSizeConfig(
-                        (new MaxSizeConfig())
-                                .setMaxSizePolicy(MaxSizeConfig.MaxSizePolicy.valueOf("USED_HEAP_PERCENTAGE"))
-                                .setSize(eidasClientProperties.getHazelcastMaxHeapSizePercentage())
+                .setEvictionConfig(new EvictionConfig()
+                        .setEvictionPolicy(EvictionPolicy.valueOf(eidasClientProperties.getHazelcastEvictionPolicy()))
+                        .setMaxSizePolicy(MaxSizePolicy.USED_HEAP_PERCENTAGE)
+                        .setSize(eidasClientProperties.getHazelcastMaxHeapSizePercentage())
                 );
     }
 }
