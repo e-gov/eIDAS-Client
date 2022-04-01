@@ -50,7 +50,9 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <java.version>1.8</java.version>
 
-        <spring-framework.version>5.3.16</spring-framework.version>
+        <!-- Using newer version than Spring Boot's default to fix vulnerability CVE-2022-22965.
+             TODO Remove this property after upgrading Spring Boot. -->
+        <spring-framework.version>5.3.18</spring-framework.version>
         <!-- Using newer version than Spring Boot's default to fix vulnerability CVE-2020-36518.
              TODO Remove this property after upgrading Spring Boot. -->
         <jackson-bom.version>2.13.2.20220324</jackson-bom.version>
