@@ -188,7 +188,7 @@ public class EidasClientApplicationHazelcastDisabledTest extends EidasClientAppl
         List<EidasAttribute> requestEidasAttributes = Arrays.asList(EidasAttribute.CURRENT_GIVEN_NAME, EidasAttribute.CURRENT_FAMILY_NAME, EidasAttribute.GENDER);
         AuthnRequestBuilder requestBuilder = new AuthnRequestBuilder(authnReqSigningCredential, eidasClientProperties, idpMetadataResolver.getSingeSignOnService(), applicationEventPublisher);
         try {
-            requestBuilder.buildAuthnRequest(AssuranceLevel.SUBSTANTIAL, requestEidasAttributes);
+            requestBuilder.buildAuthnRequest(AssuranceLevel.SUBSTANTIAL, requestEidasAttributes, SP_TYPE_VALUE, REQUESTER_ID_VALUE);
         } catch (EidasClientException ex) {
             assertEquals("Failed to create authnRequest: Invalid key", ex.getMessage());
         }

@@ -4,13 +4,11 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.LoggingEvent;
 import ch.qos.logback.core.Appender;
-import ee.ria.eidas.client.authnrequest.SPType;
 import ee.ria.eidas.client.config.EidasClientConfiguration;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.config.EidasCredentialsConfiguration;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
 import org.joda.time.DateTime;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -104,19 +102,8 @@ public class SPMetadataGeneratorTest {
 
     private void assertExtensions(Extensions extensions) {
         List<XMLObject> extensionObjects = extensions.getUnknownXMLObjects();
-        assertSpType(extensionObjects);
-        XMLObject signingMethod = extensionObjects.get(1);
+        XMLObject signingMethod = extensionObjects.get(0);
         assertEquals("http://www.w3.org/2001/04/xmldsig-more#ecdsa-sha512", signingMethod.getDOM().getAttribute("Algorithm"));
-    }
-
-    private void assertSpType(List<XMLObject> extensionObjects) {
-        XMLObject spType = extensionObjects.get(0);
-        assertSpType(spType);
-    }
-
-    private void assertSpType(XMLObject spType) {
-        assertEquals("SPType", spType.getDOM().getLocalName());
-        Assert.assertEquals(SPType.PUBLIC.getValue(), spType.getDOM().getTextContent());
     }
 
     private void assertSPSSODescriptor(EntityDescriptor entityDescriptor) {

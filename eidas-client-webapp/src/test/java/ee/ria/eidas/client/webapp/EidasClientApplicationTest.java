@@ -8,6 +8,7 @@ import ee.ria.eidas.client.AuthInitiationService;
 import ee.ria.eidas.client.AuthResponseService;
 import ee.ria.eidas.client.authnrequest.AssuranceLevel;
 import ee.ria.eidas.client.authnrequest.EidasAttribute;
+import ee.ria.eidas.client.authnrequest.SPType;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.fixtures.ResponseBuilder;
 import ee.ria.eidas.client.metadata.IDPMetadataResolver;
@@ -64,6 +65,8 @@ import static org.hamcrest.core.IsEqual.equalTo;
 
 @Slf4j
 public abstract class EidasClientApplicationTest {
+    protected static final String REQUESTER_ID_VALUE = "TEST-REQUESTER-ID";
+    protected static final SPType SP_TYPE_VALUE = SPType.PUBLIC;
 
     @Autowired
     EidasClientProperties eidasClientProperties;
@@ -192,6 +195,8 @@ public abstract class EidasClientApplicationTest {
                 .queryParam("LoA", "LOW")
                 .queryParam("RelayState", "test")
                 .queryParam("Attributes", "BirthName PlaceOfBirth CurrentAddress Gender LegalPersonIdentifier LegalName LegalAddress VATRegistration TaxReference LEI EORI SEED SIC")
+                .queryParam("RequesterID", REQUESTER_ID_VALUE)
+                .queryParam("SPType", SP_TYPE_VALUE)
         .when()
                 .get("/login")
         .then()
@@ -210,6 +215,8 @@ public abstract class EidasClientApplicationTest {
                 .queryParam("LoA", "LOW")
                 .queryParam("RelayState", "test")
                 .queryParam("Attributes", "LegalPersonIdentifier")
+                .queryParam("RequesterID", REQUESTER_ID_VALUE)
+                .queryParam("SPType", SP_TYPE_VALUE)
         .when()
                 .get("/login")
         .then()
@@ -228,6 +235,8 @@ public abstract class EidasClientApplicationTest {
                 .queryParam("LoA", "LOW")
                 .queryParam("RelayState", "test")
                 .queryParam("Attributes", "LegalPersonIdentifier XXXX LegalName")
+                .queryParam("RequesterID", REQUESTER_ID_VALUE)
+                .queryParam("SPType", SP_TYPE_VALUE)
         .when()
                 .get("/login")
         .then()
@@ -244,6 +253,8 @@ public abstract class EidasClientApplicationTest {
                 .queryParam("LoA", "LOW")
                 .queryParam("RelayState", "test")
                 .queryParam("Attributes", "LegalPersonIdentifier LegalName D-2012-17-EUIdentifier")
+                .queryParam("RequesterID", REQUESTER_ID_VALUE)
+                .queryParam("SPType", SP_TYPE_VALUE)
                 .when()
                 .get("/login")
                 .then()
@@ -258,6 +269,8 @@ public abstract class EidasClientApplicationTest {
                 .port(port)
                 .queryParam("Country", "EE")
                 .queryParam("LoA", "ABCdef")
+                .queryParam("RequesterID", REQUESTER_ID_VALUE)
+                .queryParam("SPType", SP_TYPE_VALUE)
         .when()
                 .get("/login")
         .then()
@@ -267,10 +280,12 @@ public abstract class EidasClientApplicationTest {
     }
 
     @Test
-    public void httpPostBinding_shouldPass_whenOnlyCountryParamPresent() {
+    public void httpPostBinding_shouldPass_whenOnlyRequiredParamsPresent() {
         given()
                 .port(port)
                 .queryParam("Country", "EE")
+                .queryParam("RequesterID", REQUESTER_ID_VALUE)
+                .queryParam("SPType", SP_TYPE_VALUE)
         .when()
                 .get("/login")
         .then()
@@ -286,6 +301,8 @@ public abstract class EidasClientApplicationTest {
                 .port(port)
                 .queryParam("Country", "NEVERLAND")
                 .queryParam("RelayState", "test")
+                .queryParam("RequesterID", REQUESTER_ID_VALUE)
+                .queryParam("SPType", SP_TYPE_VALUE)
                 .when()
                 .get("/login")
                 .then()
@@ -300,24 +317,56 @@ public abstract class EidasClientApplicationTest {
                 .port(port)
                 .queryParam("Country", "EE")
                 .queryParam("RelayState", "ä")
+                .queryParam("RequesterID", REQUESTER_ID_VALUE)
+                .queryParam("SPType", SP_TYPE_VALUE)
         .when()
                 .get("/login")
         .then()
                 .statusCode(400)
                 .body("error", equalTo("Bad Request"))
-                .body("message", equalTo("Invalid RelayState! Must match the following regexp: ^[a-zA-Z0-9-_]{0,80}$"));
+                .body("message", equalTo("Invalid RelayState (ä)! Must match the following regexp: ^[a-zA-Z0-9-_]{0,80}$"));
     }
 
     @Test
-    public void httpPostBinding_shouldFail_whenMissingMandatoryParameter() {
+    public void httpPostBinding_shouldFail_whenMissingCountryRequestParam() {
         given()
                 .port(port)
+                .queryParam("RequesterID", REQUESTER_ID_VALUE)
+                .queryParam("SPType", SP_TYPE_VALUE)
         .when()
                 .get("/login")
         .then()
                 .statusCode(400)
                 .body("error", equalTo("Bad Request"))
                 .body("message", equalTo("Required request parameter 'Country' for method parameter type String is not present"));
+    }
+
+    @Test
+    public void httpPostBinding_shouldFail_whenMissingRequesterIDRequestParam() {
+        given()
+                .port(port)
+                .queryParam("Country", "EE")
+                .queryParam("SPType", SP_TYPE_VALUE)
+        .when()
+                .get("/login")
+        .then()
+                .statusCode(400)
+                .body("error", equalTo("Bad Request"))
+                .body("message", equalTo("Required request parameter 'RequesterID' for method parameter type String is not present"));
+    }
+
+    @Test
+    public void httpPostBinding_shouldFail_whenMissingSPTypeRequestParam() {
+        given()
+                .port(port)
+                .queryParam("Country", "EE")
+                .queryParam("RequesterID", REQUESTER_ID_VALUE)
+                .when()
+                .get("/login")
+                .then()
+                .statusCode(400)
+                .body("error", equalTo("Bad Request"))
+                .body("message", equalTo("Required request parameter 'SPType' for method parameter type SPType is not present"));
     }
 
     @Test

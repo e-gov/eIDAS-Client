@@ -2,7 +2,6 @@ package ee.ria.eidas.client.config;
 
 import ee.ria.eidas.client.authnrequest.AssuranceLevel;
 import ee.ria.eidas.client.authnrequest.EidasAttribute;
-import ee.ria.eidas.client.authnrequest.SPType;
 import lombok.Data;
 import org.opensaml.xmlsec.signature.support.SignatureConstants;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -76,9 +75,6 @@ public class EidasClientProperties {
     @NotNull
     @ValidIsoCountryCodes
     private List<String> availableCountries;
-
-    @NotNull
-    private SPType spType = SPType.PUBLIC;
 
     @NotNull
     private AssuranceLevel defaultLoa = AssuranceLevel.SUBSTANTIAL;

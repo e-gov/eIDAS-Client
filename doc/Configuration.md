@@ -105,7 +105,6 @@ Tabel 2.3.1 - Teenusepakkuja metateabe seadistus
 | `eidas.client.sp-entity-id` | Jah | URL, mis viitab teenusepakkuja metateabele. `/md:EntityDescriptor/@entityID` väärtus metateabes. Näiteks: https://hostname:8889/metadata |
 | `eidas.client.callback-url` | Jah | URL, mis viitab teenusepakkuja SAML`/md:EntityDescriptor/md:SPSSODescriptor/md:AssertionConsumerService/@Location` väärtus metateabes. |
 | `eidas.client.metadata-validity-in-days` | Ei | Konnektorteeenuse metateabe kehtivusaeg päevades. Vaikimisi 1 päev. |
-| `eidas.client.sp-type` | Ei | Lubatud väärtused `public` ja `private`. EIDAS spetsiifiline parameeter metateabes `/md:EntityDescriptor/md:Extensions/eidas:SPType`. Vaikimisi `public`. |
 
 <sup>1</sup> Kohustuslik juhul kui `eidas.client.hsm.enabled=true`
 

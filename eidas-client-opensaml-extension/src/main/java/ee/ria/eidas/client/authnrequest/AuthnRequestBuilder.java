@@ -43,7 +43,7 @@ public class AuthnRequestBuilder {
 
     private final ApplicationEventPublisher applicationEventPublisher;
 
-    public AuthnRequest buildAuthnRequest(AssuranceLevel loa, List<EidasAttribute> eidasAttributes) {
+    public AuthnRequest buildAuthnRequest(AssuranceLevel loa, List<EidasAttribute> eidasAttributes, SPType spType, String requesterId) {
         try {
             AuthnRequest authnRequest = OpenSAMLUtils.buildSAMLObject(AuthnRequest.class);
             authnRequest.setIssueInstant(new DateTime());
@@ -57,7 +57,7 @@ public class AuthnRequestBuilder {
             authnRequest.setIssuer(buildIssuer());
             authnRequest.setNameIDPolicy(buildNameIdPolicy());
             authnRequest.setRequestedAuthnContext(buildRequestedAuthnContext(loa));
-            authnRequest.setExtensions(buildExtensions(eidasAttributes));
+            authnRequest.setExtensions(buildExtensions(eidasAttributes, spType, requesterId));
 
             addSignature(authnRequest);
 
@@ -106,12 +106,16 @@ public class AuthnRequestBuilder {
         return requestedAuthnContext;
     }
 
-    private Extensions buildExtensions(List<EidasAttribute> eidasAttributes) {
+    private Extensions buildExtensions(List<EidasAttribute> eidasAttributes, SPType spTypeValue, String requesterIdValue) {
         Extensions extensions = OpenSAMLUtils.buildSAMLObject(Extensions.class);
 
         XSAny spType = new XSAnyBuilder().buildObject("http://eidas.europa.eu/saml-extensions", "SPType", "eidas");
-        spType.setTextContent(eidasClientProperties.getSpType().getValue());
+        spType.setTextContent(spTypeValue.getValue());
         extensions.getUnknownXMLObjects().add(spType);
+
+        XSAny requesterId = new XSAnyBuilder().buildObject("http://eidas.europa.eu/saml-extensions", "RequesterID", "eidas");
+        requesterId.setTextContent(requesterIdValue);
+        extensions.getUnknownXMLObjects().add(requesterId);
 
         XSAny requestedAttributes = new XSAnyBuilder().buildObject("http://eidas.europa.eu/saml-extensions", "RequestedAttributes", "eidas");
         addEidasAttributes(eidasAttributes, requestedAttributes);

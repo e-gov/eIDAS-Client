@@ -74,10 +74,6 @@ public class SPMetadataGenerator {
     private Extensions generateMetadataExtensions() {
         Extensions extensions = OpenSAMLUtils.buildSAMLObject(Extensions.class);
         extensions.getNamespaceManager().registerAttributeName(DigestMethod.TYPE_NAME);
-
-        XSAny spType = new XSAnyBuilder().buildObject("http://eidas.europa.eu/saml-extensions", "SPType", "eidas");
-        spType.setTextContent(eidasClientProperties.getSpType().getValue());
-        extensions.getUnknownXMLObjects().add(spType);
         addUsedSigingMethodsToExtensions(extensions);
 
         return extensions;

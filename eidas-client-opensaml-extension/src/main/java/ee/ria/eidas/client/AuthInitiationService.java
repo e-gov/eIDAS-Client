@@ -4,6 +4,7 @@ import ee.ria.eidas.client.authnrequest.AssuranceLevel;
 import ee.ria.eidas.client.authnrequest.AuthnRequestBuilder;
 import ee.ria.eidas.client.authnrequest.EidasAttribute;
 import ee.ria.eidas.client.authnrequest.EidasHTTPPostEncoder;
+import ee.ria.eidas.client.authnrequest.SPType;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.exception.EidasClientException;
 import ee.ria.eidas.client.exception.InvalidRequestException;
@@ -43,7 +44,8 @@ import static java.util.Collections.unmodifiableList;
 public class AuthInitiationService {
     public static final List<EidasAttribute> DEFAULT_REQUESTED_ATTRIBUTE_SET = unmodifiableList(asList(CURRENT_FAMILY_NAME, CURRENT_GIVEN_NAME, DATE_OF_BIRTH, PERSON_IDENTIFIER));
 
-    private static final String RELAYSTATE_VALIDATION_REGEXP = "^[a-zA-Z0-9-_]{0,80}$";
+    private static final Pattern RELAYSTATE_VALIDATION_REGEXP = Pattern.compile("^[a-zA-Z0-9-_]{0,80}$");
+    private static final Pattern REQUESTER_ID_VALIDATION_REGEXP = Pattern.compile("^[^\\s]+$");
 
     private final RequestSessionService requestSessionService;
 
@@ -55,11 +57,18 @@ public class AuthInitiationService {
 
     private final ApplicationEventPublisher applicationEventPublisher;
 
-    public void authenticate(HttpServletResponse response, String country, AssuranceLevel loa, String relayState, String attributesSet) {
+    public void authenticate(HttpServletResponse response,
+                             String country,
+                             AssuranceLevel loa,
+                             String relayState,
+                             String attributesSet,
+                             SPType spType,
+                             String requesterId) {
         validateCountry(country);
-        validateRelayState(relayState);
+        validateNullOrRegex("RelayState", relayState, RELAYSTATE_VALIDATION_REGEXP);
+        validateRegex("RequesterID", requesterId, REQUESTER_ID_VALIDATION_REGEXP);
         List<EidasAttribute> eidasAttributes = determineEidasAttributes(attributesSet);
-        redirectUserForAuthentication(response, country, loa, relayState, eidasAttributes);
+        redirectUserForAuthentication(response, country, loa, relayState, eidasAttributes, spType, requesterId);
     }
 
     private List<EidasAttribute> determineEidasAttributes(String attributesSet) {
@@ -96,9 +105,16 @@ public class AuthInitiationService {
         }
     }
 
-    private void redirectUserForAuthentication(HttpServletResponse httpServletResponse, String country, AssuranceLevel loa, String relayState, List<EidasAttribute> eidasAttributes) {
+    private void redirectUserForAuthentication(
+            HttpServletResponse httpServletResponse,
+            String country,
+            AssuranceLevel loa,
+            String relayState,
+            List<EidasAttribute> eidasAttributes,
+            SPType spType,
+            String requesterId) {
         AuthnRequestBuilder authnRequestBuilder = new AuthnRequestBuilder(authnReqSigningCredential, eidasClientProperties, idpMetadataResolver.getSingeSignOnService(), applicationEventPublisher);
-        AuthnRequest authnRequest = authnRequestBuilder.buildAuthnRequest(loa, eidasAttributes);
+        AuthnRequest authnRequest = authnRequestBuilder.buildAuthnRequest(loa, eidasAttributes, spType, requesterId);
         saveRequestAsSession(authnRequest, eidasAttributes);
         redirectUserWithRequest(httpServletResponse, authnRequest, country, relayState);
     }
@@ -159,14 +175,20 @@ public class AuthInitiationService {
         }
     }
 
-    private void validateRelayState(String relayState) {
-        if (relayState == null) {
+    private void validateNullOrRegex(String inputName, String inputValue, Pattern regex) {
+        if (inputValue == null) {
             return;
         }
-        Pattern pattern = Pattern.compile(RELAYSTATE_VALIDATION_REGEXP);
-        Matcher matcher = pattern.matcher(relayState);
+        validateRegex(inputName, inputValue, regex);
+    }
+
+    private void validateRegex(String inputName, String inputValue, Pattern regex) {
+        if (inputValue == null) {
+            throw new InvalidRequestException(inputName + " cannot be null!");
+        }
+        Matcher matcher = regex.matcher(inputValue);
         if (!matcher.matches()) {
-            throw new InvalidRequestException("Invalid RelayState! Must match the following regexp: " + RELAYSTATE_VALIDATION_REGEXP);
+            throw new InvalidRequestException("Invalid " + inputName + " (" + inputValue + ")! Must match the following regexp: " + regex);
         }
     }
 

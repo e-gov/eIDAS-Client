@@ -3,6 +3,7 @@ package ee.ria.eidas.client.webapp.controller;
 import ee.ria.eidas.client.AuthInitiationService;
 import ee.ria.eidas.client.AuthResponseService;
 import ee.ria.eidas.client.authnrequest.AssuranceLevel;
+import ee.ria.eidas.client.authnrequest.SPType;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.response.AuthenticationResult;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,8 +41,10 @@ public class AuthenticationController {
             @RequestParam("Country") String country,
             @RequestParam(value = "LoA", required=false) AssuranceLevel loa,
             @RequestParam(value = "RelayState", required=false) String relayState,
-            @RequestParam(value = "Attributes", required=false) String eidasAttributes) {
-        authInitiationService.authenticate(response, country, loa, relayState, eidasAttributes);
+            @RequestParam(value = "Attributes", required=false) String eidasAttributes,
+            @RequestParam("RequesterID") String requesterId,
+            @RequestParam("SPType") SPType spType) {
+        authInitiationService.authenticate(response, country, loa, relayState, eidasAttributes, spType, requesterId);
     }
 
     @PostMapping(value = ENDPOINT_AUTHENTICATION_RETURN_URL)
