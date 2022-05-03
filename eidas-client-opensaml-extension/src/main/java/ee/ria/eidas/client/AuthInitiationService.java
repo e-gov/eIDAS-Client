@@ -31,6 +31,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -64,7 +65,7 @@ public class AuthInitiationService {
                              String attributesSet,
                              SPType spType,
                              String requesterId) {
-        validateCountry(country);
+        validateCountry(country, spType);
         validateNullOrRegex("RelayState", relayState, RELAYSTATE_VALIDATION_REGEXP);
         validateRegex("RequesterID", requesterId, REQUESTER_ID_VALIDATION_REGEXP);
         List<EidasAttribute> eidasAttributes = determineEidasAttributes(attributesSet);
@@ -168,10 +169,11 @@ public class AuthInitiationService {
         }
     }
 
-    private void validateCountry(String country) {
-        List<String> validCountries = idpMetadataResolver.getSupportedCountries();
-        if (!validCountries.stream().anyMatch(country::equalsIgnoreCase)) {
-            throw new InvalidRequestException("Invalid country! Valid countries:" + validCountries);
+    private void validateCountry(String country, SPType spType) {
+        Map<SPType, List<String>> validCountries = idpMetadataResolver.getSupportedCountries();
+        List<String> validCountriesForCurrentSector = validCountries.get(spType);
+        if (validCountriesForCurrentSector.stream().noneMatch(country::equalsIgnoreCase)) {
+            throw new InvalidRequestException("Invalid country for " + spType + " sector! Valid countries:" + validCountriesForCurrentSector);
         }
     }
 

@@ -1,5 +1,6 @@
 package ee.ria.eidas.client.metadata;
 
+import ee.ria.eidas.client.authnrequest.SPType;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.config.OpenSAMLConfiguration;
 import ee.ria.eidas.client.exception.EidasClientException;
@@ -128,25 +129,29 @@ public class IDPMetadataResolver {
         throw new EidasClientException("Could not find a valid SAML2 POST BINDING from IDP metadata!");
     }
 
-    public List<String> getSupportedCountries() {
+    public Map<SPType, List<String>> getSupportedCountries() {
         try {
             AbstractReloadingMetadataResolver metadataResolver = this.resolve();
             CriteriaSet criteriaSet = new CriteriaSet(new EntityIdCriterion(url));
             EntityDescriptor entityDescriptor = metadataResolver.resolveSingle(criteriaSet);
 
-            List<String> supportedCountries = getSupportedCountries(entityDescriptor);
+            Map<SPType, List<String >> supportedCountries = new HashMap<>();
 
-            if (supportedCountries.isEmpty()) {
+            List<String> publicSectorSupportedCountries = getPublicSectorSupportedCountries(entityDescriptor);
+            if (publicSectorSupportedCountries.isEmpty()) {
                 log.error("Unable to get supported countries from metadata. Using supported countries from configuration.");
-                return getSupportedCountriesFromConfiguration();
+                supportedCountries.put(SPType.PUBLIC, eidasClientProperties.getAvailableCountriesPublicFallback());
+            } else {
+                supportedCountries.put(SPType.PUBLIC, publicSectorSupportedCountries);
             }
+            supportedCountries.put(SPType.PRIVATE, eidasClientProperties.getAvailableCountriesPrivate());
             return supportedCountries;
         } catch (final ResolverException e) {
             throw new EidasClientException("Error initializing IDP metadata", e);
         }
     }
 
-    protected List<String> getSupportedCountries(EntityDescriptor entityDescriptor) {
+    protected List<String> getPublicSectorSupportedCountries(EntityDescriptor entityDescriptor) {
         if (entityDescriptor == null) {
             log.error("Could not find a valid EntityDescriptor in your IDP metadata!");
             return new ArrayList<>();
@@ -176,10 +181,6 @@ public class IDPMetadataResolver {
         X509Credential switchCred = CredentialSupport.getSimpleCredential(cert, null);
         StaticCredentialResolver switchCredResolver = new StaticCredentialResolver(switchCred);
         return new ExplicitKeySignatureTrustEngine(switchCredResolver, DefaultSecurityConfigurationBootstrap.buildBasicInlineKeyInfoCredentialResolver());
-    }
-
-    private List<String> getSupportedCountriesFromConfiguration() {
-        return eidasClientProperties.getAvailableCountries();
     }
 
     private X509Certificate getResponseSigningCertificate(IDPMetadataResolver idpMetadataResolver) {

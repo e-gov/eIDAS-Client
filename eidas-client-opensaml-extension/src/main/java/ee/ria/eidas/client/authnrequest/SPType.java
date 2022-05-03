@@ -1,5 +1,7 @@
 package ee.ria.eidas.client.authnrequest;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+
 public enum SPType {
     PRIVATE("private"),
     PUBLIC("public");
@@ -12,5 +14,10 @@ public enum SPType {
 
     public String getValue() {
         return value;
+    }
+
+    @JsonValue
+    public String toLowerCase() {
+        return toString().toLowerCase();
     }
 }

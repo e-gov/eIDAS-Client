@@ -1,6 +1,7 @@
 package ee.ria.eidas.client.webapp.controller;
 
 import ee.ria.eidas.client.AuthInitiationService;
+import ee.ria.eidas.client.authnrequest.SPType;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.metadata.IDPMetadataResolver;
 import ee.ria.eidas.client.metadata.SPMetadataGenerator;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import java.util.List;
+import java.util.Map;
 
 import static ee.ria.eidas.client.webapp.EidasClientApi.ENDPOINT_METADATA_METADATA;
 import static ee.ria.eidas.client.webapp.EidasClientApi.ENDPOINT_METADATA_SUPPORTED_COUNTRIES;
@@ -39,7 +41,8 @@ public class MetadataController {
     }
 
     @GetMapping(value = ENDPOINT_METADATA_SUPPORTED_COUNTRIES, produces = { "application/json" }, consumes = MediaType.ALL_VALUE)
-    public @ResponseBody List<String> countries() {
+    public @ResponseBody
+    Map<SPType, List<String>> countries() {
         return idpMetadataResolver.getSupportedCountries();
     }
 }

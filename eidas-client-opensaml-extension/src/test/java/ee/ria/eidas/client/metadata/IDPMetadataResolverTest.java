@@ -1,5 +1,6 @@
 package ee.ria.eidas.client.metadata;
 
+import ee.ria.eidas.client.authnrequest.SPType;
 import ee.ria.eidas.client.config.EidasClientConfiguration;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.config.EidasCredentialsConfiguration;
@@ -26,7 +27,13 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 
 @TestPropertySource(locations = "classpath:application-test.properties")
@@ -111,14 +118,26 @@ public class IDPMetadataResolverTest {
     }
 
     @Test
-    public void getSupportedCountriesSuccessfullyFromConfigurationIfEntityDescriptorMissing() {
-        assertEquals(new ArrayList<>(Collections.emptyList()), idpMetadataResolver.getSupportedCountries(null));
+    public void getPublicSectorSupportedCountriesSuccessfullyFromConfigurationIfEntityDescriptorMissing() {
+        assertEquals(new ArrayList<>(Collections.emptyList()), idpMetadataResolver.getPublicSectorSupportedCountries(null));
     }
 
     @Test
-    public void getSupportedCountriesSuccessfullyFromConfigurationIfNoneSpecifiedInMetadata() {
-        Mockito.when(eidasClientProperties.getAvailableCountries()).thenReturn(new ArrayList<>(Arrays.asList("EE", "CA")));
-        assertEquals(new ArrayList<>(Arrays.asList("EE", "CA")), idpMetadataResolver.getSupportedCountries());
+    public void getSupportedPublicSectorCountriesSuccessfullyFromConfigurationIfNoneSpecifiedInMetadata() {
+        Mockito.when(eidasClientProperties.getAvailableCountriesPublicFallback()).thenReturn(new ArrayList<>(asList("EE", "CA")));
+        assertEquals(new HashMap<SPType, List<String>>(){{
+            put(SPType.PUBLIC, asList("EE", "CA"));
+            put(SPType.PRIVATE, emptyList());
+        }}, idpMetadataResolver.getSupportedCountries());
+    }
+
+    @Test
+    public void getSupportedPrivateSectorCountriesSuccessfullyFromConfiguration() {
+        Mockito.when(eidasClientProperties.getAvailableCountriesPrivate()).thenReturn(new ArrayList<>(singletonList("IT")));
+        assertEquals(new HashMap<SPType, List<String>>(){{
+            put(SPType.PUBLIC, emptyList());
+            put(SPType.PRIVATE, asList("IT"));
+        }}, idpMetadataResolver.getSupportedCountries());
     }
 
     private void assertResolveFails(String url) {

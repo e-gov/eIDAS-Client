@@ -286,11 +286,14 @@ curl 'https://localhost:8889/supportedCountries'
 
 ### Vastus
 
-**Eduka vastuse** korral tagastatakse HTTP staatuskood 200 ning toetatud riigid.
+**Eduka vastuse** korral tagastatakse HTTP staatuskood 200 ning toetatud riigid nii avaliku kui erasektori jaoks.
 
 Näide:
-```bash
-["EE", "LV", "LT"]
+```json
+{
+  "public": ["EE","DE","CA"],
+  "private": ["DE"]
+}
 ```
 
 **Vea korral** moodustatakse vastus vastavalt [**veakäsitlus**](Service-API.md#veakasitlus) peatükis toodule. Võimalikud veaolukorrad on toodud järgnevas tabelis:

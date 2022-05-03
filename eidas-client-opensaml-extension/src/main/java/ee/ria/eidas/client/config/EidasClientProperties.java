@@ -74,7 +74,11 @@ public class EidasClientProperties {
 
     @NotNull
     @ValidIsoCountryCodes
-    private List<String> availableCountries;
+    private List<String> availableCountriesPublicFallback;
+
+    @NotNull
+    @ValidIsoCountryCodes
+    private List<String> availableCountriesPrivate;
 
     @NotNull
     private AssuranceLevel defaultLoa = AssuranceLevel.SUBSTANTIAL;

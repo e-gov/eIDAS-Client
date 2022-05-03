@@ -296,6 +296,22 @@ public abstract class EidasClientApplicationTest {
     }
 
     @Test
+    public void httpPostBinding_shouldPass_whenSpTypePrivate() {
+        given()
+                .port(port)
+                .queryParam("Country", "IT")
+                .queryParam("RequesterID", REQUESTER_ID_VALUE)
+                .queryParam("SPType", SPType.PRIVATE)
+        .when()
+                .get("/login")
+        .then()
+                .statusCode(200)
+                .body("html.body.form.@action", equalTo("http://localhost:8080/EidasNode/ServiceProvider"))
+                .body("html.body.form.div.input[0].@value", not(empty()))
+                .body("html.body.form.div.input[1].@value", equalTo("IT"));
+    }
+
+    @Test
     public void httpPostBinding_shouldFail_whenCountryRequestParamInvalid() {
         given()
                 .port(port)
@@ -308,7 +324,39 @@ public abstract class EidasClientApplicationTest {
                 .then()
                 .statusCode(400)
                 .body("error", equalTo("Bad Request"))
-                .body("message", equalTo("Invalid country! Valid countries:[EE, CA]"));
+                .body("message", equalTo("Invalid country for PUBLIC sector! Valid countries:[EE, CA]"));
+    }
+
+    @Test
+    public void httpPostBinding_shouldFail_whenPrivateOnlyCountryUsedForPublicSpType() {
+        given()
+                .port(port)
+                .queryParam("Country", "IT")
+                .queryParam("RelayState", "test")
+                .queryParam("RequesterID", REQUESTER_ID_VALUE)
+                .queryParam("SPType", SP_TYPE_VALUE)
+                .when()
+                .get("/login")
+                .then()
+                .statusCode(400)
+                .body("error", equalTo("Bad Request"))
+                .body("message", equalTo("Invalid country for PUBLIC sector! Valid countries:[EE, CA]"));
+    }
+
+    @Test
+    public void httpPostBinding_shouldFail_whenPublicOnlyCountryUsedForPrivateSpType() {
+        given()
+                .port(port)
+                .queryParam("Country", "CA")
+                .queryParam("RelayState", "test")
+                .queryParam("RequesterID", REQUESTER_ID_VALUE)
+                .queryParam("SPType", SPType.PRIVATE)
+                .when()
+                .get("/login")
+                .then()
+                .statusCode(400)
+                .body("error", equalTo("Bad Request"))
+                .body("message", equalTo("Invalid country for PRIVATE sector! Valid countries:[IT]"));
     }
 
     @Test

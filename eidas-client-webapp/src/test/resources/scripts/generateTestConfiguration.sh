@@ -79,7 +79,8 @@ echo "eidas.client.sp-entity-id = $2/metadata">>$confFileName
 echo "eidas.client.callback-url = $2/returnUrl">>$confFileName
 echo "">>$confFileName
 
-echo "eidas.client.available-countries = EE,CA">>$confFileName
+echo "eidas.client.available-countries-public-fallback = EE,CA">>$confFileName
+echo "eidas.client.available-countries-private = IT">>$confFileName
 
 echo "eidas.client.idp-metadata-signing-certificate-key-id = idpmetadata">>$confFileName
 
