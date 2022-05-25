@@ -46,7 +46,7 @@ public class AuthInitiationService {
     public static final List<EidasAttribute> DEFAULT_REQUESTED_ATTRIBUTE_SET = unmodifiableList(asList(CURRENT_FAMILY_NAME, CURRENT_GIVEN_NAME, DATE_OF_BIRTH, PERSON_IDENTIFIER));
 
     private static final Pattern RELAYSTATE_VALIDATION_REGEXP = Pattern.compile("^[a-zA-Z0-9-_]{0,80}$");
-    private static final Pattern REQUESTER_ID_VALIDATION_REGEXP = Pattern.compile("^[^\\s]+$");
+    private static final Pattern REQUESTER_ID_VALIDATION_REGEXP = Pattern.compile("^((?!urn:uuid:)[a-zA-Z][a-zA-Z0-9+.-]*:.*|urn:uuid:[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})$");
 
     private final RequestSessionService requestSessionService;
 

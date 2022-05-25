@@ -65,7 +65,7 @@ import static org.hamcrest.core.IsEqual.equalTo;
 
 @Slf4j
 public abstract class EidasClientApplicationTest {
-    protected static final String REQUESTER_ID_VALUE = "TEST-REQUESTER-ID";
+    protected static final String REQUESTER_ID_VALUE = "urn:uuid:dc6f7b1e-dbff-11ec-abe3-1739d1454b92";
     protected static final SPType SP_TYPE_VALUE = SPType.PUBLIC;
 
     @Autowired

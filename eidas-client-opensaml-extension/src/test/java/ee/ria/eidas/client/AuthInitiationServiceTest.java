@@ -60,7 +60,8 @@ import static org.mockito.Mockito.verify;
 @RunWith(SpringJUnit4ClassRunner.class)
 @ContextConfiguration(classes = { EidasClientConfiguration.class, EidasCredentialsConfiguration.class })
 public class AuthInitiationServiceTest {
-    private final String REQUESTER_ID_VALUE = "TEST-REQUESTER-ID";
+    private final String REQUESTER_ID_VALUE_UUID = "urn:uuid:b6e9db0c-db76-11ec-bce2-0f70e7740827";
+    private final String REQUESTER_ID_VALUE_URI = "test:requesterid";
     private final SPType SP_TYPE_VALUE = SPType.PUBLIC;
 
     @Autowired
@@ -99,7 +100,7 @@ public class AuthInitiationServiceTest {
     @Test
     public void returnsHttpPostBindingResponseWithDefaultNaturalHumanRequestAttributesIfNoAttributesArePassedFromRequest() throws Exception {
         MockHttpServletResponse httpResponse = new MockHttpServletResponse();
-        authenticationService.authenticate(httpResponse, "EE", AssuranceLevel.LOW, "test", null, SP_TYPE_VALUE, REQUESTER_ID_VALUE);
+        authenticationService.authenticate(httpResponse, "EE", AssuranceLevel.LOW, "test", null, SP_TYPE_VALUE, REQUESTER_ID_VALUE_UUID);
 
         assertEquals(HttpStatus.OK.value(), httpResponse.getStatus());
         String htmlForm = "<form action=\"" + HTMLEncoder.encodeForHTMLAttribute(idpMetadataResolver.getSingeSignOnService().getLocation()) + "\" method=\"post\">";
@@ -123,7 +124,7 @@ public class AuthInitiationServiceTest {
         String eidasAttributesSet = requestEidasAttributes.stream().map(EidasAttribute::getFriendlyName).collect(Collectors.joining(" "));
 
         MockHttpServletResponse httpResponse = new MockHttpServletResponse();
-        authenticationService.authenticate(httpResponse, "EE", AssuranceLevel.LOW, "test", eidasAttributesSet, SP_TYPE_VALUE, REQUESTER_ID_VALUE);
+        authenticationService.authenticate(httpResponse, "EE", AssuranceLevel.LOW, "test", eidasAttributesSet, SP_TYPE_VALUE, REQUESTER_ID_VALUE_UUID);
 
         assertEquals(HttpStatus.OK.value(), httpResponse.getStatus());
         String responseContent = httpResponse.getContentAsString();
@@ -136,7 +137,7 @@ public class AuthInitiationServiceTest {
         String eidasAttributesSet = requestEidasAttributes.stream().map(EidasAttribute::getFriendlyName).collect(Collectors.joining(" "));
 
         MockHttpServletResponse httpResponse = new MockHttpServletResponse();
-        authenticationService.authenticate(httpResponse, "EE", AssuranceLevel.LOW, "test", eidasAttributesSet, SP_TYPE_VALUE, REQUESTER_ID_VALUE);
+        authenticationService.authenticate(httpResponse, "EE", AssuranceLevel.LOW, "test", eidasAttributesSet, SP_TYPE_VALUE, REQUESTER_ID_VALUE_URI);
 
         assertEquals(HttpStatus.OK.value(), httpResponse.getStatus());
         String responseContent = httpResponse.getContentAsString();
@@ -146,13 +147,13 @@ public class AuthInitiationServiceTest {
     @Test(expected = EidasClientException.class)
     public void invalidRelayState_throwsException() {
         MockHttpServletResponse httpResponse = new MockHttpServletResponse();
-        authenticationService.authenticate(httpResponse, "EE", AssuranceLevel.LOW, "ä", null, SP_TYPE_VALUE, REQUESTER_ID_VALUE);
+        authenticationService.authenticate(httpResponse, "EE", AssuranceLevel.LOW, "ä", null, SP_TYPE_VALUE, REQUESTER_ID_VALUE_UUID);
     }
 
     @Test(expected = EidasClientException.class)
     public void invalidCountry_throwsException() {
         MockHttpServletResponse httpResponse = new MockHttpServletResponse();
-        authenticationService.authenticate(httpResponse, "NEVERLAND", AssuranceLevel.LOW, "test", null, SP_TYPE_VALUE, REQUESTER_ID_VALUE);
+        authenticationService.authenticate(httpResponse, "NEVERLAND", AssuranceLevel.LOW, "test", null, SP_TYPE_VALUE, REQUESTER_ID_VALUE_UUID);
     }
 
     @Test(expected = EidasClientException.class)
