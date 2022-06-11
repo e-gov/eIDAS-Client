@@ -7,7 +7,7 @@
     <parent>
         <artifactId>eidas-client-parent</artifactId>
         <groupId>ee.ria.eidas</groupId>
-        <version>1.1.13</version>
+        <version>1.2.0</version>
     </parent>
 
     <artifactId>eidas-client-webapp</artifactId>
