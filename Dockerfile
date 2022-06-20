@@ -10,7 +10,7 @@ RUN mvn -s settings.xml dependency:go-offline -B
 
 COPY ./eidas-client-opensaml-extension ./eidas-client-opensaml-extension
 COPY ./eidas-client-webapp ./eidas-client-webapp
-RUN mvn -s settings.xml clean package -DskipTests=true -Djacoco.skip=true -P jar
+RUN mvn -s settings.xml clean package -DskipTests=true -Djacoco.skip=true -Dmaven.gitcommitid.skip=true -P jar
 RUN java -Djarmode=layertools -jar eidas-client-webapp/target/*.jar extract
 
 FROM ${DOCKERHUB_MIRROR}library/maven:3.6.3-jdk-8-slim
