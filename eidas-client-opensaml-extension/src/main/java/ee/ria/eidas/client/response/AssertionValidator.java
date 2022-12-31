@@ -2,6 +2,7 @@ package ee.ria.eidas.client.response;
 
 import ee.ria.eidas.client.authnrequest.AssuranceLevel;
 import ee.ria.eidas.client.authnrequest.EidasAttribute;
+import ee.ria.eidas.client.authnrequest.NonNotifiedAssuranceLevel;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.exception.InvalidRequestException;
 import ee.ria.eidas.client.session.RequestSession;
@@ -12,9 +13,12 @@ import org.opensaml.saml.saml2.core.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Slf4j
 public class AssertionValidator {
+
+    private List<NonNotifiedAssuranceLevel> nonNotifiedAssuranceLevels;
 
     private int acceptedClockSkew;
 
@@ -32,6 +36,7 @@ public class AssertionValidator {
         this.idpMetadataUrl = properties.getIdpMetadataUrl();
         this.callbackUrl = properties.getCallbackUrl();
         this.spEntityID = properties.getSpEntityId();
+        this.nonNotifiedAssuranceLevels = properties.getNonNotifiedAssuranceLevels();
     }
 
     public void validate(Assertion assertion, RequestSession requestSession) {
@@ -65,6 +70,7 @@ public class AssertionValidator {
     }
 
     private void validateExistingRequestSession(Assertion assertion, RequestSession requestSession) {
+
         String requestID = assertion.getSubject().getSubjectConfirmations().get(0).getSubjectConfirmationData().getInResponseTo();
         if (requestSession == null || !requestSession.getRequestId().equals(requestID)) {
             throw new InvalidRequestException("No corresponding SAML request session found for the given response assertion!");
@@ -74,6 +80,9 @@ public class AssertionValidator {
                 throw new InvalidRequestException("Request session with ID " + requestID + " has expired!");
             }
         }
+
+        getNonNotifiedConfigurationForCountry(assertion, requestSession.getCountry())
+                .ifPresent(notifiedAssuranceLevel -> convertNonNotifiedLoaToNotified(assertion, notifiedAssuranceLevel));
 
         boolean isReturnedLoaValid = false;
         for (AssuranceLevel loa : AssuranceLevel.values()) {
@@ -87,6 +96,19 @@ public class AssertionValidator {
         }
 
         validateRequestedMandatoryEidasDatasetsPresent(requestSession.getRequestedAttributes().stream().filter(EidasAttribute::isRequired).collect(Collectors.toList()), assertion);
+    }
+
+    private void convertNonNotifiedLoaToNotified(Assertion assertion, NonNotifiedAssuranceLevel nonNotifiedAssuranceLevel) {
+        assertion.getAuthnStatements().get(0).getAuthnContext().getAuthnContextClassRef().setAuthnContextClassRef(nonNotifiedAssuranceLevel.getNotifiedLevel());
+    }
+
+    private Optional<NonNotifiedAssuranceLevel> getNonNotifiedConfigurationForCountry(Assertion assertion, String country) {
+        String loa = assertion.getAuthnStatements().get(0).getAuthnContext().getAuthnContextClassRef().getAuthnContextClassRef();
+        return Optional.ofNullable(nonNotifiedAssuranceLevels)
+                .map(List::stream).orElseGet(Stream::empty)
+                .filter(c -> c.getCountry().equals(country))
+                .filter(c -> c.getNonNotifiedLevel().equals(loa))
+                .findFirst();
     }
 
     private void validateEidasRestrictions(Assertion assertion) {

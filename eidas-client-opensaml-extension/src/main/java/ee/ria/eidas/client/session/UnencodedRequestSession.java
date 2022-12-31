@@ -13,6 +13,7 @@ public class UnencodedRequestSession implements RequestSession {
     private final DateTime issueInstant;
     private final AssuranceLevel loa;
     private final List<EidasAttribute> requestedAttributes;
+    private final String country;
 
     @Override
     public int compareTo(final RequestSession o) {
@@ -39,6 +40,11 @@ class EncodedRequestSession implements RequestSession {
 
     @Override
     public AssuranceLevel getLoa() {
+        throw new UnsupportedOperationException(OPERATION_NOT_SUPPORTED);
+    }
+
+    @Override
+    public String getCountry() {
         throw new UnsupportedOperationException(OPERATION_NOT_SUPPORTED);
     }
 

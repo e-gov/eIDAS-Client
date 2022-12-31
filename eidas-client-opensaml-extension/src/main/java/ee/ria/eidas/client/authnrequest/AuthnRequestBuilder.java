@@ -92,9 +92,6 @@ public class AuthnRequestBuilder {
     }
 
     private RequestedAuthnContext buildRequestedAuthnContext(AssuranceLevel loa, String country) {
-        if (loa == null) {
-            loa = eidasClientProperties.getDefaultLoa();
-        }
 
         AuthnContextClassRef loaAuthnContextClassRef = OpenSAMLUtils.buildSAMLObject(AuthnContextClassRef.class);
         loaAuthnContextClassRef.setAuthnContextClassRef(loa.getUri());

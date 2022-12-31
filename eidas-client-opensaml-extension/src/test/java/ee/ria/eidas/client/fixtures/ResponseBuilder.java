@@ -58,10 +58,18 @@ public class ResponseBuilder {
     }
 
     public Response buildResponse(String issuer) {
-        return buildResponse(issuer, null);
+        return buildResponse(issuer, null, null);
     }
 
     public Response buildResponse(String issuer, Map<InputType, Optional<Object>> inputMap) {
+        return buildResponse(issuer, inputMap, null);
+    }
+
+    public Response buildResponse(String issuer, String loa) {
+        return buildResponse(issuer, null, loa);
+    }
+
+    public Response buildResponse(String issuer, Map<InputType, Optional<Object>> inputMap, String loa) {
         try {
             DateTime issueInstant = getInput(inputMap, InputType.ISSUE_INSTANT, () -> new DateTime());
             Signature signature = createSignature();
@@ -74,7 +82,7 @@ public class ResponseBuilder {
             authnResponse.setID(OpenSAMLUtils.generateSecureRandomId());
             authnResponse.setSignature(signature);
             authnResponse.setStatus(getInput(inputMap, InputType.STATUS, () -> buildSuccessStatus()));
-            authnResponse.getEncryptedAssertions().add(buildAssertion(issueInstant, issuer, inputMap));
+            authnResponse.getEncryptedAssertions().add(buildAssertion(issueInstant, issuer, inputMap, loa));
 
             XMLObjectProviderRegistrySupport.getMarshallerFactory().getMarshaller(authnResponse).marshall(authnResponse);
             Signer.signObject(signature);
@@ -144,7 +152,11 @@ public class ResponseBuilder {
         return status;
     }
 
-    private EncryptedAssertion buildAssertion(DateTime issueInstant, String issuer, Map<InputType, Optional<Object>> inputMap) throws Exception {
+    private EncryptedAssertion buildAssertion(DateTime issueInstant, String issuer, Map<InputType, Optional<Object>> inputMap, String loa) throws Exception {
+
+        if (loa == null) {
+            loa = AssuranceLevel.LOW.getUri();
+        }
         AttributeStatement attributeStatement = getInput(inputMap, InputType.ATTRIBUTE_STATEMENT, () -> buildAttributeStatement());
         Signature signature = createSignature();
 
@@ -155,7 +167,7 @@ public class ResponseBuilder {
         assertion.setIssuer(buildIssuer(issuer));
         assertion.setSubject(buildSubject(issueInstant, inputMap));
         assertion.setConditions(buildConditions(issueInstant, inputMap));
-        assertion.getAuthnStatements().add(buildAuthnStatement(issueInstant, inputMap));
+        assertion.getAuthnStatements().add(buildAuthnStatement(issueInstant, inputMap, loa));
         if (attributeStatement != null) assertion.getAttributeStatements().add(attributeStatement);
         assertion.setSignature(signature);
 
@@ -234,7 +246,8 @@ public class ResponseBuilder {
         return conditions;
     }
 
-    private AuthnStatement buildAuthnStatement(DateTime issueInstant, Map<InputType, Optional<Object>> inputMap) {
+    private AuthnStatement buildAuthnStatement(DateTime issueInstant, Map<InputType, Optional<Object>> inputMap, String loa) {
+
         AuthnStatement authnStatement = new AuthnStatementBuilder().buildObject();
         authnStatement.setAuthnInstant(issueInstant.minusMinutes(1));
 
@@ -242,7 +255,7 @@ public class ResponseBuilder {
             AuthnContext lambdaAuthnContext = new AuthnContextBuilder().buildObject();
 
             AuthnContextClassRef authnContextClassRef = new AuthnContextClassRefBuilder().buildObject();
-            authnContextClassRef.setAuthnContextClassRef(AssuranceLevel.LOW.getUri());
+            authnContextClassRef.setAuthnContextClassRef(loa);
             lambdaAuthnContext.setAuthnContextClassRef(authnContextClassRef);
 
             AuthnContextDecl authnContextDecl = new AuthnContextDeclBuilder().buildObject();

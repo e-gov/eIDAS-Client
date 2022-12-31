@@ -206,7 +206,7 @@ public class EidasClientApplicationHazelcastDisabledTest extends EidasClientAppl
 
         ResponseBuilder mockResponseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
         MockHttpServletRequest mockAuthnRequest = buildMockHttpServletRequest("SAMLResponse", mockResponseBuilder.buildResponse("classpath:idp-metadata.xml"));
-        UnencodedRequestSession requestSession = new UnencodedRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.SUBSTANTIAL, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
+        UnencodedRequestSession requestSession = new UnencodedRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.SUBSTANTIAL, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET, "CA");
         requestSessionService.saveRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, requestSession);
         try {
             authResponseService.getAuthenticationResult(mockAuthnRequest);

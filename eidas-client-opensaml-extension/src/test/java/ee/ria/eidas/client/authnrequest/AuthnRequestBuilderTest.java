@@ -108,7 +108,7 @@ public class AuthnRequestBuilderTest {
     @Test
     public void buildAuthnRequestWhenNonNotifiedLoaIsDefinedForCountry() {
         List<EidasAttribute> requestEidasAttributes = Arrays.asList(EidasAttribute.CURRENT_GIVEN_NAME, EidasAttribute.CURRENT_FAMILY_NAME, EidasAttribute.GENDER);
-        AuthnRequest authnRequest = requestBuilder.buildAuthnRequest(AssuranceLevel.SUBSTANTIAL, requestEidasAttributes, SP_TYPE_VALUE, REQUESTER_ID_VALUE, "UA");
+        AuthnRequest authnRequest = requestBuilder.buildAuthnRequest(AssuranceLevel.SUBSTANTIAL, requestEidasAttributes, SP_TYPE_VALUE, REQUESTER_ID_VALUE, "CA");
 
         assertAuthnRequest(authnRequest, requestEidasAttributes, SP_TYPE_VALUE, REQUESTER_ID_VALUE, AuthnContextComparisonTypeEnumeration.EXACT, properties.getNonNotifiedAssuranceLevels().get(0).nonNotifiedLevel);
 
@@ -123,7 +123,7 @@ public class AuthnRequestBuilderTest {
     @Test
     public void buildAuthnRequestWhenNonNotifiedLoaIsDefinedForCountryAndRequestedNotifiedLevelIsLowerThanConfigured() {
         List<EidasAttribute> requestEidasAttributes = Arrays.asList(EidasAttribute.CURRENT_GIVEN_NAME, EidasAttribute.CURRENT_FAMILY_NAME, EidasAttribute.GENDER);
-        AuthnRequest authnRequest = requestBuilder.buildAuthnRequest(AssuranceLevel.LOW, requestEidasAttributes, SP_TYPE_VALUE, REQUESTER_ID_VALUE, "UA");
+        AuthnRequest authnRequest = requestBuilder.buildAuthnRequest(AssuranceLevel.LOW, requestEidasAttributes, SP_TYPE_VALUE, REQUESTER_ID_VALUE, "CA");
 
         assertAuthnRequest(authnRequest, requestEidasAttributes, SP_TYPE_VALUE, REQUESTER_ID_VALUE, AuthnContextComparisonTypeEnumeration.EXACT, properties.getNonNotifiedAssuranceLevels().get(0).nonNotifiedLevel);
 

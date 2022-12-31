@@ -74,6 +74,9 @@ public class AuthInitiationService {
         validateNullOrRegex("RelayState", relayState, RELAYSTATE_VALIDATION_REGEXP);
         validateRegex("RequesterID", requesterId, REQUESTER_ID_VALIDATION_REGEXP);
         List<EidasAttribute> eidasAttributes = determineEidasAttributes(attributesSet);
+        if (loa == null) {
+            loa = eidasClientProperties.getDefaultLoa();
+        }
         redirectUserForAuthentication(response, country, loa, relayState, eidasAttributes, spType, requesterId);
     }
 
@@ -121,13 +124,12 @@ public class AuthInitiationService {
             String requesterId) {
         AuthnRequestBuilder authnRequestBuilder = new AuthnRequestBuilder(authnReqSigningCredential, eidasClientProperties, idpMetadataResolver.getSingeSignOnService(), applicationEventPublisher);
         AuthnRequest authnRequest = authnRequestBuilder.buildAuthnRequest(loa, eidasAttributes, spType, requesterId, country);
-        saveRequestAsSession(authnRequest, eidasAttributes);
+        saveRequestAsSession(authnRequest, eidasAttributes, loa, country);
         redirectUserWithRequest(httpServletResponse, authnRequest, country, relayState);
     }
 
-    private void saveRequestAsSession(AuthnRequest authnRequest, List<EidasAttribute> eidasAttributes) {
-        String loa = authnRequest.getRequestedAuthnContext().getAuthnContextClassRefs().get(0).getAuthnContextClassRef();
-        RequestSession requestSession = new UnencodedRequestSession(authnRequest.getID(), authnRequest.getIssueInstant(), AssuranceLevel.toEnum(loa), eidasAttributes);
+    private void saveRequestAsSession(AuthnRequest authnRequest, List<EidasAttribute> eidasAttributes, AssuranceLevel loa, String country) {
+        RequestSession requestSession = new UnencodedRequestSession(authnRequest.getID(), authnRequest.getIssueInstant(), loa, eidasAttributes, country);
         requestSessionService.saveRequestSession(requestSession.getRequestId(), requestSession);
     }
 

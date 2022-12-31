@@ -42,7 +42,7 @@ public class LocalRequestSessionServiceImplTest {
     @Test
     public void getRequestSession_returnsSession_whenSavedBeforehand() {
         String requestID = "_4ededd23fb88e6964df71b8bdb1c706f";
-        UnencodedRequestSession requestSession = new UnencodedRequestSession(requestID, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
+        UnencodedRequestSession requestSession = new UnencodedRequestSession(requestID, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET, "CA");
         requestSessionService.saveRequestSession(requestID, requestSession);
         assertNotNull(requestSessionService.getAndRemoveRequestSession(requestID));
     }
@@ -59,7 +59,7 @@ public class LocalRequestSessionServiceImplTest {
         expectedEx.expectMessage("A request with an ID: _4ededd23fb88e6964df71b8bdb1c706f already exists!");
 
         String requestID = "_4ededd23fb88e6964df71b8bdb1c706f";
-        UnencodedRequestSession requestSession = new UnencodedRequestSession(requestID, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
+        UnencodedRequestSession requestSession = new UnencodedRequestSession(requestID, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET, "CA");
         requestSessionService.saveRequestSession(requestID, requestSession);
         requestSessionService.saveRequestSession(requestID, requestSession);
     }
@@ -67,7 +67,7 @@ public class LocalRequestSessionServiceImplTest {
     @Test
     public void getRequestSession_returnsNull_whenSessionIsRemovedBeforehand() {
         String requestID = "_4ededd23fb88e6964df71b8bdb1c706f";
-        UnencodedRequestSession requestSession = new UnencodedRequestSession(requestID, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
+        UnencodedRequestSession requestSession = new UnencodedRequestSession(requestID, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET, "CA");
         requestSessionService.saveRequestSession(requestID, requestSession);
         requestSessionService.getAndRemoveRequestSession(requestID);
 
@@ -78,7 +78,7 @@ public class LocalRequestSessionServiceImplTest {
     public void getRequestSession_returnsNull_whenSessionExpiresAndThereforeIsRemovedBeforehand() throws InterruptedException {
         String requestID = "_4ededd23fb88e6964df71b8bdb1c706f";
         DateTime timeInPast = new DateTime().minusSeconds(properties.getMaximumAuthenticationLifetime()).minusSeconds(properties.getAcceptedClockSkew()).minusSeconds(1);
-        UnencodedRequestSession requestSession = new UnencodedRequestSession(requestID, timeInPast, AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
+        UnencodedRequestSession requestSession = new UnencodedRequestSession(requestID, timeInPast, AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET, "CA");
         requestSessionService.saveRequestSession(requestID, requestSession);
         requestSessionService.removeExpiredSessions();
         assertNull(requestSessionService.getAndRemoveRequestSession(requestID));

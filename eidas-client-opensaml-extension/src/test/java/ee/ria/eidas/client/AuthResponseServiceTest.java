@@ -126,7 +126,7 @@ public class AuthResponseServiceTest {
         mockResponseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
 
         requestSessionService.getAndRemoveRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO);
-        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
+        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET, "CA");
 
         Logger root = (Logger) LoggerFactory.getLogger(AuthResponseService.class);
         root.addAppender(mockedAppender);
@@ -137,7 +137,7 @@ public class AuthResponseServiceTest {
     public void whenResponseStatusSuccessAndValidatedSuccessfully_AuthenticationResultIsReturned() throws Exception {
         httpRequest = buildMockHttpServletRequest("SAMLResponse", mockResponseBuilder.buildResponse("classpath:idp-metadata.xml"));
         AuthenticationResult result = authResponseService.getAuthenticationResult(httpRequest);
-        assertAuthenticationResult(result);
+        assertAuthenticationResult(result, AssuranceLevel.LOW.getUri());
 
         verifyLogs("AuthnResponse ID", Level.INFO);
         verifyLogStartsWithXML("AuthnResponse: ", Level.DEBUG);
@@ -146,12 +146,35 @@ public class AuthResponseServiceTest {
     }
 
     @Test
-    public void whenResponseLoaLevelIsLowerThanRequested_thenExceptionIsThrow() throws Exception {
+    public void whenResponseStatusSuccessAndLoaIsValidNotNotified_AuthenticationResultIsReturned() throws Exception {
+        httpRequest = buildMockHttpServletRequest("SAMLResponse", mockResponseBuilder.buildResponse("classpath:idp-metadata.xml", "http://eidas.europa.eu/NonNotified/LoA/low"));
+        AuthenticationResult result = authResponseService.getAuthenticationResult(httpRequest);
+        assertAuthenticationResult(result, AssuranceLevel.SUBSTANTIAL.getUri());
+
+        verifyLogs("AuthnResponse ID", Level.INFO);
+        verifyLogStartsWithXML("AuthnResponse: ", Level.DEBUG);
+        verifyLogs("Decrypted Assertion ID", Level.INFO);
+        verifyLogs("AuthnResponse validation: " + StatusCode.SUCCESS, Level.INFO);
+    }
+
+    @Test
+    public void whenResponseStatusSuccessAndLoaIsInvalidNotNotified_thenExceptionIsThrown() throws Exception {
+        expectedEx.expect(InvalidRequestException.class);
+        expectedEx.expectMessage("Invalid SAMLResponse. AuthnContextClassRef is not greater or equal to the request level of assurance!");
+
+        httpRequest = buildMockHttpServletRequest("SAMLResponse", mockResponseBuilder.buildResponse("classpath:idp-metadata.xml", "http://eidas.europa.eu/NonNotified/LoA/invalid"));
+
+        AuthenticationResult result = authResponseService.getAuthenticationResult(httpRequest);
+        fail("Should not reach this!");
+    }
+
+    @Test
+    public void whenResponseLoaLevelIsLowerThanRequested_thenExceptionIsThrown() throws Exception {
         expectedEx.expect(InvalidRequestException.class);
         expectedEx.expectMessage("Invalid SAMLResponse. AuthnContextClassRef is not greater or equal to the request level of assurance!");
 
         requestSessionService.getAndRemoveRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO);
-        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.SUBSTANTIAL, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
+        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.SUBSTANTIAL, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET, "CA");
         httpRequest = buildMockHttpServletRequest("SAMLResponse", mockResponseBuilder.buildResponse("classpath:idp-metadata.xml"));
         AuthenticationResult result = authResponseService.getAuthenticationResult(httpRequest);
         fail("Should not reach this!");
@@ -166,7 +189,7 @@ public class AuthResponseServiceTest {
         List<EidasAttribute> requestedAttributes = new ArrayList<>(AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
         requestedAttributes.addAll(Arrays.asList(EidasAttribute.LEGAL_NAME, EidasAttribute.LEGAL_PERSON_IDENTIFIER, EidasAttribute.LEI));
         requestSessionService.getAndRemoveRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO);
-        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.LOW, requestedAttributes);
+        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.LOW, requestedAttributes, "CA");
 
         AttributeStatement attributeStatement = new AttributeStatementBuilder().buildObject();
         attributeStatement.getAttributes().add(mockResponseBuilder.buildAttribute("FirstName", "http://eidas.europa.eu/attributes/naturalperson/CurrentGivenName", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri", "eidas-natural:CurrentGivenNameType", "Alexander", "Αλέξανδρος"));
@@ -178,7 +201,7 @@ public class AuthResponseServiceTest {
     }
 
     @Test
-    public void whenResponseDoesNotHaveRequestSession_thenExceptionIsThrow2() throws Exception {
+    public void whenResponseDoesNotHaveRequestSession_thenExceptionIsThrown2() throws Exception {
         expectedEx.expect(InvalidRequestException.class);
         expectedEx.expectMessage("Invalid SAMLResponse. Assertion issuer's value is not equal to the configured IDP metadata url!");
 
@@ -188,7 +211,7 @@ public class AuthResponseServiceTest {
     }
 
     @Test
-    public void whenResponseDoesNotHaveRequestSession_thenExceptionIsThrow() throws Exception {
+    public void whenResponseDoesNotHaveRequestSession_thenExceptionIsThrown() throws Exception {
         expectedEx.expect(InvalidRequestException.class);
         expectedEx.expectMessage("Invalid SAMLResponse. No corresponding SAML request session found for the given response!");
 
@@ -385,8 +408,8 @@ public class AuthResponseServiceTest {
         fail("Should not reach this!");
     }
 
-    private void assertAuthenticationResult(AuthenticationResult result) {
-        assertEquals(AssuranceLevel.LOW.getUri(), result.getLevelOfAssurance());
+    private void assertAuthenticationResult(AuthenticationResult result, String loa) {
+        assertEquals(loa, result.getLevelOfAssurance());
         assertEquals("Αλέξανδρος", result.getAttributes().get("FirstName"));
         assertEquals("Ωνάσης", result.getAttributes().get("FamilyName"));
         assertEquals("Alexander", result.getAttributesTransliterated().get("FirstName"));
@@ -413,8 +436,8 @@ public class AuthResponseServiceTest {
         return httpRequest;
     }
 
-    private void saveNewRequestSession(String requestID, DateTime issueIntant, AssuranceLevel loa, List<EidasAttribute> requestedAttributes) {
-        UnencodedRequestSession requestSession = new UnencodedRequestSession(requestID, issueIntant, loa, requestedAttributes);
+    private void saveNewRequestSession(String requestID, DateTime issueIntant, AssuranceLevel loa, List<EidasAttribute> requestedAttributes, String country) {
+        UnencodedRequestSession requestSession = new UnencodedRequestSession(requestID, issueIntant, loa, requestedAttributes, country);
         requestSessionService.saveRequestSession(requestID, requestSession);
     }
 

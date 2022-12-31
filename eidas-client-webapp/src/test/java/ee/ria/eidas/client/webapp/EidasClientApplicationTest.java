@@ -744,7 +744,7 @@ public abstract class EidasClientApplicationTest {
     }
 
     protected void saveNewRequestSession(String requestID, DateTime issueInstant, AssuranceLevel loa, List<EidasAttribute> requestedAttributes) {
-        UnencodedRequestSession requestSession = new UnencodedRequestSession(requestID, issueInstant, loa, requestedAttributes);
+        UnencodedRequestSession requestSession = new UnencodedRequestSession(requestID, issueInstant, loa, requestedAttributes, "CA");
         requestSessionService.saveRequestSession(requestID, requestSession);
     }
 
