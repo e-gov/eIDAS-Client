@@ -2,12 +2,15 @@ package ee.ria.eidas.client.config;
 
 import ee.ria.eidas.client.authnrequest.AssuranceLevel;
 import ee.ria.eidas.client.authnrequest.EidasAttribute;
+import ee.ria.eidas.client.authnrequest.NonNotifiedAssuranceLevel;
 import lombok.Data;
 import org.opensaml.xmlsec.signature.support.SignatureConstants;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.util.Assert;
 import org.springframework.validation.annotation.Validated;
 
 import javax.annotation.Nonnegative;
+import javax.annotation.PostConstruct;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.PositiveOrZero;
@@ -32,6 +35,13 @@ public class EidasClientProperties {
     public static final String DEFAULT_HAZELCAST_ENCRYPTION_ALGORITHM = "AES";
 
     private HsmProperties hsm = new HsmProperties();
+
+    private List<NonNotifiedAssuranceLevel> nonNotifiedAssuranceLevels;
+
+    @PostConstruct
+    public void validateNonNotifiedAssuranceLevels() {
+        Assert.isTrue(hasNoMoreThanOneConfigurationPerCountry(), "Non-notified assurance levels must contain only 1 configuration per country.");
+    }
 
     @NotNull
     private String keystore;
@@ -147,6 +157,15 @@ public class EidasClientProperties {
                 return format("name=eidas\nlibrary=%s\nslotListIndex=%s\n", library, slotListIndex);
             }
         }
+    }
+
+    public boolean hasNoMoreThanOneConfigurationPerCountry() {
+        for (NonNotifiedAssuranceLevel nonNotifiedAssuranceLevel: nonNotifiedAssuranceLevels) {
+            if (nonNotifiedAssuranceLevels.stream().filter(e -> e.getCountry().equals(nonNotifiedAssuranceLevel.getCountry())).count() > 1) {
+                return false;
+            }
+        }
+        return true;
     }
 }
 

@@ -104,7 +104,6 @@ Tabel 2.3.1 - Teenusepakkuja metateabe seadistus
 | `eidas.client.response-decryption-key-pass` | Jah <sup>4</sup> | SAML autentimisvastuse dekrüpteerimisvõtme parool. |
 | `eidas.client.sp-entity-id` | Jah | URL, mis viitab teenusepakkuja metateabele. `/md:EntityDescriptor/@entityID` väärtus metateabes. Näiteks: https://hostname:8889/metadata |
 | `eidas.client.callback-url` | Jah | URL, mis viitab teenusepakkuja SAML`/md:EntityDescriptor/md:SPSSODescriptor/md:AssertionConsumerService/@Location` väärtus metateabes. |
-| `eidas.client.metadata-validity-in-days` | Ei | Konnektorteeenuse metateabe kehtivusaeg päevades. Vaikimisi 1 päev. |
 
 <sup>1</sup> Kohustuslik juhul kui `eidas.client.hsm.enabled=true`
 
@@ -190,6 +189,12 @@ Tabel 2.3.7 - Hazelcast kasutusstatistika otspunkt
 | Parameeter        | Kohustuslik | Kirjeldus, näide |
 | :---------------- | :---------- | :----------------|
 | `management.endpoint.hazelcast.enabled`  | Ei | Võimalikud väärtused: `true`, `false`. Lülitab sisse `/hazelcast` otspunkti. Vaikimisi `false`. |
+
+Tabel 2.3.8 - Mitteteavitatud tagatistasemete seadistus
+
+| `eidas.client.non-notified-assurance-levels[0].country` | Ei | Riik mille korral mitteteavitatud tagatistase kehtib. Iga riigi kohta on lubatud ainult 1 seadistus. |
+| `eidas.client.non-notified-assurance-levels[0].non-notified-level` | Ei | Mitteteavitatud tagatistase. Näide: `http://eidas.europa.eu/NonNotified/LoA/low` |
+| `eidas.client.non-notified-assurance-levels[0].notified-level` | Ei | Kui küsitud tagatistase on võrdne või madalam siin defineeritud teavitatud tagatistasemest, siis rakendub mitteteavitatud tagatistase. Näide: `http://eidas.europa.eu/LoA/substantial` |
 
 
 <a name="votmed"></a>

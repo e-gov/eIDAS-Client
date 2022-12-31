@@ -4,6 +4,7 @@ import ee.ria.eidas.client.authnrequest.AssuranceLevel;
 import ee.ria.eidas.client.authnrequest.AuthnRequestBuilder;
 import ee.ria.eidas.client.authnrequest.EidasAttribute;
 import ee.ria.eidas.client.authnrequest.EidasHTTPPostEncoder;
+import ee.ria.eidas.client.authnrequest.NonNotifiedAssuranceLevel;
 import ee.ria.eidas.client.authnrequest.SPType;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.exception.EidasClientException;
@@ -17,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
 import org.apache.commons.collections.CollectionUtils;
+import org.opensaml.core.xml.XMLObject;
 import org.opensaml.messaging.context.MessageContext;
 import org.opensaml.messaging.encoder.MessageEncodingException;
 import org.opensaml.saml.common.messaging.context.SAMLEndpointContext;
@@ -26,12 +28,15 @@ import org.opensaml.security.credential.Credential;
 import org.opensaml.xmlsec.SignatureSigningParameters;
 import org.opensaml.xmlsec.context.SecurityParametersContext;
 import org.springframework.context.ApplicationEventPublisher;
+import org.w3c.dom.Element;
 
 import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -115,7 +120,7 @@ public class AuthInitiationService {
             SPType spType,
             String requesterId) {
         AuthnRequestBuilder authnRequestBuilder = new AuthnRequestBuilder(authnReqSigningCredential, eidasClientProperties, idpMetadataResolver.getSingeSignOnService(), applicationEventPublisher);
-        AuthnRequest authnRequest = authnRequestBuilder.buildAuthnRequest(loa, eidasAttributes, spType, requesterId);
+        AuthnRequest authnRequest = authnRequestBuilder.buildAuthnRequest(loa, eidasAttributes, spType, requesterId, country);
         saveRequestAsSession(authnRequest, eidasAttributes);
         redirectUserWithRequest(httpServletResponse, authnRequest, country, relayState);
     }

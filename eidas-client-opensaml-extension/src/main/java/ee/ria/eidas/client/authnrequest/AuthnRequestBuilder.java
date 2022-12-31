@@ -28,6 +28,7 @@ import org.springframework.context.ApplicationEventPublisher;
 
 import javax.xml.namespace.QName;
 import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -43,7 +44,7 @@ public class AuthnRequestBuilder {
 
     private final ApplicationEventPublisher applicationEventPublisher;
 
-    public AuthnRequest buildAuthnRequest(AssuranceLevel loa, List<EidasAttribute> eidasAttributes, SPType spType, String requesterId) {
+    public AuthnRequest buildAuthnRequest(AssuranceLevel loa, List<EidasAttribute> eidasAttributes, SPType spType, String requesterId, String country) {
         try {
             AuthnRequest authnRequest = OpenSAMLUtils.buildSAMLObject(AuthnRequest.class);
             authnRequest.setIssueInstant(new DateTime());
@@ -56,7 +57,7 @@ public class AuthnRequestBuilder {
             authnRequest.setID(OpenSAMLUtils.generateSecureRandomId());
             authnRequest.setIssuer(buildIssuer());
             authnRequest.setNameIDPolicy(buildNameIdPolicy());
-            authnRequest.setRequestedAuthnContext(buildRequestedAuthnContext(loa));
+            authnRequest.setRequestedAuthnContext(buildRequestedAuthnContext(loa, country));
             authnRequest.setExtensions(buildExtensions(eidasAttributes, spType, requesterId));
 
             addSignature(authnRequest);
@@ -90,20 +91,30 @@ public class AuthnRequestBuilder {
         return issuer;
     }
 
-    private RequestedAuthnContext buildRequestedAuthnContext(AssuranceLevel loa) {
-        RequestedAuthnContext requestedAuthnContext = OpenSAMLUtils.buildSAMLObject(RequestedAuthnContext.class);
-        requestedAuthnContext.setComparison(AuthnContextComparisonTypeEnumeration.MINIMUM);
-
-        AuthnContextClassRef loaAuthnContextClassRef = OpenSAMLUtils.buildSAMLObject(AuthnContextClassRef.class);
-
+    private RequestedAuthnContext buildRequestedAuthnContext(AssuranceLevel loa, String country) {
         if (loa == null) {
             loa = eidasClientProperties.getDefaultLoa();
         }
-        loaAuthnContextClassRef.setAuthnContextClassRef(loa.getUri());
 
+        AuthnContextClassRef loaAuthnContextClassRef = OpenSAMLUtils.buildSAMLObject(AuthnContextClassRef.class);
+        loaAuthnContextClassRef.setAuthnContextClassRef(loa.getUri());
+        RequestedAuthnContext requestedAuthnContext = OpenSAMLUtils.buildSAMLObject(RequestedAuthnContext.class);
+        requestedAuthnContext.setComparison(AuthnContextComparisonTypeEnumeration.MINIMUM);
         requestedAuthnContext.getAuthnContextClassRefs().add(loaAuthnContextClassRef);
 
+        Optional<NonNotifiedAssuranceLevel> nonNotifiedLevel = getNonNotifiedLevel(loa, country);
+        if (nonNotifiedLevel.isPresent()) {
+            loaAuthnContextClassRef.setAuthnContextClassRef(nonNotifiedLevel.get().getNonNotifiedLevel());
+            requestedAuthnContext.setComparison(AuthnContextComparisonTypeEnumeration.EXACT);
+        }
         return requestedAuthnContext;
+    }
+
+    private Optional<NonNotifiedAssuranceLevel> getNonNotifiedLevel(AssuranceLevel loa, String country) {
+        return eidasClientProperties.getNonNotifiedAssuranceLevels().stream()
+                .filter(c -> c.getCountry().equals(country))
+                .filter(c -> loa.getLevel() <= AssuranceLevel.toEnum(c.getNotifiedLevel()).getLevel())
+                .findFirst();
     }
 
     private Extensions buildExtensions(List<EidasAttribute> eidasAttributes, SPType spTypeValue, String requesterIdValue) {

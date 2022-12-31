@@ -93,9 +93,54 @@ public class AuthnRequestBuilderTest {
     @Test
     public void buildAuthnRequest() {
         List<EidasAttribute> requestEidasAttributes = Arrays.asList(EidasAttribute.CURRENT_GIVEN_NAME, EidasAttribute.CURRENT_FAMILY_NAME, EidasAttribute.GENDER);
-        AuthnRequest authnRequest = requestBuilder.buildAuthnRequest(AssuranceLevel.SUBSTANTIAL, requestEidasAttributes, SP_TYPE_VALUE, REQUESTER_ID_VALUE);
+        AuthnRequest authnRequest = requestBuilder.buildAuthnRequest(AssuranceLevel.SUBSTANTIAL, requestEidasAttributes, SP_TYPE_VALUE, REQUESTER_ID_VALUE, "country");
 
-        assertAuthnRequest(authnRequest, requestEidasAttributes, SP_TYPE_VALUE, REQUESTER_ID_VALUE);
+        assertAuthnRequest(authnRequest, requestEidasAttributes, SP_TYPE_VALUE, REQUESTER_ID_VALUE, AuthnContextComparisonTypeEnumeration.MINIMUM, AssuranceLevel.SUBSTANTIAL.getUri());
+
+        InputStream authnRequestInputStream = new ByteArrayInputStream(OpenSAMLUtils.getXmlString(authnRequest).getBytes());
+        InputStream schemaInputStream = getClass().getResourceAsStream("/saml-schema-protocol-2.0");
+        validateXMLAgainstSchema(authnRequestInputStream, schemaInputStream);
+
+        verifyLogs("AuthnRequest building succeeded", Level.INFO);
+        verifyLogs("AuthnRequest: " + OpenSAMLUtils.getXmlString(authnRequest), Level.DEBUG);
+    }
+
+    @Test
+    public void buildAuthnRequestWhenNonNotifiedLoaIsDefinedForCountry() {
+        List<EidasAttribute> requestEidasAttributes = Arrays.asList(EidasAttribute.CURRENT_GIVEN_NAME, EidasAttribute.CURRENT_FAMILY_NAME, EidasAttribute.GENDER);
+        AuthnRequest authnRequest = requestBuilder.buildAuthnRequest(AssuranceLevel.SUBSTANTIAL, requestEidasAttributes, SP_TYPE_VALUE, REQUESTER_ID_VALUE, "UA");
+
+        assertAuthnRequest(authnRequest, requestEidasAttributes, SP_TYPE_VALUE, REQUESTER_ID_VALUE, AuthnContextComparisonTypeEnumeration.EXACT, properties.getNonNotifiedAssuranceLevels().get(0).nonNotifiedLevel);
+
+        InputStream authnRequestInputStream = new ByteArrayInputStream(OpenSAMLUtils.getXmlString(authnRequest).getBytes());
+        InputStream schemaInputStream = getClass().getResourceAsStream("/saml-schema-protocol-2.0");
+        validateXMLAgainstSchema(authnRequestInputStream, schemaInputStream);
+
+        verifyLogs("AuthnRequest building succeeded", Level.INFO);
+        verifyLogs("AuthnRequest: " + OpenSAMLUtils.getXmlString(authnRequest), Level.DEBUG);
+    }
+
+    @Test
+    public void buildAuthnRequestWhenNonNotifiedLoaIsDefinedForCountryAndRequestedNotifiedLevelIsLowerThanConfigured() {
+        List<EidasAttribute> requestEidasAttributes = Arrays.asList(EidasAttribute.CURRENT_GIVEN_NAME, EidasAttribute.CURRENT_FAMILY_NAME, EidasAttribute.GENDER);
+        AuthnRequest authnRequest = requestBuilder.buildAuthnRequest(AssuranceLevel.LOW, requestEidasAttributes, SP_TYPE_VALUE, REQUESTER_ID_VALUE, "UA");
+
+        assertAuthnRequest(authnRequest, requestEidasAttributes, SP_TYPE_VALUE, REQUESTER_ID_VALUE, AuthnContextComparisonTypeEnumeration.EXACT, properties.getNonNotifiedAssuranceLevels().get(0).nonNotifiedLevel);
+
+        InputStream authnRequestInputStream = new ByteArrayInputStream(OpenSAMLUtils.getXmlString(authnRequest).getBytes());
+        InputStream schemaInputStream = getClass().getResourceAsStream("/saml-schema-protocol-2.0");
+        validateXMLAgainstSchema(authnRequestInputStream, schemaInputStream);
+
+        verifyLogs("AuthnRequest building succeeded", Level.INFO);
+        verifyLogs("AuthnRequest: " + OpenSAMLUtils.getXmlString(authnRequest), Level.DEBUG);
+    }
+
+    @Test
+    public void buildAuthnRequestWhenNonNotifiedLoaLevelTooLow() {
+        List<EidasAttribute> requestEidasAttributes = Arrays.asList(EidasAttribute.CURRENT_GIVEN_NAME, EidasAttribute.CURRENT_FAMILY_NAME, EidasAttribute.GENDER);
+        AuthnRequest authnRequest = requestBuilder.buildAuthnRequest(AssuranceLevel.HIGH, requestEidasAttributes, SP_TYPE_VALUE, REQUESTER_ID_VALUE, "UA");
+
+        assertAuthnRequest(authnRequest, requestEidasAttributes, SP_TYPE_VALUE, REQUESTER_ID_VALUE, AuthnContextComparisonTypeEnumeration.MINIMUM, AssuranceLevel.HIGH.getUri());
 
         InputStream authnRequestInputStream = new ByteArrayInputStream(OpenSAMLUtils.getXmlString(authnRequest).getBytes());
         InputStream schemaInputStream = getClass().getResourceAsStream("/saml-schema-protocol-2.0");
@@ -108,9 +153,9 @@ public class AuthnRequestBuilderTest {
     @Test
     public void buildAuthnRequestWithNoEidasAttributes() {
         List<EidasAttribute> requestedEidasAttributes = Collections.emptyList();
-        AuthnRequest authnRequest = requestBuilder.buildAuthnRequest(AssuranceLevel.SUBSTANTIAL, requestedEidasAttributes, SP_TYPE_VALUE, REQUESTER_ID_VALUE);
+        AuthnRequest authnRequest = requestBuilder.buildAuthnRequest(AssuranceLevel.SUBSTANTIAL, requestedEidasAttributes, SP_TYPE_VALUE, REQUESTER_ID_VALUE,"country");
 
-        assertAuthnRequest(authnRequest, requestedEidasAttributes, SP_TYPE_VALUE, REQUESTER_ID_VALUE);
+        assertAuthnRequest(authnRequest, requestedEidasAttributes, SP_TYPE_VALUE, REQUESTER_ID_VALUE, AuthnContextComparisonTypeEnumeration.MINIMUM, AssuranceLevel.SUBSTANTIAL.getUri());
 
         InputStream authnRequestInputStream = new ByteArrayInputStream(OpenSAMLUtils.getXmlString(authnRequest).getBytes());
         InputStream schemaInputStream = getClass().getResourceAsStream("/saml-schema-protocol-2.0");
@@ -123,9 +168,9 @@ public class AuthnRequestBuilderTest {
     @Test
     public void buildAuthnRequestWithAllEidasAttributes() {
         List<EidasAttribute> requestedEidasAttributes = Arrays.asList(EidasAttribute.values());
-        AuthnRequest authnRequest = requestBuilder.buildAuthnRequest(AssuranceLevel.SUBSTANTIAL, requestedEidasAttributes, SP_TYPE_VALUE, REQUESTER_ID_VALUE);
+        AuthnRequest authnRequest = requestBuilder.buildAuthnRequest(AssuranceLevel.SUBSTANTIAL, requestedEidasAttributes, SP_TYPE_VALUE, REQUESTER_ID_VALUE, "country");
 
-        assertAuthnRequest(authnRequest, requestedEidasAttributes, SP_TYPE_VALUE, REQUESTER_ID_VALUE);
+        assertAuthnRequest(authnRequest, requestedEidasAttributes, SP_TYPE_VALUE, REQUESTER_ID_VALUE, AuthnContextComparisonTypeEnumeration.MINIMUM, AssuranceLevel.SUBSTANTIAL.getUri());
 
         InputStream authnRequestInputStream = new ByteArrayInputStream(OpenSAMLUtils.getXmlString(authnRequest).getBytes());
         InputStream schemaInputStream = getClass().getResourceAsStream("/saml-schema-protocol-2.0");
@@ -135,7 +180,7 @@ public class AuthnRequestBuilderTest {
         verifyLogs("AuthnRequest: " + OpenSAMLUtils.getXmlString(authnRequest), Level.DEBUG);
     }
 
-    private void assertAuthnRequest(AuthnRequest authnRequest, List<EidasAttribute> eidasAttributes, SPType expectedSpType, String expectedRequesterId) {
+    private void assertAuthnRequest(AuthnRequest authnRequest, List<EidasAttribute> eidasAttributes, SPType expectedSpType, String expectedRequesterId, AuthnContextComparisonTypeEnumeration comparisonType, String assuranceLevel) {
         assertTrue(authnRequest.isForceAuthn());
         assertTrue(authnRequest.getIssueInstant().isBefore(new DateTime()));
         assertEquals(properties.getProviderName(), authnRequest.getProviderName());
@@ -145,7 +190,7 @@ public class AuthnRequestBuilderTest {
         assertEquals(properties.getSpEntityId(), authnRequest.getIssuer().getValue());
         assertNameIDPolicy(authnRequest.getNameIDPolicy());
 
-        RequestedAuthnContext(authnRequest.getRequestedAuthnContext());
+        RequestedAuthnContext(authnRequest.getRequestedAuthnContext(), comparisonType, assuranceLevel);
 
         assertSignature(authnRequest.getSignature());
 
@@ -165,9 +210,9 @@ public class AuthnRequestBuilderTest {
         assertTrue(nameIDPolicy.getAllowCreate());
     }
 
-    private void RequestedAuthnContext(RequestedAuthnContext requestedAuthnContext) {
-        assertEquals(AuthnContextComparisonTypeEnumeration.MINIMUM, requestedAuthnContext.getComparison());
-        assertEquals(AssuranceLevel.SUBSTANTIAL.getUri(), requestedAuthnContext.getAuthnContextClassRefs().get(0).getAuthnContextClassRef());
+    private void RequestedAuthnContext(RequestedAuthnContext requestedAuthnContext, AuthnContextComparisonTypeEnumeration comparisonType, String assuranceLevel) {
+        assertEquals(comparisonType, requestedAuthnContext.getComparison());
+        assertEquals(assuranceLevel, requestedAuthnContext.getAuthnContextClassRefs().get(0).getAuthnContextClassRef());
     }
 
     private void assertExtensions(List<XMLObject> extensions, List<EidasAttribute> eidasAttributes, SPType expectedSpType, String expectedRequesterId) {
