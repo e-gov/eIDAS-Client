@@ -102,10 +102,12 @@ public class AuthnRequestBuilder {
         requestedAuthnContext.setComparison(AuthnContextComparisonTypeEnumeration.MINIMUM);
         requestedAuthnContext.getAuthnContextClassRefs().add(loaAuthnContextClassRef);
 
-        Optional<NonNotifiedAssuranceLevel> nonNotifiedLevel = getNonNotifiedLevel(loa, country);
-        if (nonNotifiedLevel.isPresent()) {
-            loaAuthnContextClassRef.setAuthnContextClassRef(nonNotifiedLevel.get().getNonNotifiedLevel());
-            requestedAuthnContext.setComparison(AuthnContextComparisonTypeEnumeration.EXACT);
+        if (eidasClientProperties.getNonNotifiedAssuranceLevels() != null) {
+            Optional<NonNotifiedAssuranceLevel> nonNotifiedLevel = getNonNotifiedLevel(loa, country);
+            if (nonNotifiedLevel.isPresent()) {
+                loaAuthnContextClassRef.setAuthnContextClassRef(nonNotifiedLevel.get().getNonNotifiedLevel());
+                requestedAuthnContext.setComparison(AuthnContextComparisonTypeEnumeration.EXACT);
+            }
         }
         return requestedAuthnContext;
     }
