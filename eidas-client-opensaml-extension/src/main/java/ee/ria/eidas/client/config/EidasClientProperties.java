@@ -40,7 +40,9 @@ public class EidasClientProperties {
 
     @PostConstruct
     public void validateNonNotifiedAssuranceLevels() {
-        Assert.isTrue(hasNoMoreThanOneConfigurationPerCountry(), "Non-notified assurance levels must contain only 1 configuration per country.");
+        if (nonNotifiedAssuranceLevels != null) {
+            Assert.isTrue(hasNoMoreThanOneConfigurationPerCountry(), "Non-notified assurance levels must contain only 1 configuration per country.");
+        }
     }
 
     @NotNull
