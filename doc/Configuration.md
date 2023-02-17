@@ -192,6 +192,8 @@ Tabel 2.3.7 - Hazelcast kasutusstatistika otspunkt
 
 Tabel 2.3.8 - Mitteteavitatud tagatistasemete seadistus
 
+| Parameeter        | Kohustuslik | Kirjeldus, näide |
+| :---------------- | :---------- | :----------------|
 | `eidas.client.non-notified-assurance-levels[0].country` | Ei | Riik mille korral mitteteavitatud tagatistase kehtib. Iga riigi kohta on lubatud ainult 1 seadistus. |
 | `eidas.client.non-notified-assurance-levels[0].non-notified-level` | Ei | Mitteteavitatud tagatistase. Näide: `http://eidas.europa.eu/NonNotified/LoA/low` |
 | `eidas.client.non-notified-assurance-levels[0].notified-level` | Ei | Kui küsitud tagatistase on võrdne või madalam siin defineeritud teavitatud tagatistasemest, siis rakendub mitteteavitatud tagatistase. Näide: `http://eidas.europa.eu/LoA/substantial` |
