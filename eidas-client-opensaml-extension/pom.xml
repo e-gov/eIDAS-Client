@@ -73,7 +73,7 @@
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk18on</artifactId>
-            <version>1.72</version>
+            <version>1.75</version>
         </dependency>
         <dependency>
             <groupId>net.shibboleth.utilities</groupId>
@@ -107,19 +107,19 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>31.1-jre</version>
+            <version>32.1.1-jre</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.santuario</groupId>
             <artifactId>xmlsec</artifactId>
-            <version>3.0.1</version>
+            <version>3.0.2</version>
         </dependency>
         <dependency>
             <!-- Using newer version of woodstox-core than xmlsec's default to fix vulnerability CVE-2022-40152 -->
             <groupId>com.fasterxml.woodstox</groupId>
             <artifactId>woodstox-core</artifactId>
-            <version>6.5.0</version>
+            <version>6.5.1</version>
         </dependency>
 
         <!-- hazelcast and it's custom content protection -->
@@ -135,7 +135,7 @@
         <dependency>
             <groupId>org.bitbucket.b_c</groupId>
             <artifactId>jose4j</artifactId>
-            <version>0.9.2</version>
+            <version>0.9.3</version>
         </dependency>
 
         <!-- test dependencies -->
