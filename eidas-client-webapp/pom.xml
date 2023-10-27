@@ -142,10 +142,12 @@
                 </executions>
             </plugin>
             <plugin>
+                <!-- TODO GSSO-534 Replace with io.github.git-commit-id:git-commit-id-maven-plugin and remove
+                      offline=true after upgrading to Spring Boot 3. Starting from 5.0.0 offline=true is default. -->
                 <groupId>pl.project13.maven</groupId>
                 <artifactId>git-commit-id-plugin</artifactId>
                 <configuration>
-                    <offline>true</offline><!-- TODO Remove when >= 5.0.0 is used, there offline=true is default. -->
+                    <offline>true</offline>
                 </configuration>
             </plugin>
         </plugins>

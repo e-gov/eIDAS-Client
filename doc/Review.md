@@ -23,7 +23,7 @@ Välismaalase autentimiseks saadab TARA eIDAS-Client-i päringu:
 
 
 ```
-GET https://eidas-Client.ria.ee/login?
+GET https://eidas-client.example.org/login?
 
 country=SE&LoA=high&RelayState=kse2vna8221lyauej'
 ```
