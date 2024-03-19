@@ -13,10 +13,10 @@
     <artifactId>eidas-client-opensaml-extension</artifactId>
 
     <properties>
-        <bouncycastle.version>1.76</bouncycastle.version>
+        <bouncycastle.version>1.77</bouncycastle.version>
         <commons-collections4.version>4.4</commons-collections4.version>
-        <guava.version>32.1.3-jre</guava.version>
-        <jose4j.version>0.9.3</jose4j.version>
+        <guava.version>33.1.0-jre</guava.version>
+        <jose4j.version>0.9.6</jose4j.version>
         <!-- TODO AUT-908 Upgrade to OpenSAML 4.x -->
         <opensaml.version>3.4.6</opensaml.version>
         <!-- TODO 2.x isn't compatible with Java 8. -->
@@ -25,14 +25,13 @@
         <shibboleth-java-support.version>7.5.2</shibboleth-java-support.version>
         <!-- TODO 6.x isn't compatible with Java 8. -->
         <shibboleth-spring-extensions.version>5.4.2</shibboleth-spring-extensions.version>
-        <shiro.version>1.12.0</shiro.version>
-        <xmlsec.version>3.0.3</xmlsec.version><!-- TODO Does it work with >= 4.x ? -->
+        <!-- TODO 2.x isn't compatible with Java 8. -->
+        <shiro.version>1.13.0</shiro.version>
+        <xmlsec.version>3.0.4</xmlsec.version><!-- TODO Does it work with >= 4.x ? -->
 
         <!-- Fix CVE-2020-13936 by replacing velocity with new version of velocity-engine-core.
              TODO Remove this property after upgrading opensaml-saml-impl.-->
         <velocity.version>2.3</velocity.version>
-        <!-- Using newer version of woodstox-core than xmlsec's default to fix vulnerability CVE-2022-40152 -->
-        <woodstox.version>6.5.1</woodstox.version>
     </properties>
 
     <dependencies>
@@ -128,11 +127,6 @@
             <groupId>org.apache.santuario</groupId>
             <artifactId>xmlsec</artifactId>
             <version>${xmlsec.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.fasterxml.woodstox</groupId>
-            <artifactId>woodstox-core</artifactId>
-            <version>${woodstox.version}</version>
         </dependency>
 
         <!-- hazelcast and it's custom content protection -->

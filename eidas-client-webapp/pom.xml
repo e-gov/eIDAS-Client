@@ -34,7 +34,7 @@
     </profiles>
 
     <properties>
-        <wiremock.version>2.35.1</wiremock.version> <!-- TODO Upgrade to >=3.0.1 after Spring Boot is upgraded to 3.x which includes jetty >= 11.0.12 -->
+        <wiremock.version>2.35.2</wiremock.version> <!-- TODO Upgrade to >=3.0.1 after Spring Boot is upgraded to 3.x which includes jetty >= 11.0.12 -->
     </properties>
 
     <dependencies>
