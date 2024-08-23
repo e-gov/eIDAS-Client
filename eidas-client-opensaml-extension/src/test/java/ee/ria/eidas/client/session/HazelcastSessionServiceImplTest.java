@@ -84,7 +84,7 @@ public class HazelcastSessionServiceImplTest {
 
 
         expectedEx.expect(ClassCastException.class);
-        expectedEx.expectMessage("java.lang.String cannot be cast to ee.ria.eidas.client.session.RequestSession");
+        expectedEx.expectMessage("java.lang.String cannot be cast to class ee.ria.eidas.client.session.RequestSession");
         requestSessionService.getAndRemoveRequestSession(requestID);
     }
 

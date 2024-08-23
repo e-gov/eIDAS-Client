@@ -13,18 +13,16 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
-import sun.security.pkcs11.SunPKCS11;
 
-import java.io.ByteArrayInputStream;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.PrivateKey;
+import java.security.Provider;
 import java.security.Security;
 import java.security.cert.X509Certificate;
 import java.util.Optional;
 
 import static java.lang.String.format;
-import static java.nio.charset.StandardCharsets.ISO_8859_1;
 
 @Slf4j
 @Configuration
@@ -51,7 +49,7 @@ public class EidasCredentialsConfiguration {
         try {
             log.info("Hardware security module enabled. Slot/slot index: {}/{}, Library: {}",
                     hsmProperties.getSlot(), hsmProperties.getSlotListIndex(), hsmProperties.getLibrary());
-            SunPKCS11 provider = new SunPKCS11(new ByteArrayInputStream(hsmProperties.toString().getBytes(ISO_8859_1)));
+            Provider provider = Security.getProvider("SunPKCS11").configure(hsmProperties.toString());
             Security.addProvider(provider);
             KeyStore keyStore = KeyStore.getInstance("PKCS11", provider);
             keyStore.load(null, hsmProperties.getPin().toCharArray());
@@ -101,13 +99,16 @@ public class EidasCredentialsConfiguration {
     }
 
     private PrivateKey getPrivateKey(KeyStore softwareKeystore, Optional<KeyStore> hardwareKeystore, String alias, String password) throws Exception {
-        return hardwareKeystore.isPresent() ? (PrivateKey) hardwareKeystore.get().getKey(alias, password.toCharArray())
-                : (PrivateKey) softwareKeystore.getKey(alias, password.toCharArray());
+        return hardwareKeystore.isPresent()
+            ? (PrivateKey) hardwareKeystore.get().getKey(alias, password.toCharArray())
+            : (PrivateKey) softwareKeystore.getKey(alias, password.toCharArray());
     }
 
     private X509Certificate getCertificate(KeyStore softwareKeystore, Optional<KeyStore> hardwareKeystore, String alias) throws KeyStoreException {
         boolean certificatesFromHsm = hardwareKeystore.isPresent() && hsmProperties.isCertificatesFromHsm();
-        return certificatesFromHsm ? (X509Certificate) hardwareKeystore.get().getCertificate(alias) : (X509Certificate) softwareKeystore.getCertificate(alias);
+        return certificatesFromHsm
+            ? (X509Certificate) hardwareKeystore.get().getCertificate(alias)
+            : (X509Certificate) softwareKeystore.getCertificate(alias);
     }
 
     @Getter

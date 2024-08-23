@@ -130,12 +130,6 @@
                             <artifactId>lombok</artifactId>
                         </exclude>
                     </excludes>
-                    <skip>${skip.layers}</skip>
-                    <layers>
-                        <enabled>true</enabled>
-                        <configuration>${project.basedir}/../layers.xml</configuration>
-                        <includeLayerTools>true</includeLayerTools>
-                    </layers>
                 </configuration>
                 <executions>
                     <execution>
