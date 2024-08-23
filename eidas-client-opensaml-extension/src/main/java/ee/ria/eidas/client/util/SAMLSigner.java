@@ -18,6 +18,7 @@ import org.opensaml.xmlsec.signature.support.SignatureSupport;
 import org.opensaml.xmlsec.signature.support.Signer;
 import org.springframework.util.Assert;
 
+
 public class SAMLSigner {
 
     private final String signatureAlgorithmUri;

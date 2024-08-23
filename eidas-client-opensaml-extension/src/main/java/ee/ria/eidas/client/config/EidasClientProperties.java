@@ -154,9 +154,9 @@ public class EidasClientProperties {
         @Override
         public String toString() {
             if (slot != null) {
-                return format("name=eidas\nlibrary=%s\nslot=%s\n", library, slot);
+                return format("--name=eidas\nlibrary=%s\nslot=%s\n", library, slot);
             } else {
-                return format("name=eidas\nlibrary=%s\nslotListIndex=%s\n", library, slotListIndex);
+                return format("--name=eidas\nlibrary=%s\nslotListIndex=%s\n", library, slotListIndex);
             }
         }
     }

@@ -3,7 +3,6 @@ package ee.ria.eidas.client.webapp;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration;
-import com.sun.org.apache.xerces.internal.dom.DOMInputImpl;
 import ee.ria.eidas.client.AuthInitiationService;
 import ee.ria.eidas.client.AuthResponseService;
 import ee.ria.eidas.client.authnrequest.AssuranceLevel;
@@ -42,10 +41,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.context.ApplicationEventPublisher;
-import org.w3c.dom.ls.LSInput;
-import org.w3c.dom.ls.LSResourceResolver;
 
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Base64;
@@ -169,7 +165,7 @@ public abstract class EidasClientApplicationTest {
         .then()
                 .statusCode(200)
                 // schema/saml-schema-metadata-2.0.xsd is located in opensaml-saml-api-3.4.5.jar
-                .body(matchesXsdInClasspath("schema/saml-schema-metadata-2.0.xsd").using(new ClasspathResourceResolver()));
+                .body(matchesXsdInClasspath("schema/saml-schema-metadata-2.0.xsd"));
     }
 
     @Test
@@ -747,34 +743,4 @@ public abstract class EidasClientApplicationTest {
         UnencodedRequestSession requestSession = new UnencodedRequestSession(requestID, issueInstant, loa, requestedAttributes, "CA");
         requestSessionService.saveRequestSession(requestID, requestSession);
     }
-
-    public static class ClasspathResourceResolver implements LSResourceResolver {
-
-        @Override
-        public LSInput resolveResource(String type, String namespaceURI, String publicId, String systemId, String baseURI) {
-            String resourceName = getResourceName(systemId);
-            InputStream resource = ClassLoader.getSystemResourceAsStream(resourceName);
-            if (resource == null) {
-                throw new RuntimeException("Resource not found or error reading resource: " + resourceName);
-            }
-            return new DOMInputImpl(publicId, systemId, baseURI, resource, null);
-        }
-
-        private static String getResourceName(String systemId) {
-            if (systemId.equals("http://www.w3.org/TR/2002/REC-xmldsig-core-20020212/xmldsig-core-schema.xsd")) {
-                return "schema/xmldsig-core-schema.xsd"; // Located in opensaml-xmlsec-api-3.4.5.jar
-            } else if (systemId.equals("http://www.w3.org/TR/xmlenc-core/xenc-schema.xsd")) {
-                return "schema/xenc-schema.xsd"; // Located in opensaml-xmlsec-api-3.4.5.jar
-            } else if (systemId.equals("http://docs.oasis-open.org/security/saml/v2.0/saml-schema-assertion-2.0.xsd")) {
-                return "schema/saml-schema-assertion-2.0.xsd"; // Located in opensaml-saml-api-3.4.5.jar
-            } else if (systemId.equals("http://www.w3.org/2001/xml.xsd")) {
-                return "schema/xml.xsd"; // Local
-            } else if (systemId.contains("://")) {
-                throw new RuntimeException("External resource must be made available locally: " + systemId);
-            }
-            return systemId;
-        }
-
-    }
-
 }
