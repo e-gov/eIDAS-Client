@@ -27,7 +27,7 @@
         <shibboleth-spring-extensions.version>5.4.2</shibboleth-spring-extensions.version>
         <!-- TODO 2.x isn't compatible with Java 8. -->
         <shiro.version>1.13.0</shiro.version>
-        <xmlsec.version>3.0.4</xmlsec.version><!-- TODO Does it work with >= 4.x ? -->
+        <xmlsec.version>3.0.2</xmlsec.version><!-- TODO Does it work with >= 4.x ? -->
 
         <!-- Fix CVE-2020-13936 by replacing velocity with new version of velocity-engine-core.
              TODO Remove this property after upgrading opensaml-saml-impl.-->
