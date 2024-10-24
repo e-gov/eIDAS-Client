@@ -75,7 +75,7 @@ public class AuthResponseService {
 
     private final Schema samlSchema;
 
-    public AuthenticationResult getAuthenticationResult(HttpServletRequest req) throws MissingServletRequestParameterException {
+    public AuthenticationResult getAuthenticationResult(HttpServletRequest req) throws MissingServletRequestParameterException, ComponentInitializationException {
         try {
             Response samlResponse = getSamlResponse(req);
 
@@ -186,7 +186,7 @@ public class AuthResponseService {
                 && (substatusCode != null && requestDenied.equals(substatusCode.getValue()));
     }
 
-    private void validateDestinationAndLifetime(Response samlResponse, HttpServletRequest request) {
+    private void validateDestinationAndLifetime(Response samlResponse, HttpServletRequest request) throws ComponentInitializationException {
         MessageContext context = new MessageContext();
         context.setMessage(samlResponse);
         SAMLMessageInfoContext messageInfoContext = context.getSubcontext(SAMLMessageInfoContext.class, true);
@@ -211,7 +211,9 @@ public class AuthResponseService {
                     receiverEndpoint != null &&
                     messageDestination.equals(eidasClientProperties.getCallbackUrl());
         });
-
+        receivedEndpointSecurityHandler.initialize();
+        lifetimeSecurityHandler.initialize();
+        schemaValidationFilter.initialize();
         BasicMessageHandlerChain handlerChain = new BasicMessageHandlerChain();
         handlerChain.setHandlers(handlers);
 

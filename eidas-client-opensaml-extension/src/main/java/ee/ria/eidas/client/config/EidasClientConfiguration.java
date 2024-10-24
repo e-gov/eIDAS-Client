@@ -33,9 +33,9 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.cert.X509Certificate;
 
-@Configuration
 @ConfigurationPropertiesScan
 @EnableScheduling
+@Configuration(enforceUniqueMethods = false)
 public class EidasClientConfiguration {
 
     @Autowired
@@ -59,7 +59,7 @@ public class EidasClientConfiguration {
     }
 
     @Bean
-    public ExplicitKeySignatureTrustEngine metadataSignatureTrustEngine(KeyStore softwareKeystore) {
+    public ExplicitKeySignatureTrustEngine idpMetadataSignatureTrustEngine(KeyStore softwareKeystore) {
         try {
             X509Certificate cert = (X509Certificate) softwareKeystore.getCertificate(eidasClientProperties.getIdpMetadataSigningCertificateKeyId());
             if (cert == null) {
@@ -92,7 +92,7 @@ public class EidasClientConfiguration {
     }
 
     @Bean
-    public IDPMetadataResolver idpMetadataResolver(@Qualifier("metadataSignatureTrustEngine") ExplicitKeySignatureTrustEngine metadataSignatureTrustEngine) {
+    public IDPMetadataResolver idpMetadataResolver(@Qualifier("idpMetadataSignatureTrustEngine") ExplicitKeySignatureTrustEngine metadataSignatureTrustEngine) {
         return new IDPMetadataResolver(eidasClientProperties.getIdpMetadataUrl(), metadataSignatureTrustEngine);
     }
 

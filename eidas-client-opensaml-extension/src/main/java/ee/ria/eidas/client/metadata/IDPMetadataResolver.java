@@ -16,16 +16,20 @@ import org.opensaml.core.criterion.EntityIdCriterion;
 import org.opensaml.core.xml.XMLObject;
 import org.opensaml.core.xml.schema.impl.XSAnyImpl;
 import org.opensaml.saml.common.xml.SAMLConstants;
+import org.opensaml.saml.criterion.EntityRoleCriterion;
+import org.opensaml.saml.criterion.ProtocolCriterion;
 import org.opensaml.saml.metadata.resolver.filter.impl.SignatureValidationFilter;
 import org.opensaml.saml.metadata.resolver.impl.AbstractReloadingMetadataResolver;
 import org.opensaml.saml.metadata.resolver.impl.HTTPMetadataResolver;
 import org.opensaml.saml.metadata.resolver.impl.ResourceBackedMetadataResolver;
 import org.opensaml.saml.saml2.metadata.EntityDescriptor;
+import org.opensaml.saml.saml2.metadata.IDPSSODescriptor;
 import org.opensaml.saml.saml2.metadata.KeyDescriptor;
 import org.opensaml.saml.saml2.metadata.SingleSignOnService;
 import org.opensaml.security.credential.CredentialSupport;
 import org.opensaml.security.credential.UsageType;
 import org.opensaml.security.credential.impl.StaticCredentialResolver;
+import org.opensaml.security.criteria.UsageCriterion;
 import org.opensaml.security.x509.X509Credential;
 import org.opensaml.xmlsec.config.impl.DefaultSecurityConfigurationBootstrap;
 import org.opensaml.xmlsec.signature.impl.X509CertificateImpl;
@@ -84,15 +88,17 @@ public class IDPMetadataResolver {
             throw new EidasClientException("Idp metadata resource not set! Please check your configuration.");
         }
 
-        try {/*
+        try {
             final CriteriaSet criteriaSet = new CriteriaSet();
             criteriaSet.add(new UsageCriterion(UsageType.SIGNING));
             criteriaSet.add(new EntityRoleCriterion(IDPSSODescriptor.DEFAULT_ELEMENT_NAME));
             criteriaSet.add(new ProtocolCriterion(SAMLConstants.SAML20P_NS));
-            criteriaSet.add(new EntityIdCriterion()); //FIXME*/
+            criteriaSet.add(new EntityIdCriterion(url));
+
             SignatureValidationFilter signatureValidationFilter = new SignatureValidationFilter(metadataSignatureTrustEngine);
-            //signatureValidationFilter.setDefaultCriteria(criteriaSet);
+            signatureValidationFilter.setDefaultCriteria(criteriaSet);
             signatureValidationFilter.initialize();
+
             AbstractReloadingMetadataResolver idpMetadataResolver = getMetadataResolver(url);
             idpMetadataResolver.setParserPool(parserPool);
             idpMetadataResolver.setId(idpMetadataResolver.getClass().getCanonicalName());
