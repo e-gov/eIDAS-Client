@@ -2,13 +2,49 @@ package ee.ria.eidas.client.fixtures;
 
 import ee.ria.eidas.client.authnrequest.AssuranceLevel;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
-import org.joda.time.DateTime;
 import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
 import org.opensaml.core.xml.schema.XSAny;
 import org.opensaml.core.xml.schema.impl.XSAnyBuilder;
 import org.opensaml.saml.common.SAMLVersion;
-import org.opensaml.saml.saml2.core.*;
-import org.opensaml.saml.saml2.core.impl.*;
+import org.opensaml.saml.saml2.core.Assertion;
+import org.opensaml.saml.saml2.core.Attribute;
+import org.opensaml.saml.saml2.core.AttributeStatement;
+import org.opensaml.saml.saml2.core.AttributeValue;
+import org.opensaml.saml.saml2.core.Audience;
+import org.opensaml.saml.saml2.core.AudienceRestriction;
+import org.opensaml.saml.saml2.core.AuthnContext;
+import org.opensaml.saml.saml2.core.AuthnContextClassRef;
+import org.opensaml.saml.saml2.core.AuthnContextDecl;
+import org.opensaml.saml.saml2.core.AuthnStatement;
+import org.opensaml.saml.saml2.core.Conditions;
+import org.opensaml.saml.saml2.core.EncryptedAssertion;
+import org.opensaml.saml.saml2.core.Issuer;
+import org.opensaml.saml.saml2.core.NameID;
+import org.opensaml.saml.saml2.core.Response;
+import org.opensaml.saml.saml2.core.Status;
+import org.opensaml.saml.saml2.core.StatusCode;
+import org.opensaml.saml.saml2.core.StatusMessage;
+import org.opensaml.saml.saml2.core.Subject;
+import org.opensaml.saml.saml2.core.SubjectConfirmation;
+import org.opensaml.saml.saml2.core.SubjectConfirmationData;
+import org.opensaml.saml.saml2.core.impl.AssertionBuilder;
+import org.opensaml.saml.saml2.core.impl.AttributeBuilder;
+import org.opensaml.saml.saml2.core.impl.AttributeStatementBuilder;
+import org.opensaml.saml.saml2.core.impl.AudienceBuilder;
+import org.opensaml.saml.saml2.core.impl.AudienceRestrictionBuilder;
+import org.opensaml.saml.saml2.core.impl.AuthnContextBuilder;
+import org.opensaml.saml.saml2.core.impl.AuthnContextClassRefBuilder;
+import org.opensaml.saml.saml2.core.impl.AuthnContextDeclBuilder;
+import org.opensaml.saml.saml2.core.impl.AuthnStatementBuilder;
+import org.opensaml.saml.saml2.core.impl.ConditionsBuilder;
+import org.opensaml.saml.saml2.core.impl.IssuerBuilder;
+import org.opensaml.saml.saml2.core.impl.NameIDBuilder;
+import org.opensaml.saml.saml2.core.impl.StatusBuilder;
+import org.opensaml.saml.saml2.core.impl.StatusCodeBuilder;
+import org.opensaml.saml.saml2.core.impl.StatusMessageBuilder;
+import org.opensaml.saml.saml2.core.impl.SubjectBuilder;
+import org.opensaml.saml.saml2.core.impl.SubjectConfirmationBuilder;
+import org.opensaml.saml.saml2.core.impl.SubjectConfirmationDataBuilder;
 import org.opensaml.saml.saml2.encryption.Encrypter;
 import org.opensaml.security.SecurityException;
 import org.opensaml.security.credential.Credential;
@@ -23,6 +59,8 @@ import org.opensaml.xmlsec.signature.support.SignatureConstants;
 import org.opensaml.xmlsec.signature.support.Signer;
 
 import javax.xml.namespace.QName;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -71,7 +109,7 @@ public class ResponseBuilder {
 
     public Response buildResponse(String issuer, Map<InputType, Optional<Object>> inputMap, String loa) {
         try {
-            DateTime issueInstant = getInput(inputMap, InputType.ISSUE_INSTANT, () -> new DateTime());
+            Instant issueInstant = getInput(inputMap, InputType.ISSUE_INSTANT, Instant::now);
             Signature signature = createSignature();
 
             Response authnResponse = OpenSAMLUtils.buildSAMLObject(Response.class);
@@ -147,12 +185,12 @@ public class ResponseBuilder {
             statusCode.setStatusCode(substatusCode);
         }
         StatusMessage statusMessage = new StatusMessageBuilder().buildObject();
-        statusMessage.setMessage(messageText);
+        statusMessage.setValue(messageText);
         status.setStatusMessage(statusMessage);
         return status;
     }
 
-    private EncryptedAssertion buildAssertion(DateTime issueInstant, String issuer, Map<InputType, Optional<Object>> inputMap, String loa) throws Exception {
+    private EncryptedAssertion buildAssertion(Instant issueInstant, String issuer, Map<InputType, Optional<Object>> inputMap, String loa) throws Exception {
 
         if (loa == null) {
             loa = AssuranceLevel.LOW.getUri();
@@ -199,7 +237,7 @@ public class ResponseBuilder {
         return issuer;
     }
 
-    private Subject buildSubject(DateTime issueInstant, Map<InputType, Optional<Object>> inputMap) {
+    private Subject buildSubject(Instant issueInstant, Map<InputType, Optional<Object>> inputMap) {
         Subject subject = new SubjectBuilder().buildObject();
 
         NameID nameID = new NameIDBuilder().buildObject();
@@ -215,7 +253,7 @@ public class ResponseBuilder {
             SubjectConfirmationData subjectConfirmationData = new SubjectConfirmationDataBuilder().buildObject();
             subjectConfirmationData.setAddress("172.24.0.1");
             subjectConfirmationData.setInResponseTo(getInput(inputMap, InputType.ASSERTION_IN_RESPONSE_TO, () -> DEFAULT_IN_RESPONSE_TO));
-            subjectConfirmationData.setNotOnOrAfter(issueInstant.plusMinutes(5));
+            subjectConfirmationData.setNotOnOrAfter(issueInstant.plus(Duration.ofMinutes(5)));
             subjectConfirmationData.setRecipient("http://localhost:8889/returnUrl");
 
             lambdaSubjectConfirmation.setSubjectConfirmationData(subjectConfirmationData);
@@ -229,33 +267,33 @@ public class ResponseBuilder {
         return subject;
     }
 
-    private Conditions buildConditions(DateTime issueInstant, Map<InputType, Optional<Object>> inputMap) {
+    private Conditions buildConditions(Instant issueInstant, Map<InputType, Optional<Object>> inputMap) {
         Conditions conditions = new ConditionsBuilder().buildObject();
         conditions.setNotBefore(issueInstant);
         conditions.setNotOnOrAfter(
-                getInput(inputMap, InputType.ASSERTION_CONDITIONS_NOT_ON_OR_AFTER, () -> issueInstant.plusMinutes(5))
-        );
+                getInput(inputMap, InputType.ASSERTION_CONDITIONS_NOT_ON_OR_AFTER, () -> issueInstant.plus(Duration.ofMinutes(5))
+        ));
 
         AudienceRestriction audienceRestriction = new AudienceRestrictionBuilder().buildObject();
 
         Audience audience = new AudienceBuilder().buildObject();
-        audience.setAudienceURI("http://localhost:8889/metadata");
+        audience.setURI("http://localhost:8889/metadata");
 
         audienceRestriction.getAudiences().add(audience);
         conditions.getAudienceRestrictions().add(audienceRestriction);
         return conditions;
     }
 
-    private AuthnStatement buildAuthnStatement(DateTime issueInstant, Map<InputType, Optional<Object>> inputMap, String loa) {
+    private AuthnStatement buildAuthnStatement(Instant issueInstant, Map<InputType, Optional<Object>> inputMap, String loa) {
 
         AuthnStatement authnStatement = new AuthnStatementBuilder().buildObject();
-        authnStatement.setAuthnInstant(issueInstant.minusMinutes(1));
+        authnStatement.setAuthnInstant(issueInstant.minus(Duration.ofMinutes(1)));
 
         AuthnContext authnContext = getInput(inputMap, InputType.AUTHN_CONTEXT, () -> {
             AuthnContext lambdaAuthnContext = new AuthnContextBuilder().buildObject();
 
             AuthnContextClassRef authnContextClassRef = new AuthnContextClassRefBuilder().buildObject();
-            authnContextClassRef.setAuthnContextClassRef(loa);
+            authnContextClassRef.setURI(loa);
             lambdaAuthnContext.setAuthnContextClassRef(authnContextClassRef);
 
             AuthnContextDecl authnContextDecl = new AuthnContextDeclBuilder().buildObject();

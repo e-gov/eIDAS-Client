@@ -3,6 +3,10 @@ package ee.ria.eidas.client.config;
 import ee.ria.eidas.client.authnrequest.AssuranceLevel;
 import ee.ria.eidas.client.authnrequest.EidasAttribute;
 import ee.ria.eidas.client.authnrequest.NonNotifiedAssuranceLevel;
+import jakarta.annotation.PostConstruct;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Data;
 import org.opensaml.xmlsec.signature.support.SignatureConstants;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -10,10 +14,6 @@ import org.springframework.util.Assert;
 import org.springframework.validation.annotation.Validated;
 
 import javax.annotation.Nonnegative;
-import javax.annotation.PostConstruct;
-import javax.validation.constraints.NotNull;
-import javax.validation.constraints.Pattern;
-import javax.validation.constraints.PositiveOrZero;
 import java.util.Arrays;
 import java.util.List;
 

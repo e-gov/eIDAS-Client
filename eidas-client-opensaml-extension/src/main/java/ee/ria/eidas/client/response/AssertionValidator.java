@@ -8,9 +8,9 @@ import ee.ria.eidas.client.exception.InvalidRequestException;
 import ee.ria.eidas.client.session.RequestSession;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections.CollectionUtils;
-import org.joda.time.DateTime;
 import org.opensaml.saml.saml2.core.*;
 
+import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -75,7 +75,7 @@ public class AssertionValidator {
         if (requestSession == null || !requestSession.getRequestId().equals(requestID)) {
             throw new InvalidRequestException("No corresponding SAML request session found for the given response assertion!");
         } else {
-            DateTime now = new DateTime(requestSession.getIssueInstant().getZone());
+            Instant now = Instant.now();
             if (now.isAfter(requestSession.getIssueInstant().plusSeconds(maxAuthenticationLifetime).plusSeconds(acceptedClockSkew))) {
                 throw new InvalidRequestException("Request session with ID " + requestID + " has expired!");
             }
@@ -86,7 +86,7 @@ public class AssertionValidator {
 
         boolean isReturnedLoaValid = false;
         for (AssuranceLevel loa : AssuranceLevel.values()) {
-            if (loa.getUri().equalsIgnoreCase(assertion.getAuthnStatements().get(0).getAuthnContext().getAuthnContextClassRef().getAuthnContextClassRef())
+            if (loa.getUri().equalsIgnoreCase(assertion.getAuthnStatements().get(0).getAuthnContext().getAuthnContextClassRef().getURI())
                     && loa.getLevel() >= requestSession.getLoa().getLevel()) {
                 isReturnedLoaValid = true;
             }
@@ -99,11 +99,11 @@ public class AssertionValidator {
     }
 
     private void convertNonNotifiedLoaToNotified(Assertion assertion, NonNotifiedAssuranceLevel nonNotifiedAssuranceLevel) {
-        assertion.getAuthnStatements().get(0).getAuthnContext().getAuthnContextClassRef().setAuthnContextClassRef(nonNotifiedAssuranceLevel.getNotifiedLevel());
+        assertion.getAuthnStatements().get(0).getAuthnContext().getAuthnContextClassRef().setURI(nonNotifiedAssuranceLevel.getNotifiedLevel());
     }
 
     private Optional<NonNotifiedAssuranceLevel> getNonNotifiedConfigurationForCountry(Assertion assertion, String country) {
-        String loa = assertion.getAuthnStatements().get(0).getAuthnContext().getAuthnContextClassRef().getAuthnContextClassRef();
+        String loa = assertion.getAuthnStatements().get(0).getAuthnContext().getAuthnContextClassRef().getURI();
         return Optional.ofNullable(nonNotifiedAssuranceLevels)
                 .map(List::stream).orElseGet(Stream::empty)
                 .filter(c -> c.getCountry().equals(country))
@@ -127,7 +127,7 @@ public class AssertionValidator {
     }
 
     private void validateIssueInstant(Assertion assertion) {
-        DateTime now = new DateTime(assertion.getIssueInstant().getZone());
+        Instant now = Instant.now();
         if (now.isAfter(assertion.getIssueInstant().plusSeconds(acceptedClockSkew).plusSeconds(maxAuthenticationLifetime))) {
             throw new InvalidRequestException("Assertion issue instant is expired!");
         } else if (now.isBefore(assertion.getIssueInstant().minusSeconds(acceptedClockSkew).minusSeconds(maxAuthenticationLifetime))) {
@@ -180,7 +180,7 @@ public class AssertionValidator {
     }
 
     private void validateNotOnOrAfter(SubjectConfirmationData subjectConfirmationData) {
-        DateTime now = new DateTime(subjectConfirmationData.getNotOnOrAfter().getZone());
+        Instant now = Instant.now();
         if (subjectConfirmationData.getNotOnOrAfter().plusSeconds(acceptedClockSkew).isBefore(now)) {
             throw new InvalidRequestException("SubjectConfirmationData NotOnOrAfter is not valid!");
         }
@@ -203,15 +203,15 @@ public class AssertionValidator {
     }
 
     private void validateNotOnOrAfter(Conditions conditions) {
-        DateTime now = new DateTime(conditions.getNotOnOrAfter().getZone());
+        Instant now = Instant.now();
         if (conditions.getNotOnOrAfter().plusSeconds(acceptedClockSkew).isBefore(now)) {
             throw new InvalidRequestException("Assertion condition NotOnOrAfter is not valid!");
         }
     }
 
     private void validateNotBefore(Conditions conditions) {
-        DateTime now = new DateTime(conditions.getNotBefore().getZone());
-        if (conditions.getNotBefore().minus(acceptedClockSkew).isAfter(now)) {
+        Instant now = Instant.now();
+        if (conditions.getNotBefore().minusSeconds(acceptedClockSkew).isAfter(now)) {
             throw new InvalidRequestException("Assertion condition NotBefore is not valid!");
         }
     }
@@ -229,7 +229,7 @@ public class AssertionValidator {
             throw new InvalidRequestException("Assertion condition's AudienceRestriction must contain at least 1 Audience!");
         }
         for (Audience audience : audiences) {
-            if (spEntityID.equals(audience.getAudienceURI())) {
+            if (spEntityID.equals(audience.getURI())) {
                 return;
             }
         }
@@ -240,8 +240,8 @@ public class AssertionValidator {
         validateAuthnInstant(authnStatements.get(0).getAuthnInstant());
     }
 
-    private void validateAuthnInstant(DateTime authnInstant) {
-        DateTime now = new DateTime(authnInstant.getZone());
+    private void validateAuthnInstant(Instant authnInstant) {
+        Instant now = Instant.now();
         if (now.isAfter(authnInstant.plusSeconds(maxAuthenticationLifetime).plusSeconds(acceptedClockSkew))) {
             throw new InvalidRequestException("AuthnInstant is expired!");
         } else if (now.isBefore(authnInstant.minusSeconds(acceptedClockSkew))) {

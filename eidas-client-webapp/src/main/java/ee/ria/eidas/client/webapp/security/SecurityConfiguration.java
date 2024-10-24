@@ -30,7 +30,7 @@ public class SecurityConfiguration {
         String property = environment.getRequiredProperty(SECURITY_DISABLED_HTTP_METHODS);
         List list = Collections.unmodifiableList(asList(tokenizeToStringArray(property, ",")));
         Collection<String> invalidHttpMethods = CollectionUtils.subtract(list, Stream.of(HttpMethod.values())
-                .map(Enum::name)
+                .map(HttpMethod::name)
                 .collect(Collectors.toList()));
         if (invalidHttpMethods.isEmpty()) {
             return new DisableHttpMethodsFilter(list);

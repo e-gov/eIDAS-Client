@@ -7,18 +7,18 @@ import com.hazelcast.map.IMap;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.exception.EidasClientException;
 import ee.ria.eidas.client.util.SerializationUtils;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.codec.digest.MessageDigestAlgorithms;
-import org.apache.commons.lang.StringUtils;
-import org.apache.shiro.crypto.AesCipherService;
-import org.apache.shiro.crypto.CipherService;
-import org.apache.shiro.util.Assert;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.shiro.crypto.cipher.AesCipherService;
+import org.apache.shiro.crypto.cipher.CipherService;
+import org.apache.shiro.lang.util.Assert;
 import org.jose4j.jws.AlgorithmIdentifiers;
 import org.jose4j.jws.JsonWebSignature;
 import org.jose4j.keys.AesKey;
 
-import javax.annotation.PreDestroy;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -31,9 +31,10 @@ import java.util.concurrent.TimeUnit;
 public class HazelcastRequestSessionServiceImpl implements RequestSessionService {
 
     public static final String UNANSWERED_REQUESTS_MAP = "unansweredRequestsMap";
+
     private final HazelcastInstance hazelcastInstance;
-    private final CipherExecutor cipherExecutor;
-    private int maxAuthenticationLifetime;
+    private final CipherExecutor<byte[], byte[]> cipherExecutor;
+    private final int maxAuthenticationLifetime;
 
     public HazelcastRequestSessionServiceImpl(EidasClientProperties properties, HazelcastInstance hazelcastInstance) {
         log.debug("Using in Hazelcast map for request tracking");
@@ -191,7 +192,7 @@ public class HazelcastRequestSessionServiceImpl implements RequestSessionService
                 final Key key = new SecretKeySpec(this.encryptionKey.getBytes(StandardCharsets.UTF_8),
                         this.encryptionAlgorithm);
                 final CipherService cipher = new AesCipherService();
-                return cipher.decrypt(verifiedValue, key.getEncoded()).getBytes();
+                return cipher.decrypt(verifiedValue, key.getEncoded()).getClonedBytes();
             } catch (final Exception e) {
                 throw Throwables.propagate(e);
             }

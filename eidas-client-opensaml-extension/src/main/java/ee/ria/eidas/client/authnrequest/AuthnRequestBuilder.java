@@ -7,7 +7,6 @@ import ee.ria.eidas.client.util.OpenSAMLUtils;
 import ee.ria.eidas.client.util.SAMLSigner;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.joda.time.DateTime;
 import org.opensaml.core.xml.io.MarshallingException;
 import org.opensaml.core.xml.schema.XSAny;
 import org.opensaml.core.xml.schema.impl.XSAnyBuilder;
@@ -27,6 +26,7 @@ import org.opensaml.xmlsec.signature.support.SignatureException;
 import org.springframework.context.ApplicationEventPublisher;
 
 import javax.xml.namespace.QName;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -47,7 +47,7 @@ public class AuthnRequestBuilder {
     public AuthnRequest buildAuthnRequest(AssuranceLevel loa, List<EidasAttribute> eidasAttributes, SPType spType, String requesterId, String country) {
         try {
             AuthnRequest authnRequest = OpenSAMLUtils.buildSAMLObject(AuthnRequest.class);
-            authnRequest.setIssueInstant(new DateTime());
+            authnRequest.setIssueInstant(Instant.now());
             authnRequest.setForceAuthn(true);
             authnRequest.setIsPassive(false);
             authnRequest.setProviderName(eidasClientProperties.getProviderName());
@@ -94,7 +94,7 @@ public class AuthnRequestBuilder {
     private RequestedAuthnContext buildRequestedAuthnContext(AssuranceLevel loa, String country) {
 
         AuthnContextClassRef loaAuthnContextClassRef = OpenSAMLUtils.buildSAMLObject(AuthnContextClassRef.class);
-        loaAuthnContextClassRef.setAuthnContextClassRef(loa.getUri());
+        loaAuthnContextClassRef.setURI(loa.getUri());
         RequestedAuthnContext requestedAuthnContext = OpenSAMLUtils.buildSAMLObject(RequestedAuthnContext.class);
         requestedAuthnContext.setComparison(AuthnContextComparisonTypeEnumeration.MINIMUM);
         requestedAuthnContext.getAuthnContextClassRefs().add(loaAuthnContextClassRef);
@@ -102,7 +102,7 @@ public class AuthnRequestBuilder {
         if (eidasClientProperties.getNonNotifiedAssuranceLevels() != null) {
             Optional<NonNotifiedAssuranceLevel> nonNotifiedLevel = getNonNotifiedLevel(loa, country);
             if (nonNotifiedLevel.isPresent()) {
-                loaAuthnContextClassRef.setAuthnContextClassRef(nonNotifiedLevel.get().getNonNotifiedLevel());
+                loaAuthnContextClassRef.setURI(nonNotifiedLevel.get().getNonNotifiedLevel());
                 requestedAuthnContext.setComparison(AuthnContextComparisonTypeEnumeration.EXACT);
             }
         }

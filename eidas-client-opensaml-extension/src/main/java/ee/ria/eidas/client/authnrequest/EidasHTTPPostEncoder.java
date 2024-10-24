@@ -6,10 +6,7 @@ import org.apache.velocity.runtime.RuntimeConstants;
 import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
 import org.opensaml.messaging.context.MessageContext;
 import org.opensaml.messaging.encoder.MessageEncodingException;
-import org.opensaml.saml.common.SAMLObject;
 import org.opensaml.saml.saml2.binding.encoding.impl.HTTPPostEncoder;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class EidasHTTPPostEncoder extends HTTPPostEncoder {
 
@@ -26,7 +23,7 @@ public class EidasHTTPPostEncoder extends HTTPPostEncoder {
     }
 
     @Override
-    protected void populateVelocityContext(VelocityContext velocityContext, MessageContext<SAMLObject> messageContext, String endpointURL) throws MessageEncodingException {
+    protected void populateVelocityContext(VelocityContext velocityContext, MessageContext messageContext, String endpointURL) throws MessageEncodingException {
         velocityContext.put("Country", countryCode);
         velocityContext.put("RelayState", relayState);
         super.populateVelocityContext(velocityContext, messageContext, endpointURL);

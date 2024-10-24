@@ -7,7 +7,7 @@ import ee.ria.eidas.client.metadata.IDPMetadataResolver;
 import ee.ria.eidas.client.metadata.SPMetadataGenerator;
 import ee.ria.eidas.client.session.LocalRequestSessionServiceImpl;
 import ee.ria.eidas.client.session.RequestSessionService;
-import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
+import net.shibboleth.shared.component.ComponentInitializationException;
 import org.opensaml.saml.common.xml.SAMLSchemaBuilder;
 import org.opensaml.saml.metadata.resolver.impl.PredicateRoleDescriptorResolver;
 import org.opensaml.saml.security.impl.MetadataCredentialResolver;
@@ -59,7 +59,7 @@ public class EidasClientConfiguration {
     }
 
     @Bean
-    public ExplicitKeySignatureTrustEngine idpMetadataSignatureTrustEngine(KeyStore softwareKeystore) {
+    public ExplicitKeySignatureTrustEngine metadataSignatureTrustEngine(KeyStore softwareKeystore) {
         try {
             X509Certificate cert = (X509Certificate) softwareKeystore.getCertificate(eidasClientProperties.getIdpMetadataSigningCertificateKeyId());
             if (cert == null) {
@@ -92,7 +92,7 @@ public class EidasClientConfiguration {
     }
 
     @Bean
-    public IDPMetadataResolver idpMetadataResolver(@Qualifier("idpMetadataSignatureTrustEngine") ExplicitKeySignatureTrustEngine metadataSignatureTrustEngine) {
+    public IDPMetadataResolver idpMetadataResolver(@Qualifier("metadataSignatureTrustEngine") ExplicitKeySignatureTrustEngine metadataSignatureTrustEngine) {
         return new IDPMetadataResolver(eidasClientProperties.getIdpMetadataUrl(), metadataSignatureTrustEngine);
     }
 

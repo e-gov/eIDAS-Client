@@ -1,7 +1,7 @@
 package ee.ria.eidas.client.utils;
 
-import net.shibboleth.utilities.java.support.xml.QNameSupport;
-import net.shibboleth.utilities.java.support.xml.XMLParserException;
+import net.shibboleth.shared.xml.QNameSupport;
+import net.shibboleth.shared.xml.XMLParserException;
 import org.junit.Assert;
 import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
 import org.opensaml.core.xml.io.Unmarshaller;

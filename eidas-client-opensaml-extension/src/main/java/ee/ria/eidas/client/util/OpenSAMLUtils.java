@@ -1,8 +1,9 @@
 package ee.ria.eidas.client.util;
 
 import ee.ria.eidas.client.exception.EidasClientException;
-import net.shibboleth.utilities.java.support.security.RandomIdentifierGenerationStrategy;
-import net.shibboleth.utilities.java.support.xml.SerializeSupport;
+import net.shibboleth.shared.security.impl.RandomIdentifierGenerationStrategy;
+import net.shibboleth.shared.security.impl.SecureRandomIdentifierGenerationStrategy;
+import net.shibboleth.shared.xml.SerializeSupport;
 import org.opensaml.core.xml.XMLObject;
 import org.opensaml.core.xml.XMLObjectBuilderFactory;
 import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
@@ -11,8 +12,6 @@ import org.opensaml.xmlsec.algorithm.AlgorithmDescriptor;
 import org.opensaml.xmlsec.algorithm.AlgorithmSupport;
 import org.opensaml.xmlsec.algorithm.DigestAlgorithm;
 import org.opensaml.xmlsec.algorithm.SignatureAlgorithm;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
 import org.w3c.dom.Element;
 
@@ -20,7 +19,7 @@ import javax.xml.namespace.QName;
 
 public class OpenSAMLUtils {
 
-    private static RandomIdentifierGenerationStrategy secureRandomIdGenerator = new RandomIdentifierGenerationStrategy();
+    private static RandomIdentifierGenerationStrategy secureRandomIdGenerator = new SecureRandomIdentifierGenerationStrategy();
 
     public static <T> T buildSAMLObject(final Class<T> clazz) {
         T object;

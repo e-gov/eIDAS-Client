@@ -8,7 +8,6 @@ import java.io.*;
 
 @Slf4j
 public final class SerializationUtils {
-
     
     private SerializationUtils() {
     }

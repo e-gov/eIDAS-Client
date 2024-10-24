@@ -4,7 +4,6 @@ import ee.ria.eidas.client.authnrequest.AssuranceLevel;
 import ee.ria.eidas.client.authnrequest.AuthnRequestBuilder;
 import ee.ria.eidas.client.authnrequest.EidasAttribute;
 import ee.ria.eidas.client.authnrequest.EidasHTTPPostEncoder;
-import ee.ria.eidas.client.authnrequest.NonNotifiedAssuranceLevel;
 import ee.ria.eidas.client.authnrequest.SPType;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.exception.EidasClientException;
@@ -14,11 +13,11 @@ import ee.ria.eidas.client.session.RequestSession;
 import ee.ria.eidas.client.session.RequestSessionService;
 import ee.ria.eidas.client.session.UnencodedRequestSession;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
+import net.shibboleth.shared.component.ComponentInitializationException;
 import org.apache.commons.collections.CollectionUtils;
-import org.opensaml.core.xml.XMLObject;
 import org.opensaml.messaging.context.MessageContext;
 import org.opensaml.messaging.encoder.MessageEncodingException;
 import org.opensaml.saml.common.messaging.context.SAMLEndpointContext;
@@ -28,20 +27,19 @@ import org.opensaml.security.credential.Credential;
 import org.opensaml.xmlsec.SignatureSigningParameters;
 import org.opensaml.xmlsec.context.SecurityParametersContext;
 import org.springframework.context.ApplicationEventPublisher;
-import org.w3c.dom.Element;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-import static ee.ria.eidas.client.authnrequest.EidasAttribute.*;
+import static ee.ria.eidas.client.authnrequest.EidasAttribute.CURRENT_FAMILY_NAME;
+import static ee.ria.eidas.client.authnrequest.EidasAttribute.CURRENT_GIVEN_NAME;
+import static ee.ria.eidas.client.authnrequest.EidasAttribute.DATE_OF_BIRTH;
+import static ee.ria.eidas.client.authnrequest.EidasAttribute.PERSON_IDENTIFIER;
 import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableList;
 
@@ -155,7 +153,7 @@ public class AuthInitiationService {
         encoder.setCountryCode(country.toUpperCase());
         encoder.setRelayState(relayState);
 
-        encoder.setHttpServletResponse(httpServletResponse);
+        encoder.setHttpServletResponseSupplier(() -> httpServletResponse);
 
         try {
             encoder.initialize();
