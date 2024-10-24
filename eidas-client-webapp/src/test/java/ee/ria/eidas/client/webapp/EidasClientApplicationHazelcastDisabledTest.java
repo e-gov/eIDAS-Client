@@ -8,10 +8,9 @@ import ee.ria.eidas.client.exception.EidasClientException;
 import ee.ria.eidas.client.fixtures.ResponseBuilder;
 import ee.ria.eidas.client.session.UnencodedRequestSession;
 import io.restassured.http.ContentType;
-import net.shibboleth.utilities.java.support.resolver.CriteriaSet;
-import net.shibboleth.utilities.java.support.resolver.Criterion;
-import net.shibboleth.utilities.java.support.resolver.ResolverException;
-import org.joda.time.DateTime;
+import net.shibboleth.shared.resolver.CriteriaSet;
+import net.shibboleth.shared.resolver.Criterion;
+import net.shibboleth.shared.resolver.ResolverException;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mockito;
@@ -206,7 +205,7 @@ public class EidasClientApplicationHazelcastDisabledTest extends EidasClientAppl
 
         ResponseBuilder mockResponseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
         MockHttpServletRequest mockAuthnRequest = buildMockHttpServletRequest("SAMLResponse", mockResponseBuilder.buildResponse("classpath:idp-metadata.xml"));
-        UnencodedRequestSession requestSession = new UnencodedRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.SUBSTANTIAL, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET, "CA");
+        UnencodedRequestSession requestSession = new UnencodedRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, Instant.now(), AssuranceLevel.SUBSTANTIAL, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET, "CA");
         requestSessionService.saveRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, requestSession);
         try {
             authResponseService.getAuthenticationResult(mockAuthnRequest);

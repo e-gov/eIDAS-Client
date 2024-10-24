@@ -17,10 +17,9 @@ import ee.ria.eidas.client.response.AuthenticationResult;
 import ee.ria.eidas.client.session.RequestSessionService;
 import ee.ria.eidas.client.session.UnencodedRequestSession;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
-import net.shibboleth.utilities.java.support.resolver.CriteriaSet;
-import net.shibboleth.utilities.java.support.resolver.Criterion;
-import net.shibboleth.utilities.java.support.resolver.ResolverException;
-import org.joda.time.DateTime;
+import net.shibboleth.shared.resolver.CriteriaSet;
+import net.shibboleth.shared.resolver.Criterion;
+import net.shibboleth.shared.resolver.ResolverException;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -30,7 +29,9 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
 import org.opensaml.core.criterion.EntityIdCriterion;
-import org.opensaml.saml.saml2.core.*;
+import org.opensaml.saml.saml2.core.AttributeStatement;
+import org.opensaml.saml.saml2.core.Response;
+import org.opensaml.saml.saml2.core.StatusCode;
 import org.opensaml.saml.saml2.core.impl.AttributeStatementBuilder;
 import org.opensaml.security.credential.Credential;
 import org.opensaml.security.credential.impl.KeyStoreCredentialResolver;
@@ -49,7 +50,16 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 
 import javax.xml.validation.Schema;
 import java.security.KeyStore;
-import java.util.*;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Base64;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -126,7 +136,7 @@ public class AuthResponseServiceTest {
         mockResponseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
 
         requestSessionService.getAndRemoveRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO);
-        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET, "CA");
+        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, Instant.now(), AssuranceLevel.LOW, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET, "CA");
 
         Logger root = (Logger) LoggerFactory.getLogger(AuthResponseService.class);
         root.addAppender(mockedAppender);
@@ -174,7 +184,7 @@ public class AuthResponseServiceTest {
         expectedEx.expectMessage("Invalid SAMLResponse. AuthnContextClassRef is not greater or equal to the request level of assurance!");
 
         requestSessionService.getAndRemoveRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO);
-        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.SUBSTANTIAL, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET, "CA");
+        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, Instant.now(), AssuranceLevel.SUBSTANTIAL, AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET, "CA");
         httpRequest = buildMockHttpServletRequest("SAMLResponse", mockResponseBuilder.buildResponse("classpath:idp-metadata.xml"));
         AuthenticationResult result = authResponseService.getAuthenticationResult(httpRequest);
         fail("Should not reach this!");
@@ -189,7 +199,7 @@ public class AuthResponseServiceTest {
         List<EidasAttribute> requestedAttributes = new ArrayList<>(AuthInitiationService.DEFAULT_REQUESTED_ATTRIBUTE_SET);
         requestedAttributes.addAll(Arrays.asList(EidasAttribute.LEGAL_NAME, EidasAttribute.LEGAL_PERSON_IDENTIFIER, EidasAttribute.LEI));
         requestSessionService.getAndRemoveRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO);
-        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, new DateTime(), AssuranceLevel.LOW, requestedAttributes, "CA");
+        saveNewRequestSession(ResponseBuilder.DEFAULT_IN_RESPONSE_TO, Instant.now(), AssuranceLevel.LOW, requestedAttributes, "CA");
 
         AttributeStatement attributeStatement = new AttributeStatementBuilder().buildObject();
         attributeStatement.getAttributes().add(mockResponseBuilder.buildAttribute("FirstName", "http://eidas.europa.eu/attributes/naturalperson/CurrentGivenName", "urn:oasis:names:tc:SAML:2.0:attrname-format:uri", "eidas-natural:CurrentGivenNameType", "Alexander", "Αλέξανδρος"));
@@ -274,7 +284,7 @@ public class AuthResponseServiceTest {
         expectedEx.expect(InvalidRequestException.class);
         expectedEx.expectMessage("Invalid SAMLResponse. Error handling message: Message was rejected due to issue instant expiration");
 
-        DateTime pastTime = new DateTime().minusSeconds(properties.getResponseMessageLifetime()).minusSeconds(properties.getAcceptedClockSkew()).minusSeconds(1);
+        Instant pastTime = Instant.now().minusSeconds(properties.getResponseMessageLifetime()).minusSeconds(properties.getAcceptedClockSkew()).minusSeconds(1);
         Response response = mockResponseBuilder.buildResponse("classpath:idp-metadata.xml", Collections.singletonMap(ResponseBuilder.InputType.ISSUE_INSTANT, Optional.of(pastTime)));
         httpRequest = buildMockHttpServletRequest("SAMLResponse" ,response);
 
@@ -287,7 +297,7 @@ public class AuthResponseServiceTest {
         expectedEx.expect(InvalidRequestException.class);
         expectedEx.expectMessage("Invalid SAMLResponse. Error handling message: Message was rejected because it was issued in the future");
 
-        DateTime futureTime = new DateTime().plusSeconds(1)
+        Instant futureTime = Instant.now().plusSeconds(1)
                 .plusSeconds(properties.getResponseMessageLifetime()).plusSeconds(properties.getAcceptedClockSkew());
         Response response = mockResponseBuilder.buildResponse("classpath:idp-metadata.xml", Collections.singletonMap(ResponseBuilder.InputType.ISSUE_INSTANT, Optional.of(futureTime)));
         httpRequest = buildMockHttpServletRequest("SAMLResponse" ,response);
@@ -328,7 +338,7 @@ public class AuthResponseServiceTest {
         expectedEx.expectMessage("Invalid SAMLResponse. Assertion condition NotOnOrAfter is not valid!");
 
         Response response = mockResponseBuilder.buildResponse("classpath:idp-metadata.xml",
-                Collections.singletonMap(ResponseBuilder.InputType.ASSERTION_CONDITIONS_NOT_ON_OR_AFTER, Optional.of(new DateTime().minusHours(8))));
+                Collections.singletonMap(ResponseBuilder.InputType.ASSERTION_CONDITIONS_NOT_ON_OR_AFTER, Optional.of(Instant.now().minus(Duration.ofHours(8)))));
         httpRequest = buildMockHttpServletRequest("SAMLResponse", response);
 
         AuthenticationResult result = authResponseService.getAuthenticationResult(httpRequest);
@@ -436,7 +446,7 @@ public class AuthResponseServiceTest {
         return httpRequest;
     }
 
-    private void saveNewRequestSession(String requestID, DateTime issueIntant, AssuranceLevel loa, List<EidasAttribute> requestedAttributes, String country) {
+    private void saveNewRequestSession(String requestID, Instant issueIntant, AssuranceLevel loa, List<EidasAttribute> requestedAttributes, String country) {
         UnencodedRequestSession requestSession = new UnencodedRequestSession(requestID, issueIntant, loa, requestedAttributes, country);
         requestSessionService.saveRequestSession(requestID, requestSession);
     }

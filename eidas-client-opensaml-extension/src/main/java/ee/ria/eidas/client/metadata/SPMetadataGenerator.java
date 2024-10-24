@@ -7,15 +7,17 @@ import ee.ria.eidas.client.util.OpenSAMLUtils;
 import ee.ria.eidas.client.util.SAMLSigner;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang.RandomStringUtils;
-import org.joda.time.DateTime;
-import org.opensaml.core.xml.schema.XSAny;
-import org.opensaml.core.xml.schema.impl.XSAnyBuilder;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.ext.saml2alg.DigestMethod;
 import org.opensaml.saml.ext.saml2alg.SigningMethod;
 import org.opensaml.saml.saml2.core.NameIDType;
-import org.opensaml.saml.saml2.metadata.*;
+import org.opensaml.saml.saml2.metadata.AssertionConsumerService;
+import org.opensaml.saml.saml2.metadata.EntityDescriptor;
+import org.opensaml.saml.saml2.metadata.Extensions;
+import org.opensaml.saml.saml2.metadata.KeyDescriptor;
+import org.opensaml.saml.saml2.metadata.NameIDFormat;
+import org.opensaml.saml.saml2.metadata.SPSSODescriptor;
 import org.opensaml.security.SecurityException;
 import org.opensaml.security.credential.Credential;
 import org.opensaml.security.credential.UsageType;
@@ -25,6 +27,8 @@ import org.opensaml.xmlsec.keyinfo.NamedKeyInfoGeneratorManager;
 import org.opensaml.xmlsec.signature.KeyInfo;
 import org.springframework.context.ApplicationEventPublisher;
 
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
@@ -64,7 +68,8 @@ public class SPMetadataGenerator {
     private EntityDescriptor buildEntityDescriptor() {
         EntityDescriptor descriptor = OpenSAMLUtils.buildSAMLObject(EntityDescriptor.class);
         descriptor.setEntityID(eidasClientProperties.getSpEntityId());
-        descriptor.setValidUntil(DateTime.now().plusDays(eidasClientProperties.getMetadataValidityInDays()));
+        descriptor.setValidUntil(
+                Instant.now().plus(eidasClientProperties.getMetadataValidityInDays(), ChronoUnit.DAYS));
         descriptor.setID(generateEntityDescriptorId());
         descriptor.setExtensions(generateMetadataExtensions());
         descriptor.getRoleDescriptors().add(buildSPSSODescriptor());
@@ -119,7 +124,7 @@ public class SPMetadataGenerator {
     private Collection<NameIDFormat> buildNameIDFormat() {
         Collection<NameIDFormat> formats = new LinkedList<>();
         NameIDFormat unspecNameID = OpenSAMLUtils.buildSAMLObject(NameIDFormat.class);
-        unspecNameID.setFormat(NameIDType.UNSPECIFIED);
+        unspecNameID.setURI(NameIDType.UNSPECIFIED);
         formats.add(unspecNameID);
         return formats;
     }

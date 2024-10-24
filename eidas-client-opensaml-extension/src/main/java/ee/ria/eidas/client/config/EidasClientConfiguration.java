@@ -7,7 +7,7 @@ import ee.ria.eidas.client.metadata.IDPMetadataResolver;
 import ee.ria.eidas.client.metadata.SPMetadataGenerator;
 import ee.ria.eidas.client.session.LocalRequestSessionServiceImpl;
 import ee.ria.eidas.client.session.RequestSessionService;
-import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
+import net.shibboleth.shared.component.ComponentInitializationException;
 import org.opensaml.saml.common.xml.SAMLSchemaBuilder;
 import org.opensaml.saml.metadata.resolver.impl.PredicateRoleDescriptorResolver;
 import org.opensaml.saml.security.impl.MetadataCredentialResolver;
@@ -33,9 +33,10 @@ import java.security.KeyStore;
 import java.security.KeyStoreException;
 import java.security.cert.X509Certificate;
 
-@Configuration
 @ConfigurationPropertiesScan
 @EnableScheduling
+// TODO Investigate if two bean methos with same name (idpMetadataSignatureTrustEngine) are really necessary or can be renamed to make situation clearer. Currently renaming breaks OpenSAML signature validation certificate loading.
+@Configuration(enforceUniqueMethods = false)
 public class EidasClientConfiguration {
 
     @Autowired

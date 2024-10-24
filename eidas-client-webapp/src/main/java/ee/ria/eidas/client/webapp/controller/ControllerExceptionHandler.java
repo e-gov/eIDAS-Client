@@ -2,6 +2,7 @@ package ee.ria.eidas.client.webapp.controller;
 
 import ee.ria.eidas.client.exception.AuthenticationFailedException;
 import ee.ria.eidas.client.exception.InvalidRequestException;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
@@ -11,7 +12,11 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.ModelAndView;
+import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
+import java.io.IOException;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.Collections;
 import java.util.Map;
@@ -53,6 +58,13 @@ public class ControllerExceptionHandler {
     public Map handleAuthenticationFailure(HttpRequestMethodNotSupportedException exception) {
         log.error("Method not allowed!", exception);
         return getMap(HttpStatus.METHOD_NOT_ALLOWED, exception.getMessage());
+    }
+
+    @ExceptionHandler({NoResourceFoundException.class, NoHandlerFoundException.class})
+    @ResponseBody
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public Map handleNoResourceException(Exception exception) {
+        return getMap(HttpStatus.NOT_FOUND, exception.getMessage());
     }
 
     @ExceptionHandler

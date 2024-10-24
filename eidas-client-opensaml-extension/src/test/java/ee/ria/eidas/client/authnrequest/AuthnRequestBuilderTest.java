@@ -9,7 +9,6 @@ import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.config.EidasCredentialsConfiguration;
 import ee.ria.eidas.client.metadata.IDPMetadataResolver;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
-import org.joda.time.DateTime;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -43,6 +42,7 @@ import javax.xml.validation.Validator;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -182,7 +182,7 @@ public class AuthnRequestBuilderTest {
 
     private void assertAuthnRequest(AuthnRequest authnRequest, List<EidasAttribute> eidasAttributes, SPType expectedSpType, String expectedRequesterId, AuthnContextComparisonTypeEnumeration comparisonType, String assuranceLevel) {
         assertTrue(authnRequest.isForceAuthn());
-        assertTrue(authnRequest.getIssueInstant().isBefore(new DateTime()));
+        assertTrue(authnRequest.getIssueInstant().isBefore(Instant.now()));
         assertEquals(properties.getProviderName(), authnRequest.getProviderName());
         assertEquals(idpMetadataResolver.getSingeSignOnService().getLocation(), authnRequest.getDestination());
         assertEquals(SAMLConstants.SAML2_POST_BINDING_URI, authnRequest.getProtocolBinding());
@@ -212,7 +212,7 @@ public class AuthnRequestBuilderTest {
 
     private void RequestedAuthnContext(RequestedAuthnContext requestedAuthnContext, AuthnContextComparisonTypeEnumeration comparisonType, String assuranceLevel) {
         assertEquals(comparisonType, requestedAuthnContext.getComparison());
-        assertEquals(assuranceLevel, requestedAuthnContext.getAuthnContextClassRefs().get(0).getAuthnContextClassRef());
+        assertEquals(assuranceLevel, requestedAuthnContext.getAuthnContextClassRefs().get(0).getURI());
     }
 
     private void assertExtensions(List<XMLObject> extensions, List<EidasAttribute> eidasAttributes, SPType expectedSpType, String expectedRequesterId) {

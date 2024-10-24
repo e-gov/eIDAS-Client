@@ -5,27 +5,31 @@ import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.config.OpenSAMLConfiguration;
 import ee.ria.eidas.client.exception.EidasClientException;
 import lombok.extern.slf4j.Slf4j;
-import net.shibboleth.ext.spring.resource.ResourceHelper;
-import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
-import net.shibboleth.utilities.java.support.resolver.CriteriaSet;
-import net.shibboleth.utilities.java.support.resolver.ResolverException;
-import net.shibboleth.utilities.java.support.xml.ParserPool;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
+import net.shibboleth.shared.component.ComponentInitializationException;
+import net.shibboleth.shared.resolver.CriteriaSet;
+import net.shibboleth.shared.resolver.ResolverException;
+import net.shibboleth.shared.spring.resource.ResourceHelper;
+import net.shibboleth.shared.xml.ParserPool;
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.opensaml.core.criterion.EntityIdCriterion;
 import org.opensaml.core.xml.XMLObject;
 import org.opensaml.core.xml.schema.impl.XSAnyImpl;
 import org.opensaml.saml.common.xml.SAMLConstants;
+import org.opensaml.saml.criterion.EntityRoleCriterion;
+import org.opensaml.saml.criterion.ProtocolCriterion;
 import org.opensaml.saml.metadata.resolver.filter.impl.SignatureValidationFilter;
 import org.opensaml.saml.metadata.resolver.impl.AbstractReloadingMetadataResolver;
 import org.opensaml.saml.metadata.resolver.impl.HTTPMetadataResolver;
 import org.opensaml.saml.metadata.resolver.impl.ResourceBackedMetadataResolver;
 import org.opensaml.saml.saml2.metadata.EntityDescriptor;
+import org.opensaml.saml.saml2.metadata.IDPSSODescriptor;
 import org.opensaml.saml.saml2.metadata.KeyDescriptor;
 import org.opensaml.saml.saml2.metadata.SingleSignOnService;
 import org.opensaml.security.credential.CredentialSupport;
 import org.opensaml.security.credential.UsageType;
 import org.opensaml.security.credential.impl.StaticCredentialResolver;
+import org.opensaml.security.criteria.UsageCriterion;
 import org.opensaml.security.x509.X509Credential;
 import org.opensaml.xmlsec.config.impl.DefaultSecurityConfigurationBootstrap;
 import org.opensaml.xmlsec.signature.impl.X509CertificateImpl;
@@ -39,7 +43,14 @@ import java.io.IOException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.util.*;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.StreamSupport;
 
 @Slf4j
@@ -78,11 +89,21 @@ public class IDPMetadataResolver {
         }
 
         try {
+            final CriteriaSet criteriaSet = new CriteriaSet();
+            criteriaSet.add(new UsageCriterion(UsageType.SIGNING));
+            criteriaSet.add(new EntityRoleCriterion(IDPSSODescriptor.DEFAULT_ELEMENT_NAME));
+            criteriaSet.add(new ProtocolCriterion(SAMLConstants.SAML20P_NS));
+            criteriaSet.add(new EntityIdCriterion(url));
+
+            SignatureValidationFilter signatureValidationFilter = new SignatureValidationFilter(metadataSignatureTrustEngine);
+            signatureValidationFilter.setDefaultCriteria(criteriaSet);
+            signatureValidationFilter.initialize();
+
             AbstractReloadingMetadataResolver idpMetadataResolver = getMetadataResolver(url);
             idpMetadataResolver.setParserPool(parserPool);
             idpMetadataResolver.setId(idpMetadataResolver.getClass().getCanonicalName());
-            idpMetadataResolver.setMetadataFilter(new SignatureValidationFilter(metadataSignatureTrustEngine));
-            idpMetadataResolver.setMinRefreshDelay(60000);
+            idpMetadataResolver.setMetadataFilter(signatureValidationFilter);
+            idpMetadataResolver.setMinRefreshDelay(Duration.ofMillis(60000));
             idpMetadataResolver.initialize();
             return idpMetadataResolver;
         } catch (ComponentInitializationException e) {

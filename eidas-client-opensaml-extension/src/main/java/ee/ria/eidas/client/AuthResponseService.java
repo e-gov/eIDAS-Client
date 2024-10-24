@@ -12,15 +12,13 @@ import ee.ria.eidas.client.response.AuthenticationResult;
 import ee.ria.eidas.client.session.RequestSession;
 import ee.ria.eidas.client.session.RequestSessionService;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import net.shibboleth.utilities.java.support.component.ComponentInitializationException;
-import net.shibboleth.utilities.java.support.net.URIComparator;
-import net.shibboleth.utilities.java.support.net.URIException;
-import net.shibboleth.utilities.java.support.resolver.CriteriaSet;
-import net.shibboleth.utilities.java.support.resolver.ResolverException;
-import org.apache.commons.lang.StringUtils;
-import org.joda.time.DateTime;
+import net.shibboleth.shared.component.ComponentInitializationException;
+import net.shibboleth.shared.resolver.CriteriaSet;
+import net.shibboleth.shared.resolver.ResolverException;
+import org.apache.commons.lang3.StringUtils;
 import org.opensaml.core.criterion.EntityIdCriterion;
 import org.opensaml.core.xml.util.XMLObjectSupport;
 import org.opensaml.messaging.context.MessageContext;
@@ -34,7 +32,11 @@ import org.opensaml.saml.common.messaging.context.SAMLMessageInfoContext;
 import org.opensaml.saml.common.xml.SAMLConstants;
 import org.opensaml.saml.criterion.EntityRoleCriterion;
 import org.opensaml.saml.criterion.ProtocolCriterion;
-import org.opensaml.saml.saml2.core.*;
+import org.opensaml.saml.saml2.core.Assertion;
+import org.opensaml.saml.saml2.core.EncryptedAssertion;
+import org.opensaml.saml.saml2.core.Response;
+import org.opensaml.saml.saml2.core.StatusCode;
+import org.opensaml.saml.saml2.core.StatusMessage;
 import org.opensaml.saml.saml2.encryption.Decrypter;
 import org.opensaml.saml.saml2.metadata.IDPSSODescriptor;
 import org.opensaml.saml.security.impl.SAMLSignatureProfileValidator;
@@ -49,10 +51,10 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import se.swedenconnect.opensaml.xmlsec.encryption.support.DecryptionUtils;
 import se.swedenconnect.opensaml.xmlsec.encryption.support.Pkcs11Decrypter;
 
-import javax.annotation.Nullable;
-import javax.servlet.http.HttpServletRequest;
 import javax.xml.validation.Schema;
 import java.io.ByteArrayInputStream;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -73,7 +75,7 @@ public class AuthResponseService {
 
     private final Schema samlSchema;
 
-    public AuthenticationResult getAuthenticationResult(HttpServletRequest req) throws MissingServletRequestParameterException {
+    public AuthenticationResult getAuthenticationResult(HttpServletRequest req) throws MissingServletRequestParameterException, ComponentInitializationException {
         try {
             Response samlResponse = getSamlResponse(req);
 
@@ -168,9 +170,9 @@ public class AuthResponseService {
         } else {
             log.info("AuthnResponse validation: FAILURE");
             if (substatusCode == null)
-                throw new AuthenticationFailedException(statusMessage.getMessage(), statusCode.getValue());
+                throw new AuthenticationFailedException(statusMessage.getValue(), statusCode.getValue());
             else
-                throw new AuthenticationFailedException(statusMessage.getMessage(), statusCode.getValue(), substatusCode.getValue());
+                throw new AuthenticationFailedException(statusMessage.getValue(), statusCode.getValue(), substatusCode.getValue());
         }
     }
 
@@ -184,8 +186,8 @@ public class AuthResponseService {
                 && (substatusCode != null && requestDenied.equals(substatusCode.getValue()));
     }
 
-    private void validateDestinationAndLifetime(Response samlResponse, HttpServletRequest request) {
-        MessageContext context = new MessageContext<Response>();
+    private void validateDestinationAndLifetime(Response samlResponse, HttpServletRequest request) throws ComponentInitializationException {
+        MessageContext context = new MessageContext();
         context.setMessage(samlResponse);
         SAMLMessageInfoContext messageInfoContext = context.getSubcontext(SAMLMessageInfoContext.class, true);
         messageInfoContext.setMessageIssueInstant(samlResponse.getIssueInstant());
@@ -193,25 +195,26 @@ public class AuthResponseService {
         SchemaValidateXMLMessage schemaValidationFilter = new SchemaValidateXMLMessage(samlSchema);
 
         MessageLifetimeSecurityHandler lifetimeSecurityHandler = new MessageLifetimeSecurityHandler();
-        lifetimeSecurityHandler.setClockSkew(eidasClientProperties.getAcceptedClockSkew() * 1000L);
-        lifetimeSecurityHandler.setMessageLifetime(eidasClientProperties.getResponseMessageLifetime() * 1000L);
+        lifetimeSecurityHandler.setClockSkew(Duration.ofSeconds(eidasClientProperties.getAcceptedClockSkew()));
+        lifetimeSecurityHandler.setMessageLifetime(Duration.ofSeconds(eidasClientProperties.getResponseMessageLifetime()));
         lifetimeSecurityHandler.setRequiredRule(true);
 
         ReceivedEndpointSecurityHandler receivedEndpointSecurityHandler = new ReceivedEndpointSecurityHandler();
-        receivedEndpointSecurityHandler.setHttpServletRequest(request);
+        receivedEndpointSecurityHandler.setHttpServletRequestSupplier(() -> request);
         List handlers = new ArrayList<MessageHandler>();
 
         handlers.add(schemaValidationFilter);
         handlers.add(lifetimeSecurityHandler);
         handlers.add(receivedEndpointSecurityHandler);
-        receivedEndpointSecurityHandler.setURIComparator(new URIComparator() {
-            @Override
-            public boolean compare(@Nullable String messageDestination, @Nullable String receiverEndpoint) throws URIException {
-                return messageDestination != null && receiverEndpoint != null && messageDestination.equals(eidasClientProperties.getCallbackUrl());
-            }
+        receivedEndpointSecurityHandler.setURIComparator((messageDestination, receiverEndpoint) -> {
+            return messageDestination != null &&
+                    receiverEndpoint != null &&
+                    messageDestination.equals(eidasClientProperties.getCallbackUrl());
         });
-
-        BasicMessageHandlerChain<ArtifactResponse> handlerChain = new BasicMessageHandlerChain<>();
+        receivedEndpointSecurityHandler.initialize();
+        lifetimeSecurityHandler.initialize();
+        schemaValidationFilter.initialize();
+        BasicMessageHandlerChain handlerChain = new BasicMessageHandlerChain();
         handlerChain.setHandlers(handlers);
 
         try {
@@ -234,7 +237,7 @@ public class AuthResponseService {
         } else if (!requestSession.getRequestId().equals(requestID)) {
             throw new EidasClientException("Request session ID mismatch!");
         } else {
-            DateTime now = new DateTime(requestSession.getIssueInstant().getZone());
+            Instant now = Instant.now();
             int maxAuthenticationLifetime = eidasClientProperties.getMaximumAuthenticationLifetime();
             int acceptedClockSkew = eidasClientProperties.getAcceptedClockSkew();
 

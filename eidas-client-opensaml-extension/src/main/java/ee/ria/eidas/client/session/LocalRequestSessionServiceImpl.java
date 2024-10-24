@@ -3,9 +3,9 @@ package ee.ria.eidas.client.session;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.exception.EidasClientException;
 import lombok.extern.slf4j.Slf4j;
-import org.joda.time.DateTime;
 import org.springframework.scheduling.annotation.Scheduled;
 
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -49,7 +49,7 @@ public class LocalRequestSessionServiceImpl implements RequestSessionService {
             log.info("Triggering removal of expired SAML request sessions");
             requestSessionMap.entrySet().removeIf(
                     requestSession -> {
-                        DateTime now = new DateTime(requestSession.getValue().getIssueInstant().getZone());
+                        Instant now = Instant.now();
                         boolean expired = now.isAfter(requestSession.getValue().getIssueInstant().plusSeconds(maxAuthenticationLifetime).plusSeconds(acceptedClockSkew));
                         if (expired) {
                             log.info("Removing expired request session with ID: " + requestSession.getKey());

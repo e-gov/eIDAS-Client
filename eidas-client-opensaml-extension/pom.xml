@@ -17,27 +17,20 @@
         <commons-collections4.version>4.4</commons-collections4.version>
         <guava.version>33.1.0-jre</guava.version>
         <jose4j.version>0.9.6</jose4j.version>
-        <!-- TODO AUT-908 Upgrade to OpenSAML 4.x -->
-        <opensaml.version>3.4.6</opensaml.version>
-        <!-- TODO 2.x isn't compatible with Java 8. -->
-        <opensaml-security-ext.version>1.0.8</opensaml-security-ext.version>
-        <!-- TODO 8.x isn't compatible with Java 8. -->
-        <shibboleth-java-support.version>7.5.2</shibboleth-java-support.version>
-        <!-- TODO 6.x isn't compatible with Java 8. -->
-        <shibboleth-spring-extensions.version>5.4.2</shibboleth-spring-extensions.version>
-        <!-- TODO 2.x isn't compatible with Java 8. -->
-        <shiro.version>1.13.0</shiro.version>
-        <xmlsec.version>3.0.2</xmlsec.version><!-- TODO Does it work with >= 4.x ? -->
-
-        <!-- Fix CVE-2020-13936 by replacing velocity with new version of velocity-engine-core.
-             TODO Remove this property after upgrading opensaml-saml-impl.-->
-        <velocity.version>2.3</velocity.version>
+        <opensaml.version>5.1.1</opensaml.version>
+        <opensaml-security-ext.version>4.1.1</opensaml-security-ext.version>
+        <shiro.version>2.0.1</shiro.version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>org.opensaml</groupId>
-            <artifactId>opensaml-core</artifactId>
+            <artifactId>opensaml-core-api</artifactId>
+            <version>${opensaml.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.opensaml</groupId>
+            <artifactId>opensaml-core-impl</artifactId>
             <version>${opensaml.version}</version>
         </dependency>
         <dependency>
@@ -50,12 +43,6 @@
             <artifactId>opensaml-saml-impl</artifactId>
             <version>${opensaml.version}</version>
             <exclusions>
-                <!-- Fix CVE-2020-13936 by replacing velocity with new version of velocity-engine-core.
-                     TODO Remove this property after upgrading opensaml-saml-impl.-->
-                <exclusion>
-                    <groupId>org.apache.velocity</groupId>
-                    <artifactId>velocity</artifactId>
-                </exclusion>
                 <!-- Excluded because we are already using bcprov-jdk18on as a dependency.-->
                 <exclusion>
                     <groupId>org.bouncycastle</groupId>
@@ -64,9 +51,9 @@
             </exclusions>
         </dependency>
         <dependency>
-            <groupId>org.apache.velocity</groupId>
-            <artifactId>velocity-engine-core</artifactId>
-            <version>${velocity.version}</version>
+            <groupId>org.opensaml</groupId>
+            <artifactId>opensaml-spring</artifactId>
+            <version>${opensaml.version}</version>
         </dependency>
         <dependency>
             <groupId>org.opensaml</groupId>
@@ -91,16 +78,6 @@
             <version>${bouncycastle.version}</version>
         </dependency>
         <dependency>
-            <groupId>net.shibboleth.utilities</groupId>
-            <artifactId>java-support</artifactId>
-            <version>${shibboleth-java-support.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>net.shibboleth.ext</groupId>
-            <artifactId>spring-extensions</artifactId>
-            <version>${shibboleth-spring-extensions.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
@@ -122,11 +99,6 @@
             <artifactId>guava</artifactId>
             <version>${guava.version}</version>
             <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.santuario</groupId>
-            <artifactId>xmlsec</artifactId>
-            <version>${xmlsec.version}</version>
         </dependency>
 
         <!-- hazelcast and it's custom content protection -->

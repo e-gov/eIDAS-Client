@@ -8,7 +8,6 @@ import ee.ria.eidas.client.config.EidasClientConfiguration;
 import ee.ria.eidas.client.config.EidasClientProperties;
 import ee.ria.eidas.client.config.EidasCredentialsConfiguration;
 import ee.ria.eidas.client.util.OpenSAMLUtils;
-import org.joda.time.DateTime;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -30,6 +29,8 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
+import java.time.Duration;
+import java.time.Instant;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -86,7 +87,7 @@ public class SPMetadataGeneratorTest {
 
     private void assertEntityDescriptor(EntityDescriptor entityDescriptor) {
         assertEquals(properties.getSpEntityId(), entityDescriptor.getEntityID());
-        assertTrue(entityDescriptor.getValidUntil().isBefore(DateTime.now().plusDays(properties.getMetadataValidityInDays())));
+        assertTrue(entityDescriptor.getValidUntil().isBefore(Instant.now().plus(Duration.ofDays(properties.getMetadataValidityInDays()))));
 
         assertSignature(entityDescriptor.getSignature());
         assertExtensions(entityDescriptor.getExtensions());
@@ -128,13 +129,13 @@ public class SPMetadataGeneratorTest {
     }
 
     private void assertNameIDFormat(NameIDFormat nameIDFormat, String expectedFormat) {
-        assertEquals(expectedFormat, nameIDFormat.getFormat());
+        assertEquals(expectedFormat, nameIDFormat.getURI());
     }
 
     private void assertAssertionConsumerService(AssertionConsumerService assertionConsumerService) {
         assertEquals(SAMLConstants.SAML2_POST_BINDING_URI, assertionConsumerService.getBinding());
         assertEquals(properties.getCallbackUrl(), assertionConsumerService.getLocation());
-        assertEquals(new Integer(0), assertionConsumerService.getIndex());
+        assertEquals(Integer.valueOf(0), assertionConsumerService.getIndex());
     }
 
     private void verifyLogs(String logMessage, Level level) {

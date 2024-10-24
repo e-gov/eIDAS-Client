@@ -6,8 +6,6 @@ import org.opensaml.core.xml.XMLObject;
 import org.opensaml.core.xml.schema.XSAny;
 import org.opensaml.saml.saml2.core.Assertion;
 import org.opensaml.saml.saml2.core.Attribute;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import javax.xml.namespace.QName;
 import java.util.HashMap;
@@ -26,7 +24,7 @@ public class AuthenticationResult {
     private Map<String, String> attributesTransliterated = new HashMap<>();
 
     public AuthenticationResult(Assertion assertion) {
-        levelOfAssurance = assertion.getAuthnStatements().get(0).getAuthnContext().getAuthnContextClassRef().getAuthnContextClassRef();
+        levelOfAssurance = assertion.getAuthnStatements().get(0).getAuthnContext().getAuthnContextClassRef().getURI();
         for (Attribute attribute : assertion.getAttributeStatements().get(0).getAttributes()) {
             for (XMLObject attributeValue : attribute.getAttributeValues()) {
                 addToResponse(attribute, (XSAny) attributeValue);
