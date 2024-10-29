@@ -7,16 +7,12 @@ import ee.ria.eidas.client.metadata.IDPMetadataResolver;
 import ee.ria.eidas.client.metadata.SPMetadataGenerator;
 import ee.ria.eidas.client.session.LocalRequestSessionServiceImpl;
 import ee.ria.eidas.client.session.RequestSessionService;
-import net.shibboleth.shared.component.ComponentInitializationException;
 import org.opensaml.saml.common.xml.SAMLSchemaBuilder;
-import org.opensaml.saml.metadata.resolver.impl.PredicateRoleDescriptorResolver;
-import org.opensaml.saml.security.impl.MetadataCredentialResolver;
 import org.opensaml.security.credential.Credential;
 import org.opensaml.security.credential.CredentialSupport;
 import org.opensaml.security.credential.impl.StaticCredentialResolver;
 import org.opensaml.security.x509.X509Credential;
 import org.opensaml.xmlsec.config.impl.DefaultSecurityConfigurationBootstrap;
-import org.opensaml.xmlsec.keyinfo.KeyInfoCredentialResolver;
 import org.opensaml.xmlsec.signature.support.impl.ExplicitKeySignatureTrustEngine;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -35,8 +31,7 @@ import java.security.cert.X509Certificate;
 
 @ConfigurationPropertiesScan
 @EnableScheduling
-// TODO Investigate if two bean methos with same name (idpMetadataSignatureTrustEngine) are really necessary or can be renamed to make situation clearer. Currently renaming breaks OpenSAML signature validation certificate loading.
-@Configuration(enforceUniqueMethods = false)
+@Configuration
 public class EidasClientConfiguration {
 
     @Autowired
@@ -73,23 +68,6 @@ public class EidasClientConfiguration {
         } catch (KeyStoreException e) {
             throw new EidasClientException("Error initializing. Cannot get IDP metadata trusted certificate", e);
         }
-    }
-
-    @Bean
-    public ExplicitKeySignatureTrustEngine idpMetadataSignatureTrustEngine(IDPMetadataResolver idpMetadataResolver) {
-        MetadataCredentialResolver metadataCredentialResolver = new MetadataCredentialResolver();
-        PredicateRoleDescriptorResolver roleResolver = new PredicateRoleDescriptorResolver(idpMetadataResolver.resolve());
-        KeyInfoCredentialResolver keyResolver = DefaultSecurityConfigurationBootstrap.buildBasicInlineKeyInfoCredentialResolver();
-        metadataCredentialResolver.setKeyInfoCredentialResolver(keyResolver);
-        metadataCredentialResolver.setRoleDescriptorResolver(roleResolver);
-
-        try {
-            metadataCredentialResolver.initialize();
-            roleResolver.initialize();
-        } catch (final ComponentInitializationException e) {
-            throw new EidasClientException("Error initializing metadataCredentialResolver", e);
-        }
-        return new ExplicitKeySignatureTrustEngine(metadataCredentialResolver, keyResolver);
     }
 
     @Bean
