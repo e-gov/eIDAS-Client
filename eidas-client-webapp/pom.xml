@@ -34,10 +34,21 @@
     </profiles>
 
     <properties>
+        <elastic-apm.version>1.52.1</elastic-apm.version>
         <wiremock.version>3.9.1</wiremock.version>
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>co.elastic.apm</groupId>
+            <artifactId>apm-agent-api</artifactId>
+            <version>${elastic-apm.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>co.elastic.apm</groupId>
+            <artifactId>apm-agent-attach</artifactId>
+            <version>${elastic-apm.version}</version>
+        </dependency>
         <dependency>
             <groupId>ee.ria.eidas</groupId>
             <artifactId>eidas-client-opensaml-extension</artifactId>
@@ -124,6 +135,9 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
+                    <environmentVariables>
+                        <ELASTIC_APM_ENABLED>false</ELASTIC_APM_ENABLED>
+                    </environmentVariables>
                     <excludes>
                         <exclude>
                             <groupId>org.projectlombok</groupId>
