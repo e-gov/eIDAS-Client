@@ -15,11 +15,11 @@
     <properties>
         <bouncycastle.version>1.79</bouncycastle.version>
         <commons-collections4.version>4.4</commons-collections4.version>
-        <guava.version>33.1.0-jre</guava.version>
+        <guava.version>33.3.1-jre</guava.version>
         <jose4j.version>0.9.6</jose4j.version>
         <opensaml.version>5.1.3</opensaml.version>
-        <opensaml-security-ext.version>4.1.1</opensaml-security-ext.version>
-        <shiro.version>2.0.1</shiro.version>
+        <opensaml-security-ext.version>4.1.2</opensaml-security-ext.version>
+        <shiro.version>2.0.2</shiro.version>
     </properties>
 
     <dependencies>
