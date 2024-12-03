@@ -1,37 +1,36 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <Configuration monitorInterval="30">
     <Properties>
+        <Property name="LOG_HOME">${env:java.io.tmpdir:-/tmp}</Property>
+        <Property name="LOG_FILES_MAX_COUNT">31</Property>
+        <Property name="LOG_CONSOLE_LEVEL">INFO</Property>
+        <Property name="LOG_FILE_LEVEL">OFF</Property>
         <Property name="eidas.client.log.pattern">{&quot;date&quot;:&quot;%d{yyyy-MM-dd'T'HH:mm:ss,SSSZ}&quot;, &quot;level&quot;:&quot;%level&quot;%notEmpty{, &quot;request&quot;:&quot;%X{request}&quot;}%notEmpty{, &quot;requestId&quot;:&quot;%X{requestId}&quot;}%notEmpty{, &quot;sessionId&quot;:&quot;%X{sessionId}&quot;}, &quot;logger&quot;:&quot;%logger&quot;, &quot;thread&quot;:&quot;%thread&quot;, &quot;message&quot;:&quot;%enc{%msg}{JSON}&quot;%notEmpty{, &quot;throwable&quot;:&quot;%enc{%throwable}{JSON}&quot;}}%n</Property>
-        <Property name="eidas.client.log.level">info</Property>
-        <Property name="eidas.client.log.dir">/var/log/eidas</Property>
     </Properties>
 
     <Appenders>
-        <Console name="default" target="SYSTEM_OUT">
+        <Console name="STDOUT" target="SYSTEM_OUT">
+            <ThresholdFilter level="${env:LOG_CONSOLE_LEVEL}"/>
             <PatternLayout charset="UTF-8" pattern="${sys:eidas.client.log.pattern}" alwaysWriteExceptions="false"/>
         </Console>
-        <RollingFile name="file" append="true"
-                     filePattern="${sys:eidas.client.log.dir}/eIDAS-Client-%d{yyyy-MM-dd}.log">
+        <RollingFile name="FILE" append="true"
+                     filePattern="${env:LOG_HOME}/eIDAS-Client-%d{yyyy-MM-dd}.log">
+            <ThresholdFilter level="${env:LOG_FILE_LEVEL}"/>
             <PatternLayout alwaysWriteExceptions="false" pattern="${sys:eidas.client.log.pattern}" />
             <CronTriggeringPolicy schedule="0 0 * * * ?"/>
             <DirectWriteRolloverStrategy>
-                <Delete basePath="${sys:eidas.client.log.dir}">
+                <Delete basePath="${env:LOG_HOME}">
                     <IfFileName glob="eIDAS-Client-*.log" />
-                    <IfLastModified age="7d" />
+                    <IfLastModified age="${env:LOG_FILES_MAX_COUNT}d" />
                 </Delete>
             </DirectWriteRolloverStrategy>
         </RollingFile>
     </Appenders>
 
     <Loggers>
-        <Logger name="ee.ria.eidas.client" level="${sys:eidas.client.log.level}" additivity="false">
-            <AppenderRef ref="default" />
-            <AppenderRef ref="file"/>
-        </Logger>
-
-        <Root level="${sys:eidas.client.log.level}">
-            <AppenderRef ref="default" />
-            <AppenderRef ref="file" />
+        <Root level="INFO">
+            <AppenderRef ref="FILE" />
+            <AppenderRef ref="STDOUT" />
         </Root>
     </Loggers>
 </Configuration>
