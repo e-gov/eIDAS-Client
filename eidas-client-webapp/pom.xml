@@ -11,27 +11,7 @@
     </parent>
 
     <artifactId>eidas-client-webapp</artifactId>
-    <packaging>${packaging.type}</packaging>
-
-    <profiles>
-        <profile>
-            <id>jar</id>
-            <properties>
-                <packaging.type>jar</packaging.type>
-                <skip.layers>false</skip.layers>
-            </properties>
-        </profile>
-        <profile>
-            <id>war</id>
-            <properties>
-                <packaging.type>war</packaging.type>
-                <skip.layers>true</skip.layers>
-            </properties>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-        </profile>
-    </profiles>
+    <packaging>war</packaging>
 
     <properties>
         <elastic-apm.version>1.52.1</elastic-apm.version>
