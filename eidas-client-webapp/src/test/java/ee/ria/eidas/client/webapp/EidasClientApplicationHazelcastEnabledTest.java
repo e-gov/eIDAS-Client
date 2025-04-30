@@ -24,7 +24,7 @@ import static org.hamcrest.core.IsEqual.equalTo;
                 "eidas.client.hazelcast-signing-algorithm=HS512",
                 "eidas.client.hazelcast-encryption-key=K7KVMOrgRj7Pw5GDHdXjKQ==",
                 "eidas.client.hazelcast-encryption-alg=AES",
-                "management.endpoint.hazelcast.enabled=true"} )
+                "management.endpoints.web.exposure.include=heartbeat,hazelcast"} )
 public class EidasClientApplicationHazelcastEnabledTest extends EidasClientApplicationTest {
 
     @Test

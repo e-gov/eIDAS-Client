@@ -32,7 +32,7 @@ import static java.util.stream.Collectors.toMap;
 @Slf4j
 @Component
 @ConditionalOnAvailableEndpoint(endpoint = HeartbeatEndpoint.class)
-@Endpoint(id = "heartbeat", enableByDefault = false)
+@Endpoint(id = "heartbeat")
 @ConfigurationProperties(prefix = "management.endpoint.heartbeat")
 public class HeartbeatEndpoint {
 

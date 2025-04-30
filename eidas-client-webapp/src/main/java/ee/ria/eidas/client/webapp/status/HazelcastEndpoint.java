@@ -20,7 +20,7 @@ import java.util.Map;
 @Slf4j
 @ConditionalOnProperty("eidas.client.hazelcast-enabled")
 @ConditionalOnAvailableEndpoint(endpoint = HazelcastEndpoint.class)
-@Endpoint(id = "hazelcast", enableByDefault = false)
+@Endpoint(id = "hazelcast")
 @Component
 public class HazelcastEndpoint {
 
