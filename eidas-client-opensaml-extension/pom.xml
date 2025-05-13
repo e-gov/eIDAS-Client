@@ -18,7 +18,7 @@
         <guava.version>33.4.8-jre</guava.version>
         <jose4j.version>0.9.6</jose4j.version>
         <opensaml.version>5.1.4</opensaml.version>
-        <opensaml-security-ext.version>4.1.5</opensaml-security-ext.version>
+        <opensaml-security-ext.version>4.1.6</opensaml-security-ext.version>
         <shiro.version>2.0.4</shiro.version>
     </properties>
 

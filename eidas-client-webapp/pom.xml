@@ -15,7 +15,7 @@
 
     <properties>
         <elastic-apm.version>1.53.0</elastic-apm.version>
-        <wiremock.version>3.9.2</wiremock.version>
+        <wiremock.version>3.13.0</wiremock.version>
     </properties>
 
     <dependencies>
