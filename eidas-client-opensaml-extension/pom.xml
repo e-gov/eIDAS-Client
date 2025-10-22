@@ -13,13 +13,13 @@
     <artifactId>eidas-client-opensaml-extension</artifactId>
 
     <properties>
-        <bouncycastle.version>1.80</bouncycastle.version>
+        <bouncycastle.version>1.82</bouncycastle.version>
         <commons-collections4.version>4.5.0</commons-collections4.version>
-        <guava.version>33.4.8-jre</guava.version>
+        <guava.version>33.5.0-jre</guava.version>
         <jose4j.version>0.9.6</jose4j.version>
-        <opensaml.version>5.1.4</opensaml.version>
-        <opensaml-security-ext.version>4.1.6</opensaml-security-ext.version>
-        <shiro.version>2.0.4</shiro.version>
+        <opensaml.version>5.1.6</opensaml.version>
+        <opensaml-security-ext.version>4.1.8</opensaml-security-ext.version>
+        <shiro.version>2.0.5</shiro.version>
     </properties>
 
     <dependencies>
