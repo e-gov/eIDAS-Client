@@ -19,7 +19,7 @@
         <jose4j.version>0.9.6</jose4j.version>
         <opensaml.version>5.1.6</opensaml.version>
         <opensaml-security-ext.version>4.1.8</opensaml-security-ext.version>
-        <shiro.version>2.0.5</shiro.version>
+        <shiro.version>2.1.0</shiro.version>
     </properties>
 
     <dependencies>
