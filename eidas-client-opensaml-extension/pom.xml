@@ -13,7 +13,7 @@
     <artifactId>eidas-client-opensaml-extension</artifactId>
 
     <properties>
-        <bouncycastle.version>1.82</bouncycastle.version>
+        <bouncycastle.version>1.84</bouncycastle.version>
         <commons-collections4.version>4.5.0</commons-collections4.version>
         <guava.version>33.5.0-jre</guava.version>
         <jose4j.version>0.9.6</jose4j.version>
