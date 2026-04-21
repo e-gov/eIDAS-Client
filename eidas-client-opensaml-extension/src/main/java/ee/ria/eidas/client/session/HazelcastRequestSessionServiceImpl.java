@@ -76,7 +76,8 @@ public class HazelcastRequestSessionServiceImpl implements RequestSessionService
             log.debug("Created encoded session [{}]", encodedSession);
             return encodedSession;
         } catch (final IOException e) {
-            throw Throwables.propagate(e);
+            Throwables.throwIfUnchecked(e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -91,7 +92,8 @@ public class HazelcastRequestSessionServiceImpl implements RequestSessionService
             log.debug("Decoded session to [{}]", result);
             return result;
         } catch (Exception e) {
-            throw Throwables.propagate(e);
+            Throwables.throwIfUnchecked(e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -180,7 +182,8 @@ public class HazelcastRequestSessionServiceImpl implements RequestSessionService
                 return sign(result);
             } catch (final Exception e) {
                 log.error(e.getMessage(), e);
-                throw Throwables.propagate(e);
+                Throwables.throwIfUnchecked(e);
+                throw new RuntimeException(e);
             }
         }
 
@@ -194,7 +197,8 @@ public class HazelcastRequestSessionServiceImpl implements RequestSessionService
                 final CipherService cipher = new AesCipherService();
                 return cipher.decrypt(verifiedValue, key.getEncoded()).getClonedBytes();
             } catch (final Exception e) {
-                throw Throwables.propagate(e);
+                Throwables.throwIfUnchecked(e);
+                throw new RuntimeException(e);
             }
         }
 
@@ -207,7 +211,8 @@ public class HazelcastRequestSessionServiceImpl implements RequestSessionService
                 jws.setKey(key);
                 return jws.getCompactSerialization().getBytes(StandardCharsets.UTF_8);
             } catch (final Exception e) {
-                throw Throwables.propagate(e);
+                Throwables.throwIfUnchecked(e);
+                throw new RuntimeException(e);
             }
         }
 
@@ -226,7 +231,8 @@ public class HazelcastRequestSessionServiceImpl implements RequestSessionService
                 }
                 return null;
             } catch (final Exception e) {
-                throw Throwables.propagate(e);
+                Throwables.throwIfUnchecked(e);
+                throw new RuntimeException(e);
             }
         }
     }

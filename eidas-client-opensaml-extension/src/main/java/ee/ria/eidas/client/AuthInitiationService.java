@@ -136,9 +136,9 @@ public class AuthInitiationService {
 
         context.setMessage(authnRequest);
 
-        SAMLPeerEntityContext peerEntityContext = context.getSubcontext(SAMLPeerEntityContext.class, true);
+        SAMLPeerEntityContext peerEntityContext = context.ensureSubcontext(SAMLPeerEntityContext.class);
 
-        SAMLEndpointContext endpointContext = peerEntityContext.getSubcontext(SAMLEndpointContext.class, true);
+        SAMLEndpointContext endpointContext = peerEntityContext.ensureSubcontext(SAMLEndpointContext.class);
         endpointContext.setEndpoint(idpMetadataResolver.getSingeSignOnService());
 
         SignatureSigningParameters signatureSigningParameters = new SignatureSigningParameters();
@@ -146,7 +146,7 @@ public class AuthInitiationService {
         signatureSigningParameters.setSignatureAlgorithm(eidasClientProperties.getRequestSignatureAlgorithm());
 
 
-        context.getSubcontext(SecurityParametersContext.class, true).setSignatureSigningParameters(signatureSigningParameters);
+        context.ensureSubcontext(SecurityParametersContext.class).setSignatureSigningParameters(signatureSigningParameters);
 
         EidasHTTPPostEncoder encoder = new EidasHTTPPostEncoder();
         encoder.setMessageContext(context);

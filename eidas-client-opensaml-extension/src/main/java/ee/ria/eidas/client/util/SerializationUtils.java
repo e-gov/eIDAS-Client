@@ -22,7 +22,8 @@ public final class SerializationUtils {
         try (ObjectOutputStream out = new ObjectOutputStream(outputStream)) {
             out.writeObject(object);
         } catch (final IOException e) {
-            throw Throwables.propagate(e);
+            Throwables.throwIfUnchecked(e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -35,7 +36,8 @@ public final class SerializationUtils {
         try (ObjectInputStream in = new ObjectInputStream(inputStream)) {
             return (T) in.readObject();
         } catch (final ClassNotFoundException | IOException e) {
-            throw Throwables.propagate(e);
+            Throwables.throwIfUnchecked(e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -52,7 +54,8 @@ public final class SerializationUtils {
             final byte[] decoded = (byte[]) cipher.decode(object);
             return deserializeAndCheckObject(decoded, type);
         } catch (final Exception e) {
-            throw Throwables.propagate(e);
+            Throwables.throwIfUnchecked(e);
+            throw new RuntimeException(e);
         }
     }
 

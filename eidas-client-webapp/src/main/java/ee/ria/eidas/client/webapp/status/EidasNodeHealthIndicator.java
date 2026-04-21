@@ -3,12 +3,11 @@ package ee.ria.eidas.client.webapp.status;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hc.client5.http.classic.methods.HttpGet;
+import org.apache.hc.client5.http.config.ConnectionConfig;
 import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
 import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
-import org.apache.hc.client5.http.io.HttpClientConnectionManager;
 import org.apache.hc.core5.http.HttpStatus;
 import org.apache.hc.core5.http.io.SocketConfig;
 import org.apache.hc.core5.util.Timeout;
@@ -37,8 +36,11 @@ public class EidasNodeHealthIndicator extends AbstractHealthIndicator {
     @PostConstruct
     public void setUp() {
         RequestConfig requestConfig = RequestConfig.custom()
-                .setConnectTimeout(Timeout.ofSeconds(timeout))
                 .setConnectionRequestTimeout(Timeout.ofSeconds(timeout))
+                .build();
+
+        ConnectionConfig connectionConfig = ConnectionConfig.custom()
+                .setConnectTimeout(Timeout.ofSeconds(timeout))
                 .build();
 
         SocketConfig socketConfig = SocketConfig.custom().setSoTimeout(Timeout.ofSeconds(timeout)).build();
@@ -47,6 +49,7 @@ public class EidasNodeHealthIndicator extends AbstractHealthIndicator {
                 .disableAutomaticRetries()
                 .setDefaultRequestConfig(requestConfig)
                 .setConnectionManager(PoolingHttpClientConnectionManagerBuilder.create()
+                        .setDefaultConnectionConfig(connectionConfig)
                         .setDefaultSocketConfig(socketConfig)
                         .build())
                 .build();
@@ -55,8 +58,9 @@ public class EidasNodeHealthIndicator extends AbstractHealthIndicator {
     @Override
     protected void doHealthCheck(Health.Builder builder) {
         HttpGet httpGet = new HttpGet(idpMetadataUrl);
-        try (CloseableHttpResponse response = httpClient.execute(httpGet)) {
-            if (response.getCode() == HttpStatus.SC_OK) {
+        try {
+            int responseCode = httpClient.execute(httpGet, response -> response.getCode());
+            if (responseCode == HttpStatus.SC_OK) {
                 builder.up().build();
             } else {
                 builder.down().build();

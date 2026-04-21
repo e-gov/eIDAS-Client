@@ -96,7 +96,7 @@ public class SPMetadataGenerator {
     }
 
     private String generateEntityDescriptorId() {
-        return "_".concat(RandomStringUtils.randomAlphanumeric(39)).toLowerCase();
+        return "_".concat(RandomStringUtils.secure().nextAlphanumeric(39)).toLowerCase();
     }
 
     private SPSSODescriptor buildSPSSODescriptor() {

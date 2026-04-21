@@ -189,7 +189,7 @@ public class AuthResponseService {
     private void validateDestinationAndLifetime(Response samlResponse, HttpServletRequest request) throws ComponentInitializationException {
         MessageContext context = new MessageContext();
         context.setMessage(samlResponse);
-        SAMLMessageInfoContext messageInfoContext = context.getSubcontext(SAMLMessageInfoContext.class, true);
+        SAMLMessageInfoContext messageInfoContext = context.ensureSubcontext(SAMLMessageInfoContext.class);
         messageInfoContext.setMessageIssueInstant(samlResponse.getIssueInstant());
 
         SchemaValidateXMLMessage schemaValidationFilter = new SchemaValidateXMLMessage(samlSchema);

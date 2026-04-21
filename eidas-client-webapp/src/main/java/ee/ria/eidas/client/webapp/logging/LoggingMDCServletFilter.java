@@ -66,7 +66,7 @@ public class LoggingMDCServletFilter implements Filter {
         String requestId = request.getHeader(REQUEST_ID_HEADER);
         if (requestId != null) return requestId;
 
-        requestId = RandomStringUtils.random(16, REQUEST_ID_CHARACTER_SET);
+        requestId = RandomStringUtils.secure().next(16, REQUEST_ID_CHARACTER_SET);
         log.debug("No " + REQUEST_ID_HEADER + " header provided in request, generated: " + requestId);
         return requestId;
     }
