@@ -38,9 +38,9 @@ import org.opensaml.security.x509.BasicX509Credential;
 import org.opensaml.xmlsec.signature.support.SignatureValidator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
@@ -68,21 +68,21 @@ public abstract class EidasClientApplicationTest {
     @Autowired
     EidasClientProperties eidasClientProperties;
 
-    @SpyBean
+    @MockitoSpyBean
     EidasClientProperties.HsmProperties hsmProperties;
 
-    @SpyBean
+    @MockitoSpyBean
     CredentialsHealthIndicator credentialsHealthIndicator;
 
-    @SpyBean
+    @MockitoSpyBean
     @Qualifier("metadataSigningCredential")
     BasicX509Credential metadataSigningCredential;
 
-    @SpyBean
+    @MockitoSpyBean
     @Qualifier("authnReqSigningCredential")
     BasicX509Credential authnReqSigningCredential;
 
-    @SpyBean
+    @MockitoSpyBean
     @Qualifier("responseAssertionDecryptionCredential")
     BasicX509Credential responseAssertionDecryptionCredential;
 
