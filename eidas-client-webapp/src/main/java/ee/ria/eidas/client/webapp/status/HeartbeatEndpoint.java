@@ -8,11 +8,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.autoconfigure.endpoint.condition.ConditionalOnAvailableEndpoint;
 import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
-import org.springframework.boot.actuate.health.HealthContributorRegistry;
-import org.springframework.boot.actuate.health.HealthIndicator;
-import org.springframework.boot.actuate.health.NamedContributor;
-import org.springframework.boot.actuate.health.Status;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.health.contributor.HealthContributors.Entry;
+import org.springframework.boot.health.contributor.HealthIndicator;
+import org.springframework.boot.health.contributor.Status;
+import org.springframework.boot.health.registry.HealthContributorRegistry;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.stereotype.Component;
 
@@ -81,10 +81,10 @@ public class HeartbeatEndpoint {
 
     private Map<String, Status> getHealthIndicatorStatuses() {
         return healthContributorRegistry.stream()
-                .filter(hc -> hc.getContributor() instanceof HealthIndicator)
-                .collect(toMap(NamedContributor::getName,
+                .filter(hc -> hc.contributor() instanceof HealthIndicator)
+                .collect(toMap(Entry::name,
                         healthContributorNamedContributor -> ((HealthIndicator) healthContributorNamedContributor
-                                .getContributor()).health().getStatus()));
+                                .contributor()).health().getStatus()));
     }
 
     private Status getOverallSystemStatus(Map<String, Status> healthIndicatorStatuses) {
