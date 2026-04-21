@@ -14,8 +14,8 @@
     <packaging>war</packaging>
 
     <properties>
-        <elastic-apm.version>1.55.1</elastic-apm.version>
-        <wiremock.version>3.13.1</wiremock.version>
+        <elastic-apm.version>1.55.6</elastic-apm.version>
+        <wiremock.version>3.13.2</wiremock.version>
     </properties>
 
     <dependencies>
