@@ -28,6 +28,7 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.opensaml.core.criterion.EntityIdCriterion;
 import org.opensaml.saml.saml2.core.AttributeStatement;
 import org.opensaml.saml.saml2.core.Response;
@@ -132,6 +133,7 @@ public class AuthResponseServiceTest {
 
     @Before
     public void setUp() {
+        MockitoAnnotations.openMocks(this);
         authResponseService = new AuthResponseService(requestSessionService, properties, idpMetadataResolver, responseAssertionDecryptionCredential, applicationEventPublisher, samlSchema);
         mockResponseBuilder = new ResponseBuilder(eidasNodeSigningCredential, responseAssertionDecryptionCredential);
 

@@ -22,6 +22,7 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.opensaml.core.config.InitializationService;
 import org.opensaml.core.xml.XMLObject;
 import org.opensaml.core.xml.config.XMLObjectProviderRegistrySupport;
@@ -90,6 +91,7 @@ public class AuthInitiationServiceTest {
 
     @Before
     public void setUp() {
+        MockitoAnnotations.openMocks(this);
         authenticationService = new AuthInitiationService(requestSessionService, authnReqSigningCredential, properties, idpMetadataResolver, applicationEventPublisher);
 
         Logger root = (Logger) LoggerFactory.getLogger(AuthInitiationService.class);

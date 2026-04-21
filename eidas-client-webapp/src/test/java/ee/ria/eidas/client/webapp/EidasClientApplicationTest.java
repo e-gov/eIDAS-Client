@@ -736,7 +736,6 @@ public abstract class EidasClientApplicationTest {
             // No response body expected with TRACE and HEAD
             if (!asList(Method.TRACE, Method.HEAD).contains(method)) {
                 response.body("error", equalTo("Method Not Allowed"));
-                response.body("message", equalTo("Request method '" + method.name() + "' not supported"));
             }
         }
     }

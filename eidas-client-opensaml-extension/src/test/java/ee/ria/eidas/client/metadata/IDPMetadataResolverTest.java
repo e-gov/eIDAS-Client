@@ -55,7 +55,7 @@ public class IDPMetadataResolverTest {
     @Before
     public void initMocks() {
         idpMetadataResolver = new IDPMetadataResolver("classpath:idp-metadata.xml", idpMetadataSignatureTrustEngine);
-        MockitoAnnotations.initMocks(this);
+        MockitoAnnotations.openMocks(this);
     }
 
     @Test
@@ -144,4 +144,3 @@ public class IDPMetadataResolverTest {
         Assert.fail("Test should not reach this!");
     }
 }
-

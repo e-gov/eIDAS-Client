@@ -14,6 +14,7 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.opensaml.core.xml.XMLObject;
 import org.opensaml.saml.common.SAMLObjectContentReference;
 import org.opensaml.saml.common.xml.SAMLConstants;
@@ -69,6 +70,7 @@ public class SPMetadataGeneratorTest {
 
     @Before
     public void setUp() {
+        MockitoAnnotations.openMocks(this);
         metadataGenerator = new SPMetadataGenerator(properties, metadataSigningCredential, authnReqSigningCredential, responseAssertionDecryptionCredential, applicationEventPublisher);
 
         Logger root = (Logger) LoggerFactory.getLogger(SPMetadataGenerator.class);

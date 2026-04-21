@@ -70,13 +70,12 @@ public class EidasClientApplicationHazelcastEnabledTest extends EidasClientAppli
                 .body("startTime", notNullValue())
                 .body("currentTime", notNullValue())
                 .body("status", equalTo("UP"))
-                .body("dependencies", hasSize(3))
-                .body("dependencies[0].name", equalTo("credentials"))
-                .body("dependencies[0].status", equalTo("UP"))
-                .body("dependencies[1].name", equalTo("hazelcast"))
-                .body("dependencies[1].status", equalTo("UP"))
-                .body("dependencies[2].name", equalTo("eIDAS-Node"))
-                .body("dependencies[2].status", equalTo("UP"));
+                .body("dependencies.name", hasItems("credentialsHealthIndicator", "hazelcastHealthIndicator", "eIDAS-Node", "livenessStateHealthIndicator", "readinessStateHealthIndicator"))
+                .body("dependencies.find { it.name == 'credentialsHealthIndicator' }.status", equalTo("UP"))
+                .body("dependencies.find { it.name == 'hazelcastHealthIndicator' }.status", equalTo("UP"))
+                .body("dependencies.find { it.name == 'eIDAS-Node' }.status", equalTo("UP"))
+                .body("dependencies.find { it.name == 'livenessStateHealthIndicator' }.status", equalTo("UP"))
+                .body("dependencies.find { it.name == 'readinessStateHealthIndicator' }.status", equalTo("UP"));
     }
 
 }

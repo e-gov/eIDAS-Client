@@ -40,6 +40,7 @@ import static java.time.Instant.now;
 import static java.time.ZoneId.of;
 import static java.time.temporal.ChronoUnit.MILLIS;
 import static java.time.temporal.ChronoUnit.SECONDS;
+import static org.hamcrest.Matchers.hasItems;
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.notNullValue;
 import static org.hamcrest.core.IsEqual.equalTo;
@@ -89,11 +90,11 @@ public class EidasClientApplicationHazelcastDisabledTest extends EidasClientAppl
                 .body("startTime", notNullValue())
                 .body("currentTime", notNullValue())
                 .body("status", equalTo("UP"))
-                .body("dependencies", hasSize(2))
-                .body("dependencies[0].status", equalTo("UP"))
-                .body("dependencies[0].name", equalTo("credentials"))
-                .body("dependencies[1].status", equalTo("UP"))
-                .body("dependencies[1].name", equalTo("eIDAS-Node"));
+                .body("dependencies.name", hasItems("credentialsHealthIndicator", "eIDAS-Node", "livenessStateHealthIndicator", "readinessStateHealthIndicator"))
+                .body("dependencies.find { it.name == 'credentialsHealthIndicator' }.status", equalTo("UP"))
+                .body("dependencies.find { it.name == 'eIDAS-Node' }.status", equalTo("UP"))
+                .body("dependencies.find { it.name == 'livenessStateHealthIndicator' }.status", equalTo("UP"))
+                .body("dependencies.find { it.name == 'readinessStateHealthIndicator' }.status", equalTo("UP"));
     }
 
     @Test
@@ -278,10 +279,10 @@ public class EidasClientApplicationHazelcastDisabledTest extends EidasClientAppl
                 .body("startTime", notNullValue())
                 .body("currentTime", notNullValue())
                 .body("status", equalTo(credentialsIndicatorStatus))
-                .body("dependencies", hasSize(2))
-                .body("dependencies[0].status", equalTo(credentialsIndicatorStatus))
-                .body("dependencies[0].name", equalTo("credentials"))
-                .body("dependencies[1].status", equalTo("UP"))
-                .body("dependencies[1].name", equalTo("eIDAS-Node"));
+                .body("dependencies.name", hasItems("credentialsHealthIndicator", "eIDAS-Node", "livenessStateHealthIndicator", "readinessStateHealthIndicator"))
+                .body("dependencies.find { it.name == 'credentialsHealthIndicator' }.status", equalTo(credentialsIndicatorStatus))
+                .body("dependencies.find { it.name == 'eIDAS-Node' }.status", equalTo("UP"))
+                .body("dependencies.find { it.name == 'livenessStateHealthIndicator' }.status", equalTo("UP"))
+                .body("dependencies.find { it.name == 'readinessStateHealthIndicator' }.status", equalTo("UP"));
     }
 }

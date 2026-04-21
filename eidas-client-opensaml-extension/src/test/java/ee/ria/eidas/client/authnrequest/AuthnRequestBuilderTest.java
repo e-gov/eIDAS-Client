@@ -16,6 +16,7 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.opensaml.core.xml.XMLObject;
 import org.opensaml.saml.common.SAMLObjectContentReference;
 import org.opensaml.saml.common.xml.SAMLConstants;
@@ -83,6 +84,7 @@ public class AuthnRequestBuilderTest {
 
     @Before
     public void setUp() {
+        MockitoAnnotations.openMocks(this);
         requestBuilder = new AuthnRequestBuilder(authnReqSigningCredential, properties, idpMetadataResolver.getSingeSignOnService(), applicationEventPublisher);
 
         Logger root = (Logger) LoggerFactory.getLogger(AuthnRequestBuilder.class);
