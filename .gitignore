@@ -2,6 +2,8 @@ target
 conf
 .idea
 *.iml
+**/.project
+**/bin/
 **/.DS_Store
 settings.xml
 
