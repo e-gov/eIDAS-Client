@@ -9,7 +9,6 @@ import org.springframework.boot.actuate.autoconfigure.endpoint.condition.Conditi
 import org.springframework.boot.actuate.endpoint.annotation.Endpoint;
 import org.springframework.boot.actuate.endpoint.annotation.ReadOperation;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.boot.health.contributor.HealthContributors.Entry;
 import org.springframework.boot.health.contributor.HealthIndicator;
 import org.springframework.boot.health.contributor.Status;
 import org.springframework.boot.health.registry.HealthContributorRegistry;
@@ -35,6 +34,9 @@ import static java.util.stream.Collectors.toMap;
 @Endpoint(id = "heartbeat")
 @ConfigurationProperties(prefix = "management.endpoint.heartbeat")
 public class HeartbeatEndpoint {
+
+    private static final String HEALTH_INDICATOR_SUFFIX = "HealthIndicator";
+    private static final List<String> DEPENDENCY_NAMES = List.of("credentials", "hazelcast", "eIDAS-Node");
 
     public static final String RESPONSE_PARAM_NAME = "name";
     public static final String RESPONSE_PARAM_VERSION = "version";
@@ -82,9 +84,17 @@ public class HeartbeatEndpoint {
     private Map<String, Status> getHealthIndicatorStatuses() {
         return healthContributorRegistry.stream()
                 .filter(hc -> hc.contributor() instanceof HealthIndicator)
-                .collect(toMap(Entry::name,
+                .filter(hc -> DEPENDENCY_NAMES.contains(formatDependencyName(hc.name())))
+                .collect(toMap(hc -> formatDependencyName(hc.name()),
                         healthContributorNamedContributor -> ((HealthIndicator) healthContributorNamedContributor
                                 .contributor()).health().getStatus()));
+    }
+
+    private String formatDependencyName(String contributorName) {
+        if (contributorName.endsWith(HEALTH_INDICATOR_SUFFIX)) {
+            return contributorName.substring(0, contributorName.length() - HEALTH_INDICATOR_SUFFIX.length());
+        }
+        return contributorName;
     }
 
     private Status getOverallSystemStatus(Map<String, Status> healthIndicatorStatuses) {
@@ -112,11 +122,12 @@ public class HeartbeatEndpoint {
     }
 
     private List<Map<String, String>> formatStatuses(Map<String, Status> healthIndicatorStatuses) {
-        return healthIndicatorStatuses.entrySet().stream()
-                .map(healthIndicator -> {
+        return DEPENDENCY_NAMES.stream()
+                .filter(healthIndicatorStatuses::containsKey)
+                .map(dependencyName -> {
                     Map<String, String> values = new HashMap<>();
-                    values.put("name", healthIndicator.getKey());
-                    values.put("status", healthIndicator.getValue().getCode());
+                    values.put("name", dependencyName);
+                    values.put("status", healthIndicatorStatuses.get(dependencyName).getCode());
                     return values;
                 }).collect(toList());
     }
