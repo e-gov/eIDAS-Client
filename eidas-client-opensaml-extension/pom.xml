@@ -13,11 +13,12 @@
     <artifactId>eidas-client-opensaml-extension</artifactId>
 
     <properties>
+        <!-- Keep aligned with bcpkix/bcutil version from OpenSAML (opensaml-security-api 5.2.3 brings 1.84), mixed versions fail with NoSuchFieldError -->
         <bouncycastle.version>1.84</bouncycastle.version>
-        <commons-collections4.version>4.5.0</commons-collections4.version>
-        <guava.version>33.5.0-jre</guava.version>
-        <jose4j.version>0.9.6</jose4j.version>
-        <opensaml.version>5.1.6</opensaml.version>
+        <commons-collections4.version>4.6.0</commons-collections4.version>
+        <guava.version>33.7.1-jre</guava.version>
+        <jose4j.version>0.9.7</jose4j.version>
+        <opensaml.version>5.2.3</opensaml.version>
         <opensaml-security-ext.version>4.1.9</opensaml-security-ext.version><!-- v4.2.0 requires Java 21 upgrade.-->
         <shiro.version>2.1.0</shiro.version>
     </properties>
